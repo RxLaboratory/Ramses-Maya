@@ -7,4 +7,4 @@ except:
     
 cmds.loadPlugin("ram_cmds.py")
 
-cmds.ramOpenRamses()
+cmds.ramSettings()

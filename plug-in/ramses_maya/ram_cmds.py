@@ -4,10 +4,12 @@ import sys
 sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
+import maya.cmds as cmds # pylint: disable=import-error
 
-from ramses import Ramses
+from ramses import Ramses # pylint: disable=import-error
 from ramses.logger import log
 from dumaf import plugins
+from ui_settings import SettingsDialog
 
 class RamOpenCmd( om.MPxCommand ):
     name = "ramOpen"
@@ -115,6 +117,7 @@ class RamImportTemplate( om.MPxCommand ):
 
 class RamSettings( om.MPxCommand ):
     name = "ramSettings"
+    settingsDialog = SettingsDialog()
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -124,7 +127,8 @@ class RamSettings( om.MPxCommand ):
         return RamSettings()
 
     def doIt(self, args):
-        log("Command 'settings' is not implemented yet!")
+        log("Opening settings...")  
+        self.settingsDialog.show()
 
 class RamOpenRamses( om.MPxCommand ):
     name = "ramOpenRamses"
@@ -140,6 +144,7 @@ class RamOpenRamses( om.MPxCommand ):
         # TODO implement settings
         ramses = Ramses.instance
         ramses.settings().ramsesClientPath = "E:/RAINBOX/LAB/DEV/02 - Applications/Ramses/Deploy/Ramses-Win/Ramses.exe"
+        ramses.settings().save()
         log("Opening the Ramses client...")
         ramses.showClient()
         
@@ -156,6 +161,8 @@ cmds_classes = (
     RamOpenRamses,
 )
 
+cmds_menuItems = []
+
 def maya_useNewAPI():
     pass
 
@@ -163,6 +170,22 @@ def initializePlugin(obj):
     # Register all commands
     plugins.registerCommands( obj, cmds_classes )
 
+    # Add Menu Items
+    cmds_menuItems.append( [
+        cmds.menuItem(
+            parent='MayaWindow|mainWindowMenu',
+            divider=True
+            ),
+        cmds.menuItem(
+            parent='MayaWindow|mainWindowMenu',
+            label='Ramses Settings',
+            command=cmds.ramSettings
+            ) ]
+    )
+
 def uninitializePlugin(obj):
     # Unregister all commands
-    plugins.unregisterCommands( obj, cmds_classes )
+    plugin = plugins.unregisterCommands( obj, cmds_classes )
+
+    # Remove menu items
+    cmds.deleteUI( cmds_menuItems, menuItem = True )
