@@ -8,7 +8,11 @@ import maya.cmds as cmds # pylint: disable=import-error
 
 from ramses import Ramses # pylint: disable=import-error
 from ramses.logger import log
-from dumaf import plugins
+from dumaf import (
+    registerCommands,
+    unregisterCommands,
+    getMayaWindow
+)
 from ui_settings import SettingsDialog
 
 class RamOpenCmd( om.MPxCommand ):
@@ -117,7 +121,7 @@ class RamImportTemplate( om.MPxCommand ):
 
 class RamSettings( om.MPxCommand ):
     name = "ramSettings"
-    settingsDialog = SettingsDialog()
+    settingsDialog = SettingsDialog( getMayaWindow() )
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -168,7 +172,7 @@ def maya_useNewAPI():
 
 def initializePlugin(obj):
     # Register all commands
-    plugins.registerCommands( obj, cmds_classes )
+    registerCommands( obj, cmds_classes )
 
     # Add Menu Items
     cmds_menuItems.append( [
@@ -185,7 +189,7 @@ def initializePlugin(obj):
 
 def uninitializePlugin(obj):
     # Unregister all commands
-    plugin = plugins.unregisterCommands( obj, cmds_classes )
+    unregisterCommands( obj, cmds_classes )
 
     # Remove menu items
     cmds.deleteUI( cmds_menuItems, menuItem = True )

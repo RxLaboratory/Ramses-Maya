@@ -33,7 +33,6 @@ class SettingsDialog( QMainWindow ):
         self._connectEvents()
         self.revert()
 
-
     def _setupUi(self):
         self.setWindowTitle("Ramses Add-ons settings")
 
