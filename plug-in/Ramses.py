@@ -1,4 +1,3 @@
-import importlib
 import sys
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import ramses_maya as ram
@@ -11,8 +10,6 @@ def maya_useNewAPI():
     pass
 
 def initializePlugin(obj):
-    # Reload module
-    importlib.reload( ram )
     # Register all commands
     plugin = om.MFnPlugin(obj, ram.vendor, ram.version)
 

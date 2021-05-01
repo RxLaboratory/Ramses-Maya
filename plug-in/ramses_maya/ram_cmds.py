@@ -1,9 +1,13 @@
 import sys
+
+# In Dev Mode, Ramses lives in its repo
+sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
+
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
-from ramses import Ramses # pylint: disable=no-name-in-module
-from ramses.logger import log # pylint: disable=import-error,no-name-in-module
-from dumaf import plugins # pylint: disable=import-error
+from ramses import Ramses
+from ramses.logger import log
+from dumaf import plugins
 
 class RamOpenCmd( om.MPxCommand ):
     name = "ramOpen"
@@ -135,10 +139,10 @@ class RamOpenRamses( om.MPxCommand ):
     def doIt(self, args):
         # TODO implement settings
         ramses = Ramses.instance
-        ramses.settings().ramsesClientPath = "D:/RAINBOX/LAB/DEV/02 - Applications/Ramses/Deploy/Ramses-Win/Ramses.exe"
+        ramses.settings().ramsesClientPath = "E:/RAINBOX/LAB/DEV/02 - Applications/Ramses/Deploy/Ramses-Win/Ramses.exe"
+        log("Opening the Ramses client...")
         ramses.showClient()
         
-
 cmds_classes = (
     RamOpenCmd,
     RamSaveCmd,

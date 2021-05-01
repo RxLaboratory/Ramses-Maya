@@ -1,4 +1,4 @@
-import maya.cmds as cmds  # pylint: disable=import-error
+import maya.cmds as cmds
 
 try:
     cmds.unloadPlugin("ram_cmds.py")
