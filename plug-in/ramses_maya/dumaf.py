@@ -34,5 +34,8 @@ def getMayaWindow():
     if not app:
         app = QApplication(sys.argv)
 
-    mayaWin = next(w for w in app.topLevelWidgets() if w.objectName()=='MayaWindow')
-    return mayaWin
+    try:
+        mayaWin = next(w for w in app.topLevelWidgets() if w.objectName()=='MayaWindow')
+        return mayaWin
+    except:
+        return None
