@@ -10,7 +10,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QSpinBox,
     QCheckBox,
     QLabel,
-    QPushButton
+    QPushButton,
+    QComboBox
 )
 from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
@@ -22,7 +23,13 @@ import sys
 
 # In Dev Mode, Ramses lives in its repo
 sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
-from ramses import Ramses
+
+from ramses import ( # pylint: disable=import-error,no-name-in-module
+    RamSettings,
+    LogLevel
+)
+# Keep the settings at hand
+settings = RamSettings.instance()
 
 class SettingsDialog( QMainWindow ):
 
@@ -62,6 +69,19 @@ class SettingsDialog( QMainWindow ):
 
         self._autoConnectBox = QCheckBox("Auto-connection")
         formLayout.setWidget( 2, QFormLayout.FieldRole, self._autoConnectBox )
+
+        formLayout.setWidget( 3, QFormLayout.LabelRole, QLabel("Developper Options:"))
+
+        formLayout.setWidget(4,  QFormLayout.LabelRole, QLabel("Log Level:") )
+
+        self._logLevelBox = QComboBox()
+        self._logLevelBox.addItem( "Data Received", LogLevel.DataReceived )
+        self._logLevelBox.addItem( "Data Sent", LogLevel.DataSent )
+        self._logLevelBox.addItem( "Debug", LogLevel.Debug )
+        self._logLevelBox.addItem( "Information", LogLevel.Info )
+        self._logLevelBox.addItem( "Critical", LogLevel.Critical )
+        self._logLevelBox.addItem( "Fatal", LogLevel.Fatal )
+        formLayout.setWidget( 4, QFormLayout.FieldRole, self._logLevelBox )
 
         mainLayout.addLayout( formLayout )
 
@@ -103,29 +123,40 @@ class SettingsDialog( QMainWindow ):
 
     @Slot()
     def save(self):
-        settings = Ramses.instance.settings()
         settings.ramsesClientPath = self._clientPathEdit.text()
         settings.ramsesClientPort = self._clientPortBox.value()
         settings.autoConnect = self._autoConnectBox.isChecked()
+        settings.logLevel = self._logLevelBox.currentData()
         settings.save()
         self.close()
 
     @Slot()
     def revert(self):
-        settings = Ramses.instance.settings()
         self._clientPathEdit.setText( settings.ramsesClientPath )
         self._clientPortBox.setValue( settings.ramsesClientPort )
         self._autoConnectBox.setChecked( settings.autoConnect )
+        i = 0
+        while i < self._logLevelBox.count():
+            if self._logLevelBox.itemData( i ) == settings.logLevel:
+                self._logLevelBox.setCurrentIndex( i )
+                break
+            i=i+1
 
     @Slot()
     def restoreDefaults(self):
-        self._clientPathEdit.setText("")
-        self._clientPortBox.setValue(18185)
-        self._autoConnectBox.setChecked(True)
+        self._clientPathEdit.setText( settings.defaultRamsesClientPath )
+        self._clientPortBox.setValue( settings.defaultRamsesClientPort )
+        self._autoConnectBox.setChecked( settings.defaultAutoConnect )
+        i=0
+        while i < self._logLevelBox.count():
+            if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
+                self._logLevelBox.setCurrentIndex( i )
+                break
+            i=i+1
 
     @Slot()
     def help(self):
-        QDesktopServices.openUrl( QUrl( Ramses.addonsHelpUrl ) )
+        QDesktopServices.openUrl( QUrl( settings.addonsHelpUrl ) )
     
     @Slot()
     def browseClientPath(self):
