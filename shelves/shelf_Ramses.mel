@@ -28,8 +28,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/ramses-icon-large.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/ramses-icon-large.png" 
+        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/ramses.png" 
+        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/ramses.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -62,12 +62,46 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/savefile_bl.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/savefile_bl.png" 
+        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/savefile_sl.png" 
+        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/savefile_sl.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
         -command "import maya.cmds as cmds\n\ncmds.ramSave()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Save new version" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "import maya.cmds as cmds\ncmds.ramSaveVersion()" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/saveincremental_sl.png" 
+        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/saveincremental_sl.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "import maya.cmds as cmds\ncmds.ramSaveVersion()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -96,8 +130,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/go-to-settings.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/go-to-settings.png" 
+        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/settings.png" 
+        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/settings.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
