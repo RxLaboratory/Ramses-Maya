@@ -1,19 +1,19 @@
 import sys
 
-# In Dev Mode, Ramses lives in its repo
-sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
-
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from ramses import Ramses # pylint: disable=import-error
-from ramses.logger import log
-from dumaf import (
+from dumaf import ( # pylint: disable=import-error,no-name-in-module
     registerCommands,
     unregisterCommands,
     getMayaWindow
 )
-from ui_settings import SettingsDialog
+
+from ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
+
+import ramses as ram
+# Keep the ramses instance at hand
+ramses = ram.Ramses.instance()
 
 class RamOpenCmd( om.MPxCommand ):
     name = "ramOpen"
@@ -26,7 +26,7 @@ class RamOpenCmd( om.MPxCommand ):
         return RamOpenCmd()
 
     def doIt(self, args):
-        log("Command 'open' is not implemented yet!")
+        ram.log("Command 'open' is not implemented yet!")
 
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
@@ -39,7 +39,7 @@ class RamSaveCmd( om.MPxCommand ):
         return RamSaveCmd()
 
     def doIt(self, args):
-        log("Command 'save' is not implemented yet!")
+        ram.log("Command 'save' is not implemented yet!")
 
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
@@ -52,9 +52,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
         return RamSaveVersionCmd()
 
     def doIt(self, args):
-        log("Command 'save new version' is not implemented yet!")
+        ram.log("Command 'save new version' is not implemented yet!")
 
-class RamPublish( om.MPxCommand ):
+class RamPublishCmd( om.MPxCommand ):
     name = "ramPublish"
 
     def __init__(self):
@@ -62,12 +62,12 @@ class RamPublish( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
-        return RamPublish()
+        return RamPublishCmd()
 
     def doIt(self, args):
-        log("Command 'publish' is not implemented yet!")
+        ram.log("Command 'publish' is not implemented yet!")
 
-class RamRetrieveVersion( om.MPxCommand ):
+class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetriveVersion"
 
     def __init__(self):
@@ -75,25 +75,25 @@ class RamRetrieveVersion( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
-        return RamRetrieveVersion()
+        return RamRetrieveVersionCmd()
 
     def doIt(self, args):
-        log("Command 'retrieve version' is not implemented yet!")
+        ram.log("Command 'retrieve version' is not implemented yet!")
 
-class RamPublishAsTemplate( om.MPxCommand ):
-    name = "ramPulbishAsTemplate"
+class RamPublishTemplateCmd( om.MPxCommand ):
+    name = "ramPulbishTemplate"
 
     def __init__(self):
         om.MPxCommand.__init__(self)
 
     @staticmethod
     def createCommand():
-        return RamPublishAsTemplate()
+        return RamPublishTemplateCmd()
 
     def doIt(self, args):
-        log("Command 'publish as template' is not implemented yet!")
+        ram.log("Command 'publish as template' is not implemented yet!")
 
-class RamOpenTemplate( om.MPxCommand ):
+class RamOpenTemplateCmd( om.MPxCommand ):
     name = "ramOpenTemplate"
 
     def __init__(self):
@@ -101,12 +101,12 @@ class RamOpenTemplate( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
-        return RamOpenTemplate()
+        return RamOpenTemplateCmd()
 
     def doIt(self, args):
-        log("Command 'open template' is not implemented yet!")
+        ram.log("Command 'open template' is not implemented yet!")
 
-class RamImportTemplate( om.MPxCommand ):
+class RamImportTemplateCmd( om.MPxCommand ):
     name = "ramImportTemplate"
 
     def __init__(self):
@@ -114,12 +114,12 @@ class RamImportTemplate( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
-        return RamImportTemplate()
+        return RamImportTemplateCmd()
 
     def doIt(self, args):
-        log("Command 'import template' is not implemented yet!")
+        ram.log("Command 'import template' is not implemented yet!")
 
-class RamSettings( om.MPxCommand ):
+class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
     settingsDialog = SettingsDialog( getMayaWindow() )
 
@@ -128,13 +128,13 @@ class RamSettings( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
-        return RamSettings()
+        return RamSettingsCmd()
 
     def doIt(self, args):
-        log("Opening settings...")  
+        ram.log("Opening settings...")  
         self.settingsDialog.show()
 
-class RamOpenRamses( om.MPxCommand ):
+class RamOpenRamsesCmd( om.MPxCommand ):
     name = "ramOpenRamses"
 
     def __init__(self):
@@ -142,27 +142,23 @@ class RamOpenRamses( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
-        return RamOpenRamses()
+        return RamOpenRamsesCmd()
 
     def doIt(self, args):
-        # TODO implement settings
-        ramses = Ramses.instance
-        ramses.settings().ramsesClientPath = "E:/RAINBOX/LAB/DEV/02 - Applications/Ramses/Deploy/Ramses-Win/Ramses.exe"
-        ramses.settings().save()
-        log("Opening the Ramses client...")
+        ram.log("Opening the Ramses client...")
         ramses.showClient()
         
 cmds_classes = (
     RamOpenCmd,
     RamSaveCmd,
     RamSaveVersionCmd,
-    RamPublish,
-    RamRetrieveVersion,
-    RamPublishAsTemplate,
-    RamOpenTemplate,
-    RamImportTemplate,
-    RamSettings,
-    RamOpenRamses,
+    RamPublishCmd,
+    RamRetrieveVersionCmd,
+    RamPublishTemplateCmd,
+    RamOpenTemplateCmd,
+    RamImportTemplateCmd,
+    RamSettingsCmd,
+    RamOpenRamsesCmd,
 )
 
 cmds_menuItems = []
@@ -192,4 +188,5 @@ def uninitializePlugin(obj):
     unregisterCommands( obj, cmds_classes )
 
     # Remove menu items
-    cmds.deleteUI( cmds_menuItems, menuItem = True )
+    for menuItem in cmds_menuItems:
+        cmds.deleteUI( menuItem, menuItem = True )
