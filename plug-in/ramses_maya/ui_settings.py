@@ -73,8 +73,8 @@ class SettingsDialog( QMainWindow ):
         connectLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
         formLayout.addWidget( connectLabel, 2, 0)
 
-        self._autoConnectBox = QCheckBox("Auto-connection")
-        formLayout.addWidget( self._autoConnectBox, 2, 1 )
+        self._onlineBox = QCheckBox("Auto-connection")
+        formLayout.addWidget( self._onlineBox, 2, 1 )
 
         mainLayout.addLayout( formLayout )
 
@@ -136,7 +136,7 @@ class SettingsDialog( QMainWindow ):
     def save(self):
         settings.ramsesClientPath = self._clientPathEdit.text()
         settings.ramsesClientPort = self._clientPortBox.value()
-        settings.autoConnect = self._autoConnectBox.isChecked()
+        settings.online = self._onlineBox.isChecked()
         settings.logLevel = self._logLevelBox.currentData()
         settings.save()
         self.close()
@@ -145,7 +145,7 @@ class SettingsDialog( QMainWindow ):
     def revert(self):
         self._clientPathEdit.setText( settings.ramsesClientPath )
         self._clientPortBox.setValue( settings.ramsesClientPort )
-        self._autoConnectBox.setChecked( settings.autoConnect )
+        self._onlineBox.setChecked( settings.online )
         i = 0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.logLevel:
@@ -157,7 +157,7 @@ class SettingsDialog( QMainWindow ):
     def restoreDefaults(self):
         self._clientPathEdit.setText( settings.defaultRamsesClientPath )
         self._clientPortBox.setValue( settings.defaultRamsesClientPort )
-        self._autoConnectBox.setChecked( settings.defaultAutoConnect )
+        self._onlineBox.setChecked( settings.defaultOnline )
         i=0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
