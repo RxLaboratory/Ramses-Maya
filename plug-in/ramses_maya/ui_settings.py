@@ -3,7 +3,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QFileDialog,
     QWidget,
     QMainWindow,
-    QFormLayout,
+    QGridLayout,
     QHBoxLayout,
     QVBoxLayout,
     QLineEdit,
@@ -16,7 +16,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
 from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
-    QUrl
+    QUrl,
+    Qt
 )
 import platform
 import sys
@@ -24,12 +25,9 @@ import sys
 # In Dev Mode, Ramses lives in its repo
 sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
 
-from ramses import ( # pylint: disable=import-error,no-name-in-module
-    RamSettings,
-    LogLevel
-)
+import ramses as ram
 # Keep the settings at hand
-settings = RamSettings.instance()
+settings = ram.RamSettings.instance()
 
 class SettingsDialog( QMainWindow ):
 
@@ -42,46 +40,59 @@ class SettingsDialog( QMainWindow ):
 
     def _setupUi(self):
         self.setWindowTitle("Ramses Add-ons settings")
+        self.setMinimumWidth( 500 )
 
         mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(6,6,6,6)
- 
-        formLayout = QFormLayout()
+        mainLayout.setSpacing(12)
+
+        formLayout = QGridLayout()
         formLayout.setSpacing(3)
 
-        formLayout.setWidget( 0, QFormLayout.LabelRole, QLabel("Ramses Application path:"))
+        pathLabel = QLabel("Ramses Application path:")
+        pathLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
+        formLayout.addWidget( pathLabel, 0, 0)
         
         pathLayout = QHBoxLayout()
         self._clientPathEdit = QLineEdit( )
         pathLayout.addWidget( self._clientPathEdit )
         self._clientPathButton = QPushButton(text="Browse...")
         pathLayout.addWidget( self._clientPathButton )
-        formLayout.setLayout( 0, QFormLayout.FieldRole, pathLayout)
+        formLayout.addLayout( pathLayout, 0, 1)
 
-        formLayout.setWidget( 1, QFormLayout.LabelRole, QLabel("Ramses Daemon port:"))
+        portLabel = QLabel("Ramses Daemon port:")
+        portLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
+        formLayout.addWidget( portLabel, 1, 0)
 
         self._clientPortBox = QSpinBox()
         self._clientPortBox.setMinimum( 1024 )
         self._clientPortBox.setMaximum( 49151 )
-        formLayout.setWidget( 1, QFormLayout.FieldRole, self._clientPortBox )
+        formLayout.addWidget( self._clientPortBox, 1, 1 )
 
-        formLayout.setWidget( 2, QFormLayout.LabelRole, QLabel("Auto-connect to the App:"))
+        connectLabel =QLabel("Auto-connect to the App:")
+        connectLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
+        formLayout.addWidget( connectLabel, 2, 0)
 
         self._autoConnectBox = QCheckBox("Auto-connection")
-        formLayout.setWidget( 2, QFormLayout.FieldRole, self._autoConnectBox )
+        formLayout.addWidget( self._autoConnectBox, 2, 1 )
 
-        formLayout.setWidget( 3, QFormLayout.LabelRole, QLabel("Developper Options:"))
+        mainLayout.addLayout( formLayout )
 
-        formLayout.setWidget(4,  QFormLayout.LabelRole, QLabel("Log Level:") )
+        formLayout.addWidget( QLabel("Developper Options:"), 3, 0)
+        formLayout.setRowMinimumHeight( 3, 30 )
+
+        logLabel = QLabel("Log Level:")
+        logLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
+        formLayout.addWidget( logLabel, 4, 0 )
 
         self._logLevelBox = QComboBox()
-        self._logLevelBox.addItem( "Data Received", LogLevel.DataReceived )
-        self._logLevelBox.addItem( "Data Sent", LogLevel.DataSent )
-        self._logLevelBox.addItem( "Debug", LogLevel.Debug )
-        self._logLevelBox.addItem( "Information", LogLevel.Info )
-        self._logLevelBox.addItem( "Critical", LogLevel.Critical )
-        self._logLevelBox.addItem( "Fatal", LogLevel.Fatal )
-        formLayout.setWidget( 4, QFormLayout.FieldRole, self._logLevelBox )
+        self._logLevelBox.addItem( "Data Received", ram.LogLevel.DataReceived )
+        self._logLevelBox.addItem( "Data Sent", ram.LogLevel.DataSent )
+        self._logLevelBox.addItem( "Debug", ram.LogLevel.Debug )
+        self._logLevelBox.addItem( "Information", ram.LogLevel.Info )
+        self._logLevelBox.addItem( "Critical", ram.LogLevel.Critical )
+        self._logLevelBox.addItem( "Fatal", ram.LogLevel.Fatal )
+        formLayout.addWidget( self._logLevelBox, 4, 1 )
 
         mainLayout.addLayout( formLayout )
 
