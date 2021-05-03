@@ -57,7 +57,7 @@ class RamOpenCmd( om.MPxCommand ):
     def doIt(self, args):
         ram.log("Command 'open' is not implemented yet!")
 
-class RamSaveCmd( om.MPxCommand ):
+class RamSaveCmd( om.MPxCommand ): #TODO
     name = "ramSave"
 
     def __init__(self):
@@ -101,7 +101,9 @@ class RamSaveCmd( om.MPxCommand ):
         ram.log( "Scene saved! Current version is: " + newVersion )
         cmds.inViewMessage( msg='Scene saved! <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
 
-class RamSaveVersionCmd( om.MPxCommand ):
+        #TODO Update status if online
+
+class RamSaveVersionCmd( om.MPxCommand ): #TODO
     name = "ramSaveVersion"
 
     def __init__(self):
@@ -135,6 +137,8 @@ class RamSaveVersionCmd( om.MPxCommand ):
         newVersion = str( decomposedFileName['version'] )
         ram.log( "Incremental save, scene saved! New version is: " + newVersion )
         cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
+
+        #TODO Update status if online
 
 class RamPublishCmd( om.MPxCommand ):
     name = "ramPublish"
@@ -253,22 +257,22 @@ def initializePlugin(obj):
     registerCommands( obj, cmds_classes )
 
     # Add Menu Items
-    cmds_menuItems.append( [
-        cmds.menuItem(
-            parent='MayaWindow|mainWindowMenu',
-            divider=True
-            ),
-        cmds.menuItem(
-            parent='MayaWindow|mainWindowMenu',
-            label='Ramses Settings',
-            command=cmds.ramSettings
-            ) ]
-    )
+    # cmds_menuItems.append( [
+    #     cmds.menuItem(
+    #         parent='MayaWindow|mainWindowMenu',
+    #         divider=True
+    #         ),
+    #     cmds.menuItem(
+    #         parent='MayaWindow|mainWindowMenu',
+    #         label='Ramses Settings',
+    #         command=cmds.ramSettings
+    #         ) ]
+    # )
 
 def uninitializePlugin(obj):
     # Unregister all commands
     unregisterCommands( obj, cmds_classes )
 
     # Remove menu items
-    for menuItem in cmds_menuItems:
-        cmds.deleteUI( menuItem, menuItem = True )
+    # for menuItem in cmds_menuItems:
+    #     cmds.deleteUI( menuItem, menuItem = True )

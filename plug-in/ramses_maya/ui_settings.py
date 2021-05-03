@@ -49,32 +49,32 @@ class SettingsDialog( QMainWindow ):
         formLayout = QGridLayout()
         formLayout.setSpacing(3)
 
+        connectLabel = QLabel("Use the Ramses Application:")
+        connectLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
+        formLayout.addWidget( connectLabel, 0, 0)
+
+        self._onlineBox = QCheckBox("Connected")
+        formLayout.addWidget( self._onlineBox, 0, 1 )
+
         pathLabel = QLabel("Ramses Application path:")
         pathLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( pathLabel, 0, 0)
+        formLayout.addWidget( pathLabel, 1, 0)
         
         pathLayout = QHBoxLayout()
         self._clientPathEdit = QLineEdit( )
         pathLayout.addWidget( self._clientPathEdit )
         self._clientPathButton = QPushButton(text="Browse...")
         pathLayout.addWidget( self._clientPathButton )
-        formLayout.addLayout( pathLayout, 0, 1)
+        formLayout.addLayout( pathLayout, 1, 1)
 
         portLabel = QLabel("Ramses Daemon port:")
         portLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( portLabel, 1, 0)
+        formLayout.addWidget( portLabel, 2, 0)
 
         self._clientPortBox = QSpinBox()
         self._clientPortBox.setMinimum( 1024 )
         self._clientPortBox.setMaximum( 49151 )
-        formLayout.addWidget( self._clientPortBox, 1, 1 )
-
-        connectLabel =QLabel("Auto-connect to the App:")
-        connectLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( connectLabel, 2, 0)
-
-        self._onlineBox = QCheckBox("Auto-connection")
-        formLayout.addWidget( self._onlineBox, 2, 1 )
+        formLayout.addWidget( self._clientPortBox, 2, 1 )
 
         mainLayout.addLayout( formLayout )
 
@@ -127,6 +127,7 @@ class SettingsDialog( QMainWindow ):
         self._revertToSavedAction.triggered.connect( self.revert )
         self._restoreDefaultsAction.triggered.connect( self.restoreDefaults )
         self._helpAction.triggered.connect( self.help )
+        self._onlineBox.clicked.connect( self.switchConnected )
 
     @Slot()
     def cancel(self):
@@ -176,6 +177,12 @@ class SettingsDialog( QMainWindow ):
         if system == "Windows": filter = "Executable Files (*.exe *.bat)"
         file = QFileDialog.getOpenFileName(self, "Select the path to the Ramses Client", "", filter)
         if file[0] != "": self._clientPathEdit.setText( file[0] )
+
+    @Slot()
+    def switchConnected(self, checked):
+        self._clientPathEdit.setEnabled(checked)
+        self._clientPortBox.setEnabled(checked)
+        self._clientPathButton.setEnabled(checked)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
