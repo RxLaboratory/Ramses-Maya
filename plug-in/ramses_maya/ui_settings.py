@@ -49,41 +49,57 @@ class SettingsDialog( QMainWindow ):
         formLayout = QGridLayout()
         formLayout.setSpacing(3)
 
+        formLayout.addWidget( QLabel("Versionning:"), 0, 0)
+        formLayout.setRowMinimumHeight( 0, 30 )
+
+        incrementLabel = QLabel("Auto-increment version every:")
+        incrementLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
+        formLayout.addWidget( incrementLabel, 1, 0)
+
+        self._autoIncrementBox = QSpinBox()
+        self._autoIncrementBox.setMinimum(1)
+        self._autoIncrementBox.setMaximum(1440) #24h
+        self._autoIncrementBox.setSuffix(" minutes.")
+        formLayout.addWidget( self._autoIncrementBox, 1, 1)
+
+        formLayout.addWidget( QLabel("Ramses Application:"), 2, 0)
+        formLayout.setRowMinimumHeight( 2, 30 )
+
         connectLabel = QLabel("Use the Ramses Application:")
         connectLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( connectLabel, 0, 0)
+        formLayout.addWidget( connectLabel, 3, 0)
 
         self._onlineBox = QCheckBox("Connected")
-        formLayout.addWidget( self._onlineBox, 0, 1 )
+        formLayout.addWidget( self._onlineBox, 3, 1 )
 
         pathLabel = QLabel("Ramses Application path:")
         pathLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( pathLabel, 1, 0)
+        formLayout.addWidget( pathLabel, 4, 0)
         
         pathLayout = QHBoxLayout()
         self._clientPathEdit = QLineEdit( )
         pathLayout.addWidget( self._clientPathEdit )
         self._clientPathButton = QPushButton(text="Browse...")
         pathLayout.addWidget( self._clientPathButton )
-        formLayout.addLayout( pathLayout, 1, 1)
+        formLayout.addLayout( pathLayout, 4, 1)
 
         portLabel = QLabel("Ramses Daemon port:")
         portLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( portLabel, 2, 0)
+        formLayout.addWidget( portLabel, 5, 0)
 
         self._clientPortBox = QSpinBox()
         self._clientPortBox.setMinimum( 1024 )
         self._clientPortBox.setMaximum( 49151 )
-        formLayout.addWidget( self._clientPortBox, 2, 1 )
+        formLayout.addWidget( self._clientPortBox, 5, 1 )
 
         mainLayout.addLayout( formLayout )
 
-        formLayout.addWidget( QLabel("Developper Options:"), 3, 0)
-        formLayout.setRowMinimumHeight( 3, 30 )
+        formLayout.addWidget( QLabel("Development:"), 6, 0)
+        formLayout.setRowMinimumHeight( 6, 30 )
 
         logLabel = QLabel("Log Level:")
         logLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( logLabel, 4, 0 )
+        formLayout.addWidget( logLabel, 7, 0 )
 
         self._logLevelBox = QComboBox()
         self._logLevelBox.addItem( "Data Received", ram.LogLevel.DataReceived )
@@ -92,7 +108,7 @@ class SettingsDialog( QMainWindow ):
         self._logLevelBox.addItem( "Information", ram.LogLevel.Info )
         self._logLevelBox.addItem( "Critical", ram.LogLevel.Critical )
         self._logLevelBox.addItem( "Fatal", ram.LogLevel.Fatal )
-        formLayout.addWidget( self._logLevelBox, 4, 1 )
+        formLayout.addWidget( self._logLevelBox, 7, 1 )
 
         mainLayout.addLayout( formLayout )
 
@@ -139,6 +155,7 @@ class SettingsDialog( QMainWindow ):
         settings.ramsesClientPort = self._clientPortBox.value()
         settings.online = self._onlineBox.isChecked()
         settings.logLevel = self._logLevelBox.currentData()
+        settings.autoIncrementTimeout = self._autoIncrementBox.value()
         settings.save()
         self.close()
 
@@ -147,6 +164,7 @@ class SettingsDialog( QMainWindow ):
         self._clientPathEdit.setText( settings.ramsesClientPath )
         self._clientPortBox.setValue( settings.ramsesClientPort )
         self._onlineBox.setChecked( settings.online )
+        self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
         i = 0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.logLevel:
@@ -160,6 +178,7 @@ class SettingsDialog( QMainWindow ):
         self._clientPathEdit.setText( settings.defaultRamsesClientPath )
         self._clientPortBox.setValue( settings.defaultRamsesClientPort )
         self._onlineBox.setChecked( settings.defaultOnline )
+        self._autoIncrementBox.setValue( settings.defaultAutoIncrementTimeout )
         i=0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
