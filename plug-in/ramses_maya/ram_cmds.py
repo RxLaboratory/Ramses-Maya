@@ -92,7 +92,7 @@ class RamSaveCmd( om.MPxCommand ):
             cmds.warning( "Incremented and Saved as " + saveFilePath )
 
         # If the timeout has expired, we're also incrementing
-        prevVersion = ram.RamFileManager.getLatestVersion( saveFilePath )
+        prevVersion = ram.RamFileManager.getLatestVersion( saveFilePath, previous=True )
         modified = prevVersion[2].timestamp()
         now = time.time()
         if settings.autoIncrementTimeout * 60 < now - modified:
