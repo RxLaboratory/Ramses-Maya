@@ -10,6 +10,7 @@ from dumaf import ( # pylint: disable=import-error,no-name-in-module
 )
 
 from ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
+from ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -122,21 +123,64 @@ class RamSaveVersionCmd( om.MPxCommand ): #TODO
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        if not saveFilePath:
+        if saveFilePath == "":
             return
+
+        # Update status
+        saveFileName = os.path.basename( saveFilePath )
+        saveFileDict = ram.RamFileManager.decomposeRamsesFileName( saveFileName )
+        currentStep = saveFileDict['ramStep']
+        currentItem = ram.RamItem.fromPath( saveFilePath )
+        currentStatus = currentItem.currentStatus( currentStep )
+        # Show status dialog
+        statusDialog = StatusDialog()
+        statusDialog.setOffline(not settings.online)
+        if currentStatus is not None:
+            statusDialog.setStatus( currentStatus )
+        update = statusDialog.exec_()
+        if update == 0:
+            return
+        status = None
+        publish = False
+        if update == 1:
+            status = ram.RamStatus(
+                statusDialog.getState(),
+                statusDialog.getComment(),
+                statusDialog.getCompletionRatio()
+            )
+            publish = statusDialog.isPublished()
 
         # Set the save name and save
         cmds.file( rename = saveFilePath )
         cmds.file( save=True, options="v=1;" )
         # Backup / Increment
-        backupFilePath = ram.RamFileManager.copyToVersion( saveFilePath, increment=True )
+        state = settings.defaultState
+        if status is not None:
+            state = status.state
+        elif currentStatus is not None:
+            state = currentStatus.state
+
+        backupFilePath = ram.RamFileManager.copyToVersion(
+            saveFilePath,
+            True,
+            state.shortName()
+            )
         backupFileName = os.path.basename( backupFilePath )
         decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( backupFileName )
-        newVersion = str( decomposedFileName['version'] )
-        ram.log( "Incremental save, scene saved! New version is: " + newVersion )
-        cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
+        newVersion = decomposedFileName['version']
 
-        #TODO Update status if online
+        # Update status
+        if settings.online and status is not None:
+            currentItem.setStatus(status, currentStep)
+
+        # Publish
+        if publish:
+            ram.RamFileManager.copyToPublish( saveFilePath )
+
+        # Alert
+        newVersionStr = str( newVersion )
+        ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
+        cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
 
 class RamPublishCmd( om.MPxCommand ):
     name = "ramPublish"

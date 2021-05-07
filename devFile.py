@@ -38,7 +38,7 @@ class StateBox( QComboBox ):
         for state in ramses.states():
             self.addItem( state.shortName(), state.color() )
 
-        self.indexChanged(0)
+        self.setState( ramses.settings().defaultState )
         self.currentIndexChanged.connect( self.indexChanged )
 
     @Slot()
@@ -139,6 +139,9 @@ class StatusDialog( QDialog ):
     def getComment(self):
         return self.commentEdit.toPlainText()
 
+    def isPublished(self):
+        return self.publishBox.isChecked()
+
     def skip(self):
         self.done(2)
 
@@ -190,7 +193,7 @@ def ramSaveIncremental():
 
     # Get the save path 
     saveFilePath = getSaveFilePath( currentFilePath )
-    if not saveFilePath:
+    if saveFilePath == "":
         return
 
     # Update status
@@ -208,12 +211,14 @@ def ramSaveIncremental():
     if update == 0:
         return
     status = None
+    publish = False
     if update == 1:
         status = ram.RamStatus(
             statusDialog.getState(),
             statusDialog.getComment(),
             statusDialog.getCompletionRatio()
         )
+        publish = statusDialog.isPublished()
 
     # Set the save name and save
     cmds.file( rename = saveFilePath )
@@ -236,7 +241,11 @@ def ramSaveIncremental():
 
     # Update status
     if settings.online and status is not None:
-        pass
+        currentItem.setStatus(status, currentStep)
+
+    # Publish
+    if publish:
+        ram.RamFileManager.copyToPublish( saveFilePath )
 
     # Alert
     newVersionStr = str( newVersion )

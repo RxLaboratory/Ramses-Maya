@@ -9,6 +9,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QSpinBox,
     QTextEdit,
     QPushButton,
+    QCheckBox,
 )
 from PySide2.QtGui import (
     QColor,
@@ -33,7 +34,7 @@ class StateBox( QComboBox ):
         for state in ramses.states():
             self.addItem( state.shortName(), state.color() )
 
-        self.indexChanged(0)
+        self.setState( ramses.settings().defaultState )
         self.currentIndexChanged.connect( self.indexChanged )
 
     @Slot()
@@ -53,7 +54,7 @@ class StateBox( QComboBox ):
             i = i+1
 
     def getState(self):
-        return ramses.state( self.currentText )
+        return ramses.state( self.currentText() )
 
 class StatusDialog( QDialog ):
     
@@ -84,6 +85,9 @@ class StatusDialog( QDialog ):
         self.completionBox.setMaximum( 100 )
         self.completionBox.setSuffix( "%" )
         topLayout.addWidget( self.completionBox )
+
+        self.publishBox = QCheckBox("Publish the current scene.")
+        topLayout.addWidget( self.publishBox )
 
         mainLayout.addLayout( topLayout )
 
@@ -131,8 +135,17 @@ class StatusDialog( QDialog ):
     def getComment(self):
         return self.commentEdit.toPlainText()
 
+    def isPublished(self):
+        return self.publishBox.isChecked()
+
     def skip(self):
         self.done(2)
+
+    def setOffline(self, offline):
+        online = not offline
+        self.completionSlider.setVisible(online)
+        self.completionBox.setVisible(online)
+        self.commentEdit.setVisible(online)
 
 if __name__ == '__main__':
     statusDialog = StatusDialog()
