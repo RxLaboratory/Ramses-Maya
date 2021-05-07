@@ -101,8 +101,6 @@ class RamSaveCmd( om.MPxCommand ): #TODO
         ram.log( "Scene saved! Current version is: " + newVersion )
         cmds.inViewMessage( msg='Scene saved! <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
 
-        #TODO Update status if online
-
 class RamSaveVersionCmd( om.MPxCommand ): #TODO
     name = "ramSaveVersion"
 

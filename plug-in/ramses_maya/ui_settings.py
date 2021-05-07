@@ -1,3 +1,4 @@
+import sys, platform
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
     QFileDialog,
@@ -19,8 +20,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     QUrl,
     Qt
 )
-import platform
-import sys
+
 
 # In Dev Mode, Ramses lives in its repo
 sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
@@ -33,12 +33,12 @@ class SettingsDialog( QMainWindow ):
 
     def __init__( self, parent=None ):
         super(SettingsDialog, self).__init__(parent)
-        self._setupUi()
-        self._setupMenu()
-        self._connectEvents()
+        self.__setupUi()
+        self.__setupMenu()
+        self.__connectEvents()
         self.revert()
 
-    def _setupUi(self):
+    def __setupUi(self):
         self.setWindowTitle("Ramses Add-ons settings")
         self.setMinimumWidth( 500 )
 
@@ -112,7 +112,7 @@ class SettingsDialog( QMainWindow ):
         mainWidget.setLayout( mainLayout )
         self.setCentralWidget( mainWidget )
 
-    def _setupMenu(self):
+    def __setupMenu(self):
         editMenu = self.menuBar().addMenu("Edit")
         self._revertToSavedAction = editMenu.addAction("Revert to Saved")
         self._restoreDefaultsAction = editMenu.addAction("Restore Default Settings")
@@ -120,7 +120,7 @@ class SettingsDialog( QMainWindow ):
         helpMenu = self.menuBar().addMenu("Help")
         self._helpAction = helpMenu.addAction("Help on Ramses Add-ons...")
 
-    def _connectEvents(self):
+    def __connectEvents(self):
         self._clientPathButton.clicked.connect( self.browseClientPath )
         self._saveButton.clicked.connect( self.save )
         self._cancelButton.clicked.connect( self.cancel )
@@ -153,6 +153,7 @@ class SettingsDialog( QMainWindow ):
                 self._logLevelBox.setCurrentIndex( i )
                 break
             i=i+1
+        self.switchConnected( settings.online )
 
     @Slot()
     def restoreDefaults(self):
@@ -165,6 +166,7 @@ class SettingsDialog( QMainWindow ):
                 self._logLevelBox.setCurrentIndex( i )
                 break
             i=i+1
+        self.switchConnected( settings.defaultOnline )
 
     @Slot()
     def help(self):
