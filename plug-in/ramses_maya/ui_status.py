@@ -116,7 +116,6 @@ class StatusDialog( QDialog ):
         self._cancelButton.clicked.connect( self.reject )
         self._skipButton.clicked.connect( self.skip )
 
-
     def stateChanged(self, s):
         state = ramses.state( s )
         self.completionBox.setValue( state.completionRatio() )

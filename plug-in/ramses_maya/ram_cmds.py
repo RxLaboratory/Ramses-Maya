@@ -11,6 +11,7 @@ from dumaf import ( # pylint: disable=import-error,no-name-in-module
 
 from ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
+from ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -193,7 +194,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
-    name = "ramRetriveVersion"
+    name = "ramRetrieveVersion"
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -203,7 +204,29 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
         return RamRetrieveVersionCmd()
 
     def doIt(self, args):
-        ram.log("Command 'retrieve version' is not implemented yet!")
+        # The current maya file
+        currentFilePath = cmds.file( q=True, sn=True )
+
+        # Get the save path 
+        saveFilePath = getSaveFilePath( currentFilePath )
+        if not saveFilePath:
+            return
+
+        # Get the version files
+        versionFiles = ram.RamFileManager.getVersionFilePaths( saveFilePath )
+
+        if len(versionFiles) == 0:
+            cmds.inViewMessage( msg='No other version found.', pos='midBottom', fade=True )
+            return
+
+        versionDialog = VersionDialog()
+        versionDialog.setVersions( versionFiles )
+        if not versionDialog.exec_():
+            return
+        
+        versionFile = ram.RamFileManager.restoreVersionFile( versionDialog.getVersion() )
+        # open
+        cmds.file(versionFile, open=True)
 
 class RamPublishTemplateCmd( om.MPxCommand ):
     name = "ramPulbishTemplate"

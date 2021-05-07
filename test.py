@@ -7,4 +7,4 @@ except:
     
 cmds.loadPlugin("ram_cmds.py")
 
-cmds.ramSettings()
+cmds.ramRetrieveVersion()
