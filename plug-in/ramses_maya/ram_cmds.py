@@ -177,8 +177,10 @@ class RamSaveVersionCmd( om.MPxCommand ):
         newVersion = decomposedFileName['version']
 
         # Update status
-        if settings.online and status is not None:
-            currentItem.setStatus(status, currentStep)
+        if status is not None:
+            if settings.online:
+                currentItem.setStatus(status, currentStep)
+            ramses.updateStatus()
 
         # Publish
         if publish:
