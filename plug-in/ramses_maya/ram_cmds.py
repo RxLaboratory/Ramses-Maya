@@ -183,24 +183,12 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if publish:
             ram.RamFileManager.copyToPublish( saveFilePath )
+            ramses.publish()
 
         # Alert
         newVersionStr = str( newVersion )
         ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
         cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
-
-class RamPublishCmd( om.MPxCommand ):
-    name = "ramPublish"
-
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamPublishCmd()
-
-    def doIt(self, args):
-        ram.log("Command 'publish' is not implemented yet!")
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetriveVersion"
@@ -287,7 +275,6 @@ cmds_classes = (
     RamOpenCmd,
     RamSaveCmd,
     RamSaveVersionCmd,
-    RamPublishCmd,
     RamRetrieveVersionCmd,
     RamPublishTemplateCmd,
     RamOpenTemplateCmd,
