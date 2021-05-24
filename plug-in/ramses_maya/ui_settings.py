@@ -2,6 +2,8 @@ import sys, platform
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
     QFileDialog,
+    QFormLayout,
+    QStackedLayout,
     QWidget,
     QMainWindow,
     QGridLayout,
@@ -12,7 +14,10 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QCheckBox,
     QLabel,
     QPushButton,
-    QComboBox
+    QComboBox,
+    QListWidget,
+    QWidget,
+    QSizePolicy,
 )
 from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
@@ -46,60 +51,91 @@ class SettingsDialog( QMainWindow ):
         mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(12)
 
-        formLayout = QGridLayout()
-        formLayout.setSpacing(3)
+        secondaryLayout = QHBoxLayout()
+        secondaryLayout.setSpacing(3)
 
-        formLayout.addWidget( QLabel("Versionning:"), 0, 0)
-        formLayout.setRowMinimumHeight( 0, 30 )
+        self.sectionsBox = QListWidget()
+        self.sectionsBox.addItem("Versionning")
+        self.sectionsBox.addItem("Folders")
+        self.sectionsBox.addItem("Ramses Application")
+        self.sectionsBox.addItem("Development")
+        self.sectionsBox.setMaximumWidth( 150 )
+        secondaryLayout.addWidget(self.sectionsBox)
+
+        self.stackedLayout = QStackedLayout()
+
+        versionningWidget = QWidget()
+        vL = QVBoxLayout()
+        versionningWidget.setLayout(vL)
+        self.stackedLayout.addWidget( versionningWidget )
+        versionningLayout = QFormLayout()
+        versionningLayout.setSpacing(3)
+        vL.addLayout(versionningLayout)
+        vL.addStretch()
 
         incrementLabel = QLabel("Auto-increment version every:")
-        incrementLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( incrementLabel, 1, 0)
-
         self._autoIncrementBox = QSpinBox()
         self._autoIncrementBox.setMinimum(1)
         self._autoIncrementBox.setMaximum(1440) #24h
         self._autoIncrementBox.setSuffix(" minutes.")
-        formLayout.addWidget( self._autoIncrementBox, 1, 1)
+        versionningLayout.addRow( incrementLabel, self._autoIncrementBox )
 
-        formLayout.addWidget( QLabel("Ramses Application:"), 2, 0)
-        formLayout.setRowMinimumHeight( 2, 30 )
+        foldersWidget = QWidget()
+        fL = QVBoxLayout()
+        foldersWidget.setLayout(fL)
+        self.stackedLayout.addWidget( foldersWidget )
+        foldersLayout = QFormLayout()
+        foldersLayout.setSpacing(3)
+        fL.addLayout(foldersLayout)
+        fL.addStretch()
+
+        pathLabel = QLabel("Ramses data path:")       
+        pathLayout = QHBoxLayout()
+        self._ramsesPathEdit = QLineEdit( )
+        pathLayout.addWidget( self._ramsesPathEdit )
+        self._ramsesPathButton = QPushButton(text="Browse...")
+        pathLayout.addWidget( self._ramsesPathButton )
+        foldersLayout.setWidget( 1, QFormLayout.LabelRole, pathLabel)
+        foldersLayout.setLayout( 1, QFormLayout.FieldRole, pathLayout)
+
+        appWidget = QWidget()
+        aL = QVBoxLayout()
+        appWidget.setLayout(aL)
+        self.stackedLayout.addWidget( appWidget )
+        appLayout = QFormLayout()
+        appLayout.setSpacing(3)
+        aL.addLayout(appLayout)
+        aL.addStretch()
 
         connectLabel = QLabel("Use the Ramses Application:")
-        connectLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( connectLabel, 3, 0)
-
         self._onlineBox = QCheckBox("Connected")
-        formLayout.addWidget( self._onlineBox, 3, 1 )
+        appLayout.addRow( connectLabel, self._onlineBox )
 
-        pathLabel = QLabel("Ramses Application path:")
-        pathLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( pathLabel, 4, 0)
-        
+        pathLabel = QLabel("Ramses Application path:")       
         pathLayout = QHBoxLayout()
         self._clientPathEdit = QLineEdit( )
         pathLayout.addWidget( self._clientPathEdit )
         self._clientPathButton = QPushButton(text="Browse...")
         pathLayout.addWidget( self._clientPathButton )
-        formLayout.addLayout( pathLayout, 4, 1)
+        appLayout.setWidget( 1, QFormLayout.LabelRole, pathLabel)
+        appLayout.setLayout( 1, QFormLayout.FieldRole, pathLayout)
 
         portLabel = QLabel("Ramses Daemon port:")
-        portLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( portLabel, 5, 0)
-
         self._clientPortBox = QSpinBox()
         self._clientPortBox.setMinimum( 1024 )
         self._clientPortBox.setMaximum( 49151 )
-        formLayout.addWidget( self._clientPortBox, 5, 1 )
+        appLayout.addRow( portLabel, self._clientPortBox )
 
-        mainLayout.addLayout( formLayout )
-
-        formLayout.addWidget( QLabel("Development:"), 6, 0)
-        formLayout.setRowMinimumHeight( 6, 30 )
+        devWidget = QWidget()
+        dL = QVBoxLayout()
+        devWidget.setLayout(dL)
+        self.stackedLayout.addWidget( devWidget )
+        devLayout = QFormLayout()
+        devLayout.setSpacing(3)
+        dL.addLayout(devLayout)
+        dL.addStretch()
 
         logLabel = QLabel("Log Level:")
-        logLabel.setAlignment( Qt.AlignRight|Qt.AlignVCenter )
-        formLayout.addWidget( logLabel, 7, 0 )
 
         self._logLevelBox = QComboBox()
         self._logLevelBox.addItem( "Data Received", ram.LogLevel.DataReceived )
@@ -108,11 +144,14 @@ class SettingsDialog( QMainWindow ):
         self._logLevelBox.addItem( "Information", ram.LogLevel.Info )
         self._logLevelBox.addItem( "Critical", ram.LogLevel.Critical )
         self._logLevelBox.addItem( "Fatal", ram.LogLevel.Fatal )
-        formLayout.addWidget( self._logLevelBox, 7, 1 )
+        
+        devLayout.addRow( logLabel, self._logLevelBox )
 
-        mainLayout.addLayout( formLayout )
+        secondaryLayout.addLayout(self.stackedLayout)
 
-        mainLayout.addStretch()
+        mainLayout.addLayout( secondaryLayout )
+        secondaryLayout.setStretch(0, 0)
+        secondaryLayout.setStretch(1, 100)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -137,7 +176,9 @@ class SettingsDialog( QMainWindow ):
         self._helpAction = helpMenu.addAction("Help on Ramses Add-ons...")
 
     def __connectEvents(self):
+        self.sectionsBox.currentRowChanged.connect(self.stackedLayout.setCurrentIndex)
         self._clientPathButton.clicked.connect( self.browseClientPath )
+        self._ramsesPathButton.clicked.connect( self.browseRamsesPath )
         self._saveButton.clicked.connect( self.save )
         self._cancelButton.clicked.connect( self.cancel )
         self._revertToSavedAction.triggered.connect( self.revert )
@@ -156,6 +197,7 @@ class SettingsDialog( QMainWindow ):
         settings.online = self._onlineBox.isChecked()
         settings.logLevel = self._logLevelBox.currentData()
         settings.autoIncrementTimeout = self._autoIncrementBox.value()
+        settings.ramsesFolderPath = self._ramsesPathEdit.text()
         settings.save()
         self.close()
 
@@ -165,6 +207,7 @@ class SettingsDialog( QMainWindow ):
         self._clientPortBox.setValue( settings.ramsesClientPort )
         self._onlineBox.setChecked( settings.online )
         self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
+        self._ramsesPathEdit.setText( settings.ramsesFolderPath )
         i = 0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.logLevel:
@@ -179,6 +222,7 @@ class SettingsDialog( QMainWindow ):
         self._clientPortBox.setValue( settings.defaultRamsesClientPort )
         self._onlineBox.setChecked( settings.defaultOnline )
         self._autoIncrementBox.setValue( settings.defaultAutoIncrementTimeout )
+        self._ramsesPathEdit.setText( settings.defaultRamsesFolderPath )
         i=0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
@@ -196,8 +240,21 @@ class SettingsDialog( QMainWindow ):
         filter = ""
         system = platform.system()
         if system == "Windows": filter = "Executable Files (*.exe *.bat)"
-        file = QFileDialog.getOpenFileName(self, "Select the path to the Ramses Client", "", filter)
+        file = QFileDialog.getOpenFileName(self,
+            "Select the path to the Ramses Client",
+            self._clientPathEdit.text(),
+            filter)
         if file[0] != "": self._clientPathEdit.setText( file[0] )
+    
+    @Slot()
+    def browseRamsesPath(self):
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select the path to the Ramses Folder",
+            self._ramsesPathEdit.text(),
+            QFileDialog.ShowDirsOnly
+            )
+        if folder != "": self._ramsesPathEdit.setText(folder )
 
     @Slot()
     def switchConnected(self, checked):
