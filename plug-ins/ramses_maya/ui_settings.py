@@ -26,10 +26,6 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Qt
 )
 
-
-# In Dev Mode, Ramses lives in its repo
-sys.path.append( 'D:/DEV_SRC/RxOT/Ramses/Ramses-Py' )
-
 import ramses as ram
 # Keep the settings at hand
 settings = ram.RamSettings.instance()

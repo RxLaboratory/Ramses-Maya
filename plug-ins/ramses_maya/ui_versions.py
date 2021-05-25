@@ -1,3 +1,5 @@
+import os, sys
+
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
     QDialog,
@@ -5,11 +7,6 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QVBoxLayout,
     QComboBox,
     QPushButton,
-)
-
-import os, sys
-sys.path.append(
-    'D:/DEV_SRC/RxOT/Ramses/Ramses-Py'
 )
 
 import ramses as ram

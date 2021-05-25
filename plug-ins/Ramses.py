@@ -1,6 +1,8 @@
-import sys
-import maya.api.OpenMaya as om # pylint: disable=import-error
 import ramses_maya as ram
+import maya.api.OpenMaya as om # pylint: disable=import-error
+
+vendor = "RxLaboratory"
+version = "0.0.1-dev"
 
 def maya_useNewAPI():
     """
@@ -9,22 +11,20 @@ def maya_useNewAPI():
     """
     pass
 
-def initializePlugin(obj):
-    # Register all commands
-    plugin = om.MFnPlugin(obj, ram.vendor, ram.version)
+def initializePlugin( obj ):
+    plugin = om.MFnPlugin(obj, vendor, version)
 
     for c in ram.cmds_classes:
         try:
             plugin.registerCommand( c.name, c.createCommand )
         except:
-            sys.stderr.write( "Failed to register command: %s\n" % c.name )
+            ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
 
-def uninitializePlugin(obj):
-    # Register all commands
-    plugin = om.MFnPlugin(obj, ram.vendor, ram.version)
+def uninitializePlugin( obj ):
+    plugin = om.MFnPlugin(obj, vendor, version)
 
     for c in reversed( ram.cmds_classes ):
         try:
             plugin.deregisterCommand( c.name )
         except:
-            sys.stderr.write( "Failed to unregister command: %s\n" % c.name )
+            ram.log( "Failed to unregister command: %s\n" % c.name )
