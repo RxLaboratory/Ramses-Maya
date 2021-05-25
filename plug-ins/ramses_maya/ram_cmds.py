@@ -3,15 +3,10 @@ import sys, os, time
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from dumaf import ( # pylint: disable=import-error,no-name-in-module
-    registerCommands,
-    unregisterCommands,
-    getMayaWindow
-)
-
-from ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
-from ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
-from ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
+from .dumaf import getMayaWindow # pylint: disable=import-error,no-name-in-module
+from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
+from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
+from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -313,27 +308,3 @@ cmds_menuItems = []
 def maya_useNewAPI():
     pass
 
-def initializePlugin(obj):
-    # Register all commands
-    registerCommands( obj, cmds_classes )
-
-    # Add Menu Items
-    # cmds_menuItems.append( [
-    #     cmds.menuItem(
-    #         parent='MayaWindow|mainWindowMenu',
-    #         divider=True
-    #         ),
-    #     cmds.menuItem(
-    #         parent='MayaWindow|mainWindowMenu',
-    #         label='Ramses Settings',
-    #         command=cmds.ramSettings
-    #         ) ]
-    # )
-
-def uninitializePlugin(obj):
-    # Unregister all commands
-    unregisterCommands( obj, cmds_classes )
-
-    # Remove menu items
-    # for menuItem in cmds_menuItems:
-    #     cmds.deleteUI( menuItem, menuItem = True )
