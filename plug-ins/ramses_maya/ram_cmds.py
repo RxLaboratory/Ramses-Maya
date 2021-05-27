@@ -134,7 +134,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Update status
         saveFileName = os.path.basename( saveFilePath )
         saveFileDict = ram.RamFileManager.decomposeRamsesFileName( saveFileName )
-        currentStep = saveFileDict['ramStep']
+        currentStep = saveFileDict['step']
         currentItem = ram.RamItem.fromPath( saveFilePath )
         currentStatus = currentItem.currentStatus( currentStep )
         # Show status dialog
@@ -159,7 +159,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         cmds.file( rename = saveFilePath )
         cmds.file( save=True, options="v=1;" )
         # Backup / Increment
-        state = settings.defaultState
+        state = ramses.defaultState
         if status is not None:
             state = status.state
         elif currentStatus is not None:
