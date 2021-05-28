@@ -20,6 +20,8 @@ def initializePlugin( obj ):
         except:
             ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
 
+    ram.log( "I'm ready!" )
+
 def uninitializePlugin( obj ):
     plugin = om.MFnPlugin(obj, vendor, version)
 
@@ -28,3 +30,5 @@ def uninitializePlugin( obj ):
             plugin.deregisterCommand( c.name )
         except:
             ram.log( "Failed to unregister command: %s\n" % c.name )
+
+    ram.log( "Thanks for playing with me. Much love, See you soon." )

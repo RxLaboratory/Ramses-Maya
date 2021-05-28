@@ -1,4 +1,5 @@
-import sys, os, time
+import sys, os
+from datetime import datetime, timedelta
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
@@ -71,9 +72,9 @@ class RamSaveCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
         ram.log("Saving file: " + currentFilePath)
         
-        # Check if the Daemon is available if Ramses is set to be used "online"
-        if not checkDaemon():
-            return
+        # We don't need the daemon to just save a file
+        # if not checkDaemon():
+        #     return
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
@@ -89,9 +90,10 @@ class RamSaveCmd( om.MPxCommand ):
 
         # If the timeout has expired, we're also incrementing
         prevVersion = ram.RamFileManager.getLatestVersion( saveFilePath, previous=True )
-        modified = prevVersion[2].timestamp()
-        now = time.time()
-        if settings.autoIncrementTimeout * 60 < now - modified:
+        modified = prevVersion[2]
+        now = datetime.today()
+        timeout = timedelta(seconds = settings.autoIncrementTimeout * 60 )
+        if  timeout < now - modified:
             increment = True
 
         # Set the save name and save
@@ -132,7 +134,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Update status
         saveFileName = os.path.basename( saveFilePath )
         saveFileDict = ram.RamFileManager.decomposeRamsesFileName( saveFileName )
-        currentStep = saveFileDict['ramStep']
+        currentStep = saveFileDict['step']
         currentItem = ram.RamItem.fromPath( saveFilePath )
         currentStatus = currentItem.currentStatus( currentStep )
         # Show status dialog
@@ -157,7 +159,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         cmds.file( rename = saveFilePath )
         cmds.file( save=True, options="v=1;" )
         # Backup / Increment
-        state = settings.defaultState
+        state = ramses.defaultState
         if status is not None:
             state = status.state
         elif currentStatus is not None:
@@ -307,4 +309,3 @@ cmds_menuItems = []
 
 def maya_useNewAPI():
     pass
-
