@@ -4,6 +4,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QDialog,
     QHBoxLayout,
     QVBoxLayout,
+    QFormLayout,
+    QWidget,
     QComboBox,
     QLineEdit,
     QPushButton,
@@ -11,7 +13,6 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QFileDialog,
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    QLine,
     Slot,
 )
 
@@ -20,10 +21,10 @@ import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram
 ramses = ram.Ramses.instance()
 
-class PublishDialog( QDialog ):
+class PublishTemplateDialog( QDialog ):
 
     def __init__(self, parent=None):
-        super(PublishDialog,self).__init__(parent)
+        super(PublishTemplateDialog,self).__init__(parent)
         self.__setupUi()
         self.__loadProjects()
         self.__connectEvents()
@@ -31,38 +32,54 @@ class PublishDialog( QDialog ):
     def __setupUi(self):
         self.setWindowTitle( "Publish Template" )
 
-        self.setMinimumWidth(300)
+        self.setMinimumWidth(400)
 
         mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
 
-        topLayout = QHBoxLayout()
+        topLayout = QFormLayout()
+        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
         self.projectBox = QComboBox()
         self.projectBox.setEditable(True)
-        topLayout.addWidget( self.projectBox )
+        topLayout.addRow( "Project:", self.projectBox )
 
         self.stepBox = QComboBox()
         self.stepBox.setEditable(True)
-        topLayout.addWidget( self.stepBox )
+        topLayout.addRow( "Step:", self.stepBox )
 
-        middleLayout = QHBoxLayout()
-        middleLayout.setSpacing(3)
+        self.nameEdit = QLineEdit()
+        self.nameEdit.setPlaceholderText("Template")
+        topLayout.addRow("Name:", self.nameEdit)
 
-        mainLayout.addLayout( topLayout )
+        self.extensionBox = QComboBox()
+        self.extensionBox.addItem("Maya Binary (.mb)", "mb")
+        self.extensionBox.addItem("Maya ASCII (.ma)", "ma")
+        topLayout.addRow("File Type:", self.extensionBox)
+
+        locationWidget = QWidget()
+        locationLayout = QHBoxLayout()
+        locationLayout.setSpacing(3)
+        locationLayout.setContentsMargins(0,0,0,0)
+        locationWidget.setLayout(locationLayout)
 
         self.locationEdit = QLineEdit()
         self.locationEdit.setEnabled(False)
         self.locationEdit.setPlaceholderText("Location...")
-        middleLayout.addWidget( self.locationEdit )
+        locationLayout.addWidget( self.locationEdit )
 
         self.browseButton = QPushButton("Browse...")
         self.browseButton.setVisible( False )
-        middleLayout.addWidget( self.browseButton )
+        locationLayout.addWidget( self.browseButton )
 
-        mainLayout.addLayout( middleLayout )
+        topLayout.addRow("Location:",locationWidget)
+
+        self.fileNameLabel = QLabel()
+        topLayout.addRow("Filename:", self.fileNameLabel)
+
+        mainLayout.addLayout( topLayout )
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -82,6 +99,8 @@ class PublishDialog( QDialog ):
         self.stepBox.currentTextChanged.connect( self.__buildPath )
         self._publishButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
+        self.extensionBox.currentIndexChanged.connect( self.__buildFileName )
+        self.nameEdit.textEdited.connect( self.__buildFileName )
 
     def __loadProjects(self):
         # Load projects
@@ -125,6 +144,7 @@ class PublishDialog( QDialog ):
     def __buildPath(self):
         self._publishButton.setEnabled(False)
         self.locationEdit.setText("")
+        self.fileNameLabel.setText("")
         pShortName = self.__getCurrentShortName( self.projectBox )
         project = ramses.project( pShortName )
         if project is None:
@@ -138,6 +158,25 @@ class PublishDialog( QDialog ):
         self.locationEdit.setPlaceholderText("Location")
         self.locationEdit.setText( step.templatesFolderPath() )
         self._publishButton.setEnabled(True)
+        # build file name
+        self.__buildFileName()
+
+    @Slot()
+    def __buildFileName(self):
+        pShortName = self.__getCurrentShortName( self.projectBox )
+        sShortName = self.__getCurrentShortName( self.stepBox )
+        resource = self.nameEdit.text()
+        if resource == "":
+            resource = "Template"
+        fileName = ram.RamFileManager.buildRamsesFileName(
+            pShortName,
+            sShortName,
+            self.extensionBox.currentData(),
+            ram.ItemType.GENERAL,
+            '',
+            resource
+        )
+        self.fileNameLabel.setText( fileName )
 
     @Slot()
     def browse(self):
@@ -193,7 +232,13 @@ class PublishDialog( QDialog ):
         self.locationEdit.setEnabled(offline)
         self.browseButton.setVisible(offline)
 
+    def getFolder(self):
+        return self.locationEdit.text()
+
+    def getFile(self):
+        return self.fileNameLabel.text()
+
 if __name__ == '__main__':
-    publishDialog = PublishDialog()
-    ok = publishDialog.exec_()
+    PublishTemplateDialog = PublishTemplateDialog()
+    ok = PublishTemplateDialog.exec_()
     print(ok)

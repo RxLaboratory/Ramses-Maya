@@ -94,9 +94,9 @@ class StatusDialog( QDialog ):
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._saveButton = QPushButton("Update")
+        self._saveButton = QPushButton("Update Status and Save")
         buttonsLayout.addWidget( self._saveButton )
-        self._skipButton = QPushButton("Skip")
+        self._skipButton = QPushButton("Skip and Save")
         buttonsLayout.addWidget( self._skipButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )

@@ -8,6 +8,7 @@ from .dumaf import getMayaWindow # pylint: disable=import-error,no-name-in-modul
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
+from .ui_publishtemplate import PublishTemplateDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -128,7 +129,8 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        if saveFilePath == "":
+        print(saveFilePath)
+        if not saveFilePath:
             return
 
         # Update status
@@ -236,7 +238,48 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         return RamPublishTemplateCmd()
 
     def doIt(self, args):
-        ram.log("Command 'publish as template' is not implemented yet!")
+        ram.log("Publishing template...")
+
+        # Check if the Daemon is available if Ramses is set to be used "online"
+        if not checkDaemon():
+            return
+
+        # Get info from the current file
+        currentFilePath = cmds.file( q=True, sn=True )
+        fileInfo = ram.RamFileManager.decomposeRamsesFilePath( currentFilePath )
+
+        # Prepare the dialog
+        publishDialog = PublishTemplateDialog()
+        # Set the project and step
+        project = ramses.currentProject()
+        step = None
+        if project is None:
+            # Try to get from current file
+            project = ramses.project( fileInfo['project'] )
+        if project is not None:
+            publishDialog.setProject( project )
+            step = project.step(fileInfo['step'])
+            if step is not None:
+                publishDialog.setStep( step )
+        
+        if publishDialog.exec_():
+            # save as template
+            saveFolder = publishDialog.getFolder()
+            saveName = publishDialog.getFile()
+            if saveFolder == '':
+                return
+            if not os.path.isdir( saveFolder ):
+                os.makedirs(saveFolder)
+            saveFilePath = ram.RamFileManager.buildPath((
+                saveFolder,
+                saveName
+            ))
+            # save as
+            cmds.file( rename = saveFilePath )
+            cmds.file( save=True, options="v=1;" )
+            # Message
+            cmds.inViewMessage( msg='Template published as: <hl>' + saveName + '</hl> in ' + saveFolder , pos='midCenter', fade=True )
+            ram.log('Template published as: ' + saveName + ' in ' + saveFolder)
 
 class RamOpenTemplateCmd( om.MPxCommand ):
     name = "ramOpenTemplate"
