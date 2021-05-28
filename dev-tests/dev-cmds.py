@@ -629,4 +629,5 @@ def retrieveVersion():
     # open
     cmds.file(versionFile, open=True)
 
+
 publishTemplate()

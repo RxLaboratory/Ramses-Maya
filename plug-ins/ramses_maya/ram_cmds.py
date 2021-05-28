@@ -228,7 +228,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
         cmds.file(versionFile, open=True)
 
 class RamPublishTemplateCmd( om.MPxCommand ):
-    name = "ramPulbishTemplate"
+    name = "ramPublishTemplate"
 
     def __init__(self):
         om.MPxCommand.__init__(self)
