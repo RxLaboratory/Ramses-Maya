@@ -31,7 +31,7 @@ class StateBox( QComboBox ):
         for state in ramses.states():
             self.addItem( state.shortName(), state.color() )
 
-        self.setState( ramses.settings().defaultState )
+        self.setState( ramses.defaultState )
         self.currentIndexChanged.connect( self.indexChanged )
 
     @Slot()

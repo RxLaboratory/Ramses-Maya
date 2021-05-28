@@ -16,8 +16,9 @@ def initializePlugin( obj ):
 
     for c in ram.cmds_classes:
         try:
-            plugin.registerCommand( c.name, c.createCommand )
-        except:
+            plugin.registerCommand( c.name, c.createCommand, c.createSyntax )
+        except Exception as e:
+            print(e)
             ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
 
     ram.log( "I'm ready!" )
