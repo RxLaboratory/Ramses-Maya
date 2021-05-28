@@ -1,5 +1,5 @@
 # Py
-import os
+import os, sys, json
 from datetime import datetime, timedelta
 # Maya
 import maya.cmds as cmds
@@ -31,6 +31,17 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 settings = ram.RamSettings.instance()
+
+def getMayaWindow():
+    app = QApplication.instance() #get the qApp instance if it exists.
+    if not app:
+        app = QApplication(sys.argv)
+
+    try:
+        mayaWin = next(w for w in app.topLevelWidgets() if w.objectName()=='MayaWindow')
+        return mayaWin
+    except:
+        return None
 
 class VersionDialog( QDialog ):
     def __init__(self, parent = None):
@@ -415,6 +426,45 @@ class PublishTemplateDialog( QDialog ):
     def getFile(self):
         return self.fileNameLabel.text()
 
+class CommentDialog( QDialog ):
+    def __init__(self, parent = None):
+        super(CommentDialog,self).__init__(parent)
+        self.__setupUi()
+        self.__connectEvents()
+
+    def __setupUi(self):
+        self.setWindowTitle( "Add a comment to this version" )
+        self.setMinimumWidth(400)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(6,6,6,6)
+        mainLayout.setSpacing(3)
+
+        self.textEdit = QLineEdit()
+        mainLayout.addWidget(self.textEdit)
+
+        buttonsLayout = QHBoxLayout()
+        buttonsLayout.setSpacing(2)
+
+        self._saveButton = QPushButton("Add Comment and Save")
+        buttonsLayout.addWidget( self._saveButton )
+        self._cancelButton = QPushButton("Cancel")
+        buttonsLayout.addWidget( self._cancelButton )
+
+        mainLayout.addLayout( buttonsLayout )
+
+        self.setLayout( mainLayout )
+
+    def __connectEvents(self):
+        self._saveButton.clicked.connect( self.accept )
+        self._cancelButton.clicked.connect( self.reject )
+
+    def getComment(self):
+        return self.textEdit.text()
+
+    def setComment(self, comment):
+        self.textEdit.setText(comment)
+
 def checkDaemon():
     """Checks if the Daemon is available (if the settings tell we have to work with it)"""
     if settings.online:
@@ -434,7 +484,7 @@ def checkDaemon():
 def getSaveFilePath( filePath ):
     # Ramses will check if the current file has to be renamed to respect the Ramses Tree and Naming Scheme
     saveFilePath = ram.RamFileManager.getSaveFilePath( filePath )
-    print(saveFilePath)
+
     if saveFilePath == "": # Ramses may return an empty string if the current file name does not respect the Ramses Naming Scheme
         cmds.warning( ram.Log.MalformedName )
         # Set file to be renamed
@@ -488,6 +538,7 @@ def publishTemplate():
         cmds.inViewMessage( msg='Template published as: <hl>' + saveName + '</hl> in ' + saveFolder , pos='midCenter', fade=True )
 
 def save():
+    """Returns the saved file path, version file path and version number"""
     ram.log("Saving file...")
 
     # The current maya file
@@ -528,6 +579,28 @@ def save():
     newVersion = str( decomposedFileName['version'] )
     ram.log( "Scene saved! Current version is: " + newVersion )
     cmds.inViewMessage( msg='Scene saved! <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
+
+    return (saveFilePath, backupFilePath, newVersion)
+
+def saveWithComment():
+    currentFilePath = cmds.file( q=True, sn=True )
+    saveFilePath = getSaveFilePath( currentFilePath )
+    if not saveFilePath:
+        return
+    # Get current comment
+    latestVersionFile = ram.RamFileManager.getLatestVersionFilePath( saveFilePath )
+    currentComment = ram.RamMetaDataManager.getComment( latestVersionFile )
+    # Ask for comment
+    commentDialog = CommentDialog(getMayaWindow())
+    commentDialog.setComment( currentComment )
+    if not commentDialog.exec_():
+        return
+    # Save first (to get the current version if it changed)
+    saveInfo = save()
+    # Write
+    comment = commentDialog.getComment()
+    if comment != '':
+        ram.RamMetaDataManager.setComment( saveInfo[1], comment )
 
 def saveVersion():
     # The current maya file
@@ -630,4 +703,4 @@ def retrieveVersion():
     cmds.file(versionFile, open=True)
 
 
-publishTemplate()
+saveWithComment()

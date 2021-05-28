@@ -1,4 +1,4 @@
-import sys, os
+import os
 from datetime import datetime, timedelta
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
@@ -9,6 +9,7 @@ from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-i
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
 from .ui_publishtemplate import PublishTemplateDialog # pylint: disable=import-error,no-name-in-module
+from .ui_comment import CommentDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -53,18 +54,59 @@ class RamOpenCmd( om.MPxCommand ):
     def createCommand():
         return RamOpenCmd()
 
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
+
     def doIt(self, args):
         ram.log("Command 'open' is not implemented yet!")
 
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
+    syntax = om.MSyntax()
+    syntax.addFlag('-c', "-comment", om.MSyntax.kString )
+    syntax.addFlag('-sc', "-set_comment", om.MSyntax.kBoolean )
 
     def __init__(self):
         om.MPxCommand.__init__(self)
+        self.newComment = ''
+        self.setComment = False
 
     @staticmethod
     def createCommand():
         return RamSaveCmd()
+
+    @staticmethod
+    def createSyntax():
+        return RamSaveCmd.syntax
+
+    def parseArgs(self, args, saveFilePath):
+        parser = om.MArgParser( RamSaveCmd.syntax, args)
+        useDialog = False
+        try:
+            self.setComment = parser.flagArgumentBool('-sc', 0)
+        except:
+            self.setComment = False
+
+        try:
+            self.newComment = parser.flagArgumentString('-c', 0)
+        except:
+            useDialog = True
+
+        # Get comment
+        if self.setComment and useDialog:
+            # Get current comment
+            latestVersionFile = ram.RamFileManager.getLatestVersionFilePath( saveFilePath )
+            currentComment = ram.RamMetaDataManager.getComment( latestVersionFile )
+            # Ask for comment
+            commentDialog = CommentDialog(getMayaWindow())
+            commentDialog.setComment( currentComment )
+            if not commentDialog.exec_():
+                return False
+            self.newComment = commentDialog.getComment()
+        
+        return True
 
     def doIt(self, args):
         ram.log("Saving file...")
@@ -82,11 +124,17 @@ class RamSaveCmd( om.MPxCommand ):
         if not saveFilePath:
             return
 
+        # Check if we need to set a comment
+        if not self.parseArgs(args,saveFilePath):
+            return
+
         # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment
         # to be sure to not lose the previous working file.
         increment = False
+        incrementReason = ''
         if ram.RamFileManager.inReservedFolder( currentFilePath ):
             increment = True
+            incrementReason = "misplaced."
             cmds.warning( "Incremented and Saved as " + saveFilePath )
 
         # If the timeout has expired, we're also incrementing
@@ -95,6 +143,7 @@ class RamSaveCmd( om.MPxCommand ):
         now = datetime.today()
         timeout = timedelta(seconds = settings.autoIncrementTimeout * 60 )
         if  timeout < now - modified:
+            incrementReason = "too old."
             increment = True
 
         # Set the save name and save
@@ -108,6 +157,14 @@ class RamSaveCmd( om.MPxCommand ):
         ram.log( "Scene saved! Current version is: " + newVersion )
         cmds.inViewMessage( msg='Scene saved! <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
 
+        # Write the comment
+        if self.setComment:
+            ram.RamMetaDataManager.setComment( backupFilePath, self.newComment )
+            ram.log( "I've added this comment for you: " + self.newComment )
+        elif increment:
+            ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because the previous version was ' + incrementReason )
+            ram.log("I've incremented the version for you because it was " + incrementReason)
+
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
 
@@ -117,6 +174,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
     @staticmethod
     def createCommand():
         return RamSaveVersionCmd()
+
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
 
     def doIt(self, args):
         # The current maya file
@@ -202,6 +264,11 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
     def createCommand():
         return RamRetrieveVersionCmd()
 
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
+
     def doIt(self, args):
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
@@ -236,6 +303,11 @@ class RamPublishTemplateCmd( om.MPxCommand ):
     @staticmethod
     def createCommand():
         return RamPublishTemplateCmd()
+
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
 
     def doIt(self, args):
         ram.log("Publishing template...")
@@ -291,6 +363,11 @@ class RamOpenTemplateCmd( om.MPxCommand ):
     def createCommand():
         return RamOpenTemplateCmd()
 
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
+
     def doIt(self, args):
         ram.log("Command 'open template' is not implemented yet!")
 
@@ -304,11 +381,17 @@ class RamImportTemplateCmd( om.MPxCommand ):
     def createCommand():
         return RamImportTemplateCmd()
 
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
+
     def doIt(self, args):
         ram.log("Command 'import template' is not implemented yet!")
 
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
+
     settingsDialog = SettingsDialog( getMayaWindow() )
 
     def __init__(self):
@@ -317,6 +400,11 @@ class RamSettingsCmd( om.MPxCommand ):
     @staticmethod
     def createCommand():
         return RamSettingsCmd()
+
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
 
     def doIt(self, args):
         ram.log("Opening settings...")  
@@ -331,6 +419,11 @@ class RamOpenRamsesCmd( om.MPxCommand ):
     @staticmethod
     def createCommand():
         return RamOpenRamsesCmd()
+
+    @staticmethod
+    def createSyntax():
+        syntaxCreator = om.MSyntax()
+        return syntaxCreator
 
     def doIt(self, args):
         ram.log("Opening the Ramses client...")
