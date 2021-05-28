@@ -1,15 +1,9 @@
-import sys
-sys.path.append(
-    'D:/DEV_SRC/RxOT/Ramses/Ramses-Py'
-)
-
+# Py
+import os
+from datetime import datetime, timedelta
+# Maya
 import maya.cmds as cmds
-import ramses as ram
-
-ramses = ram.Ramses.instance()
-settings = ram.RamSettings.instance()
-
-import os, sys, platform
+# PySide
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
     QDialog,
@@ -25,11 +19,12 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     QLine,
     Slot,
 )
-
-import maya.cmds as cmds # pylint: disable=import-error
-
+# Ramses
 import ramses as ram
+
 ramses = ram.Ramses.instance()
+settings = ram.RamSettings.instance()
+
 
 class StateBox( QComboBox ):
     def __init__(self, parent = None):
