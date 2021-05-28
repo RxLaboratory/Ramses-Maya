@@ -9,6 +9,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QDialog,
     QHBoxLayout,
     QVBoxLayout,
+    QFormLayout,
     QComboBox,
     QLineEdit,
     QPushButton,
@@ -18,6 +19,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QSpinBox,
     QCheckBox,
     QTextEdit,
+    QWidget,
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Qt,
@@ -29,6 +31,52 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 settings = ram.RamSettings.instance()
+
+class VersionDialog( QDialog ):
+    def __init__(self, parent = None):
+        super(VersionDialog,self).__init__(parent)
+        self.__setupUi()
+        self.__connectEvents()
+
+    def __setupUi(self):
+        self.setWindowTitle( "Retrieve Version" )
+        self.setMinimumWidth(250)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(6,6,6,6)
+        mainLayout.setSpacing(3)
+
+        self._versionsBox = QComboBox()
+        mainLayout.addWidget( self._versionsBox )
+
+        buttonsLayout = QHBoxLayout()
+        buttonsLayout.setSpacing(2)
+
+        self._openButton = QPushButton("Retrieve")
+        buttonsLayout.addWidget( self._openButton )
+        self._cancelButton = QPushButton("Cancel")
+        buttonsLayout.addWidget( self._cancelButton )
+
+        mainLayout.addLayout( buttonsLayout )
+
+        self.setLayout( mainLayout )
+
+    def __connectEvents(self):
+        self._openButton.clicked.connect( self.accept )
+        self._cancelButton.clicked.connect( self.reject )
+
+    def setVersions(self, fileList):
+        self._versionsBox.clear()
+        for f in fileList:
+            fileName = os.path.basename( f )
+            decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( fileName )
+            self._versionsBox.addItem( 
+                decomposedFileName['state'] + ' | ' + str(decomposedFileName['version']),
+                f
+            )
+
+    def getVersion(self):
+        return self._versionsBox.currentData()
 
 class StateBox( QComboBox ):
     def __init__(self, parent = None):
@@ -101,9 +149,9 @@ class StatusDialog( QDialog ):
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._saveButton = QPushButton("Update")
+        self._saveButton = QPushButton("Update Status and Save")
         buttonsLayout.addWidget( self._saveButton )
-        self._skipButton = QPushButton("Skip")
+        self._skipButton = QPushButton("Skip and Save")
         buttonsLayout.addWidget( self._skipButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
@@ -150,10 +198,10 @@ class StatusDialog( QDialog ):
         self.completionBox.setVisible(online)
         self.commentEdit.setVisible(online)
 
-class PublishDialog( QDialog ):
+class PublishTemplateDialog( QDialog ):
 
     def __init__(self, parent=None):
-        super(PublishDialog,self).__init__(parent)
+        super(PublishTemplateDialog,self).__init__(parent)
         self.__setupUi()
         self.__loadProjects()
         self.__connectEvents()
@@ -161,38 +209,54 @@ class PublishDialog( QDialog ):
     def __setupUi(self):
         self.setWindowTitle( "Publish Template" )
 
-        self.setMinimumWidth(300)
+        self.setMinimumWidth(400)
 
         mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
 
-        topLayout = QHBoxLayout()
+        topLayout = QFormLayout()
+        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
         self.projectBox = QComboBox()
         self.projectBox.setEditable(True)
-        topLayout.addWidget( self.projectBox )
+        topLayout.addRow( "Project:", self.projectBox )
 
         self.stepBox = QComboBox()
         self.stepBox.setEditable(True)
-        topLayout.addWidget( self.stepBox )
+        topLayout.addRow( "Step:", self.stepBox )
 
-        middleLayout = QHBoxLayout()
-        middleLayout.setSpacing(3)
+        self.nameEdit = QLineEdit()
+        self.nameEdit.setPlaceholderText("Template")
+        topLayout.addRow("Name:", self.nameEdit)
 
-        mainLayout.addLayout( topLayout )
+        self.extensionBox = QComboBox()
+        self.extensionBox.addItem("Maya Binary (.mb)", "mb")
+        self.extensionBox.addItem("Maya ASCII (.ma)", "ma")
+        topLayout.addRow("File Type:", self.extensionBox)
+
+        locationWidget = QWidget()
+        locationLayout = QHBoxLayout()
+        locationLayout.setSpacing(3)
+        locationLayout.setContentsMargins(0,0,0,0)
+        locationWidget.setLayout(locationLayout)
 
         self.locationEdit = QLineEdit()
         self.locationEdit.setEnabled(False)
         self.locationEdit.setPlaceholderText("Location...")
-        middleLayout.addWidget( self.locationEdit )
+        locationLayout.addWidget( self.locationEdit )
 
         self.browseButton = QPushButton("Browse...")
         self.browseButton.setVisible( False )
-        middleLayout.addWidget( self.browseButton )
+        locationLayout.addWidget( self.browseButton )
 
-        mainLayout.addLayout( middleLayout )
+        topLayout.addRow("Location:",locationWidget)
+
+        self.fileNameLabel = QLabel()
+        topLayout.addRow("Filename:", self.fileNameLabel)
+
+        mainLayout.addLayout( topLayout )
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -212,6 +276,8 @@ class PublishDialog( QDialog ):
         self.stepBox.currentTextChanged.connect( self.__buildPath )
         self._publishButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
+        self.extensionBox.currentIndexChanged.connect( self.__buildFileName )
+        self.nameEdit.textEdited.connect( self.__buildFileName )
 
     def __loadProjects(self):
         # Load projects
@@ -255,6 +321,7 @@ class PublishDialog( QDialog ):
     def __buildPath(self):
         self._publishButton.setEnabled(False)
         self.locationEdit.setText("")
+        self.fileNameLabel.setText("")
         pShortName = self.__getCurrentShortName( self.projectBox )
         project = ramses.project( pShortName )
         if project is None:
@@ -268,6 +335,25 @@ class PublishDialog( QDialog ):
         self.locationEdit.setPlaceholderText("Location")
         self.locationEdit.setText( step.templatesFolderPath() )
         self._publishButton.setEnabled(True)
+        # build file name
+        self.__buildFileName()
+
+    @Slot()
+    def __buildFileName(self):
+        pShortName = self.__getCurrentShortName( self.projectBox )
+        sShortName = self.__getCurrentShortName( self.stepBox )
+        resource = self.nameEdit.text()
+        if resource == "":
+            resource = "Template"
+        fileName = ram.RamFileManager.buildRamsesFileName(
+            pShortName,
+            sShortName,
+            self.extensionBox.currentData(),
+            ram.ItemType.GENERAL,
+            '',
+            resource
+        )
+        self.fileNameLabel.setText( fileName )
 
     @Slot()
     def browse(self):
@@ -326,6 +412,9 @@ class PublishDialog( QDialog ):
     def getFolder(self):
         return self.locationEdit.text()
 
+    def getFile(self):
+        return self.fileNameLabel.text()
+
 def checkDaemon():
     """Checks if the Daemon is available (if the settings tell we have to work with it)"""
     if settings.online:
@@ -355,7 +444,7 @@ def getSaveFilePath( filePath ):
 
     return saveFilePath
 
-def publishTemplate(): # TODO : template name & Extension as ma or mb
+def publishTemplate():
     ram.log("Publishing template...")
 
     # Check if the Daemon is available if Ramses is set to be used "online"
@@ -367,7 +456,7 @@ def publishTemplate(): # TODO : template name & Extension as ma or mb
     fileInfo = ram.RamFileManager.decomposeRamsesFilePath( currentFilePath )
 
     # Prepare the dialog
-    publishDialog = PublishDialog()
+    publishDialog = PublishTemplateDialog()
     # Set the project and step
     project = ramses.currentProject()
     step = None
@@ -383,19 +472,11 @@ def publishTemplate(): # TODO : template name & Extension as ma or mb
     if publishDialog.exec_():
         # save as template
         saveFolder = publishDialog.getFolder()
+        saveName = publishDialog.getFile()
         if saveFolder == '':
             return
         if not os.path.isdir( saveFolder ):
             os.makedirs(saveFolder)
-        saveInfo = ram.RamFileManager.decomposeRamsesFilePath( saveFolder )
-        saveName = ram.RamFileManager.buildRamsesFileName(
-            saveInfo['project'],
-            saveInfo['step'],
-            "mb",
-            ram.ItemType.GENERAL,
-            '',
-            "Template"
-        )
         saveFilePath = ram.RamFileManager.buildPath((
             saveFolder,
             saveName
@@ -505,6 +586,7 @@ def saveVersion():
     backupFileName = os.path.basename( backupFilePath )
     decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( backupFileName )
     newVersion = decomposedFileName['version']
+    newState = decomposedFileName['state']
 
     # Update status
     if status is not None:
@@ -519,8 +601,32 @@ def saveVersion():
 
     # Alert
     newVersionStr = str( newVersion )
-    ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
-    cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
+    ram.log( "Incremental save, scene saved with state: " + newState + "! New version is: " + newVersionStr )
+    cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl> | State: <hl>' + newState + '</hl>', pos='midCenter', fade=True )
 
+def retrieveVersion():
+    # The current maya file
+    currentFilePath = cmds.file( q=True, sn=True )
 
-saveVersion()
+    # Get the save path 
+    saveFilePath = getSaveFilePath( currentFilePath )
+    if not saveFilePath:
+        return
+
+    # Get the version files
+    versionFiles = ram.RamFileManager.getVersionFilePaths( saveFilePath )
+
+    if len(versionFiles) == 0:
+        cmds.inViewMessage( msg='No other version found.', pos='midBottom', fade=True )
+        return
+
+    versionDialog = VersionDialog()
+    versionDialog.setVersions( versionFiles )
+    if not versionDialog.exec_():
+        return
+    
+    versionFile = ram.RamFileManager.restoreVersionFile( versionDialog.getVersion() )
+    # open
+    cmds.file(versionFile, open=True)
+
+publishTemplate()
