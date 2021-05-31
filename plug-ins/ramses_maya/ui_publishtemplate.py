@@ -1,6 +1,4 @@
-import os, sys, platform
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QApplication,
     QDialog,
     QHBoxLayout,
     QVBoxLayout,
@@ -239,6 +237,6 @@ class PublishTemplateDialog( QDialog ):
         return self.fileNameLabel.text()
 
 if __name__ == '__main__':
-    PublishTemplateDialog = PublishTemplateDialog()
-    ok = PublishTemplateDialog.exec_()
+    publishTemplateDialog = PublishTemplateDialog()
+    ok = publishTemplateDialog.exec_()
     print(ok)
