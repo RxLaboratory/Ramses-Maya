@@ -296,6 +296,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
 
 class RamPublishTemplateCmd( om.MPxCommand ):
     name = "ramPublishTemplate"
+    syntax = om.MSyntax()
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -306,8 +307,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
+        return RamPublishTemplateCmd.syntax
 
     def doIt(self, args):
         ram.log("Publishing template...")
@@ -322,6 +322,8 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
         # Prepare the dialog
         publishDialog = PublishTemplateDialog()
+        if not settings.online:
+            publishDialog.setOffline()
         # Set the project and step
         project = ramses.currentProject()
         step = None
