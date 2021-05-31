@@ -205,7 +205,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
         currentStatus = currentItem.currentStatus( currentStep )
         # Show status dialog
-        statusDialog = StatusDialog()
+        statusDialog = StatusDialog(getMayaWindow())
         statusDialog.setOffline(not settings.online)
         if currentStatus is not None:
             statusDialog.setStatus( currentStatus )
@@ -288,7 +288,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='No other version found.', pos='midBottom', fade=True )
             return
 
-        versionDialog = VersionDialog()
+        versionDialog = VersionDialog(getMayaWindow())
         versionDialog.setVersions( versionFiles )
         if not versionDialog.exec_():
             return
@@ -324,7 +324,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         fileInfo = ram.RamFileManager.decomposeRamsesFilePath( currentFilePath )
 
         # Prepare the dialog
-        publishDialog = PublishTemplateDialog()
+        publishDialog = PublishTemplateDialog(getMayaWindow())
         if not settings.online:
             publishDialog.setOffline()
         # Set the project and step
@@ -446,7 +446,6 @@ class RamOpenCmd( om.MPxCommand ):
                 # only the transform nodes
                 if cmds.nodeType(node) == 'transform':
                     cmds.parent(node, itemGroupName)
-
 
 class RamOpenTemplateCmd( om.MPxCommand ):
     name = "ramOpenTemplate"
