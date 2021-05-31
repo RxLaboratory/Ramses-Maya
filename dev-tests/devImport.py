@@ -31,6 +31,7 @@ class ImportDialog( QDialog ):
         self._currentStep = None
         self._currentResource = ""
         self._currentFiles = []
+        self._resourceFiles = []
 
         self.__setupUi()
         self.__loadProjects()
@@ -265,6 +266,7 @@ class ImportDialog( QDialog ):
 
     def __updateResources(self):
         self.resourceList.clear()
+        self._resourceFiles = []
         if self._currentStep is None:
             return
         # Shots and Assets
@@ -272,20 +274,40 @@ class ImportDialog( QDialog ):
             if self._currentItem is None:
                 return
             # List resources
-            self._resources = self._currentItem.stepFilePaths( self._currentStep )
-            for resource in self._resources:
+            for resource in self._currentItem.stepFilePaths( self._currentStep ):
                 fileName = os.path.basename(resource)
                 fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
                 if fileInfo is None:
                     continue
                 res = fileInfo['resource']
+                self._resourceFiles.append( resource )
                 if res != "":
                     self.resourceList.addItem(res)
                 else:
                     self.resourceList.addItem("Main")
         # Templates
         else:
-            pass
+            # List resources
+            folder = self._currentStep.templatesFolderPath()
+            if folder == '':
+                return
+            for f in os.listdir( folder ):
+                fileInfo = ram.RamFileManager.decomposeRamsesFileName(f)
+                if fileInfo is None:
+                    continue
+                if fileInfo['project'] != self._currentStep.projectShortName():
+                    continue
+                if fileInfo['step'] != self._currentStep.shortName():
+                    continue 
+                res = fileInfo['object'] + ' | ' + fileInfo['resource']
+                self._resourceFiles.append( ram.RamFileManager.buildPath((
+                    folder,
+                    f
+                )) )
+                if res != '':
+                    self.resourceList.addItem(res)
+                else:
+                    self.resourceList.addItem("Main")
 
     @Slot()
     def __resourceChanged(self, row):
@@ -303,9 +325,20 @@ class ImportDialog( QDialog ):
         self.versionList.clear()
         self._currentFiles = []
 
+        if self.typeBox.currentIndex() == 2 and row in range(0, len(self._resourceFiles)):
+            self._currentItem = ram.RamItem.fromPath( self._resourceFiles[ row ] )
+
+        if self._currentItem is None:
+            return
+        if self._currentStep is None and self.typeBox.currentIndex() in (0,1):
+            return
+
         # List versions or published files
         if self.actionBox.currentIndex() == 0: # Open action, list versions
-            self._currentFiles = self._currentItem.versionFilePaths(self._currentResource, self._currentStep)
+            if self.typeBox.currentIndex() in (0,1):
+                self._currentFiles = self._currentItem.versionFilePaths(self._currentResource, self._currentStep)
+            else:
+                self._currentFiles = self._currentItem.versionFilePaths()
             self._currentFiles.reverse()
             # Add current
             self.versionList.addItem("Current Version")
@@ -321,7 +354,10 @@ class ImportDialog( QDialog ):
                     itemText = itemText + ' | ' + comment
                 self.versionList.addItem(itemText)
         else: # Import Action, list published files
-            self._currentFiles = self._currentItem.publishFilePaths( self._currentResource, self._currentStep )
+            if self.typeBox.currentIndex() in (0,1):
+                self._currentFiles = self._currentItem.publishFilePaths( self._currentResource, self._currentStep )
+            else:
+                self._currentFiles = self._currentItem.publishFilePaths( )
             for f in self._currentFiles:
                 fileName = os.path.basename( f )
                 self.versionList.addItem(fileName)
@@ -352,20 +388,28 @@ class ImportDialog( QDialog ):
         return self._currentStep
     
     def getResource(self):
-        return self._currentResource
+        resource = self._currentResource.replace(' | ', '_')
+        if resource.endswith('_'):
+            resource = resource[0:-1]
+        return resource
 
     def getFile(self):
         row = self.versionList.currentRow()
         # if open (index 0), there's an extra item on top of the list
         l = - self.actionBox.currentIndex()
         if row <= l:
-            file = self._currentItem.stepFilePath(self._currentResource, "ma", self._currentStep)
-            if file != "":
-                return file
-            file = self._currentItem.stepFilePath(self._currentResource, "mb", self._currentStep)
-            if file != "":
-                return file
-            return ""
+            if self.typeBox.currentIndex() in (0,1):
+                file = self._currentItem.stepFilePath(self._currentResource, "ma", self._currentStep)
+                if file != "":
+                    return file
+                file = self._currentItem.stepFilePath(self._currentResource, "mb", self._currentStep)
+                if file != "":
+                    return file
+                return ""
+            else:
+                resourceRow = self.resourceList.currentRow()
+                if resourceRow >= 0:
+                    return self._resourceFiles[ resourceRow ]
         # if open (index 0), there's an extra item on top of the list
         r = 1-self.actionBox.currentIndex()
         return self._currentFiles[row-r]
@@ -396,12 +440,14 @@ def importCmd():
         itemShortName = item.shortName()
         projectShortName = item.projectShortName()
         stepShortName = step.shortName()
+        resource = importDialog.getResource()
+        
         # Let's import only if there's no user-defined import scripts
         if len( ramses.importScripts ) > 0:
             ramses.importItem(
                 item,
-                step,
-                filePath
+                filePath,
+                step                
             )
             return
         # We're going to import in a group
@@ -425,6 +471,7 @@ def importCmd():
                 itemShortName = 'S' + itemShortName
         # If it's a general item, store in a group named after the step
         else:
+            itemShortName = resource
             groupName = projectShortName + '_G_' + stepShortName
             itemName = projectShortName + '_G_' + itemShortName
             if re.match(regex, itemShortName):

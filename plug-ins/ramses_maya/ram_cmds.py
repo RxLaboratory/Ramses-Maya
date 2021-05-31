@@ -1,15 +1,16 @@
-import os
+import os, re
 from datetime import datetime, timedelta
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from .dumaf import getMayaWindow # pylint: disable=import-error,no-name-in-module
+from .dumaf import getMayaWindow, getCreateGroup # pylint: disable=import-error,no-name-in-module
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
 from .ui_publishtemplate import PublishTemplateDialog # pylint: disable=import-error,no-name-in-module
 from .ui_comment import CommentDialog # pylint: disable=import-error,no-name-in-module
+from .ui_import import ImportDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -191,7 +192,6 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        print(saveFilePath)
         if not saveFilePath:
             return
 
@@ -200,6 +200,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
         saveFileDict = ram.RamFileManager.decomposeRamsesFileName( saveFileName )
         currentStep = saveFileDict['step']
         currentItem = ram.RamItem.fromPath( saveFilePath )
+        if currentItem is None:
+            cmds.warning( ram.Log.NotAnItem )
+            cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
         currentStatus = currentItem.currentStatus( currentStep )
         # Show status dialog
         statusDialog = StatusDialog()
@@ -242,12 +245,12 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if status is not None:
             if settings.online:
                 currentItem.setStatus(status, currentStep)
-            ramses.updateStatus()
+            ramses.updateStatus(currentItem, status, currentStep)
 
         # Publish
         if publish:
             ram.RamFileManager.copyToPublish( saveFilePath )
-            ramses.publish()
+            ramses.publish( currentItem, saveFilePath, currentStep)
 
         # Alert
         newVersionStr = str( newVersion )
@@ -355,6 +358,96 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='Template published as: <hl>' + saveName + '</hl> in ' + saveFolder , pos='midCenter', fade=True )
             ram.log('Template published as: ' + saveName + ' in ' + saveFolder)
 
+class RamOpenCmd( om.MPxCommand ):
+    name = "ramOpen"
+    syntax = om.MSyntax()
+
+    def __init__(self):
+        om.MPxCommand.__init__(self)
+
+    @staticmethod
+    def createCommand():
+        return RamOpenCmd()
+
+    @staticmethod
+    def createSyntax():
+        return RamOpenCmd.syntax
+
+    def doIt(self, args):
+        # Check if the Daemon is available if Ramses is set to be used "online"
+        if not checkDaemon():
+            return
+
+        # Let's show the dialog
+        importDialog = ImportDialog(getMayaWindow())
+        result = importDialog.exec_()
+        if result == 1: # open
+            # Get the file, check if it's a version
+            file = importDialog.getFile()
+            if ram.RamFileManager.inVersionsFolder( file ):
+                file = ram.RamFileManager.restoreVersionFile( file )
+            # Open
+            cmds.file(file, open=True)
+        elif result == 2: # import
+            # Get Data
+            item = importDialog.getItem()
+            step = importDialog.getStep()
+            filePath = importDialog.getFile()
+            itemShortName = item.shortName()
+            projectShortName = item.projectShortName()
+            stepShortName = step.shortName()
+            resource = importDialog.getResource()
+            
+            # Let's import only if there's no user-defined import scripts
+            if len( ramses.importScripts ) > 0:
+                ramses.importItem(
+                    item,
+                    filePath,
+                    step                
+                )
+                return
+            # We're going to import in a group
+            groupName = ''
+
+            # Prepare names
+            # Check if the short name is not made only of numbers
+            regex = re.compile('^\\d+$')
+            # If it's an asset, let's get the asset group
+            itemType = item.itemType()
+            if itemType == ram.ItemType.ASSET:
+                groupName = projectShortName + '_A_' + item.group()
+                itemName = projectShortName + '_A_' + itemShortName
+                if re.match(regex, itemShortName):
+                    itemShortName = 'A' + itemShortName
+            # If it's a shot, let's store in the shots group
+            elif itemType == ram.ItemType.SHOT:
+                groupName = projectShortName + '_S_Shots'
+                itemName = projectShortName + '_S_' + itemShortName
+                if re.match(regex, itemShortName):
+                    itemShortName = 'S' + itemShortName
+            # If it's a general item, store in a group named after the step
+            else:
+                itemShortName = resource
+                groupName = projectShortName + '_G_' + stepShortName
+                itemName = projectShortName + '_G_' + itemShortName
+                if re.match(regex, itemShortName):
+                    itemShortName = 'G' + itemShortName
+
+
+            groupName = getCreateGroup(groupName)
+            # Import the file
+            newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
+            # Add a group for the imported asset
+            itemGroupName = cmds.group(name= itemName, em=True, parent=groupName)
+            for node in newNodes:
+                # when parenting, some shapes won't exist anymore
+                if not cmds.objExists(node):
+                    continue
+                # only the transform nodes
+                if cmds.nodeType(node) == 'transform':
+                    cmds.parent(node, itemGroupName)
+
+
 class RamOpenTemplateCmd( om.MPxCommand ):
     name = "ramOpenTemplate"
 
@@ -437,6 +530,7 @@ cmds_classes = (
     RamSaveVersionCmd,
     RamRetrieveVersionCmd,
     RamPublishTemplateCmd,
+    RamOpenCmd,
     RamOpenTemplateCmd,
     RamImportTemplateCmd,
     RamSettingsCmd,
