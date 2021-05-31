@@ -6,7 +6,6 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QStackedLayout,
     QWidget,
     QMainWindow,
-    QGridLayout,
     QHBoxLayout,
     QVBoxLayout,
     QLineEdit,
