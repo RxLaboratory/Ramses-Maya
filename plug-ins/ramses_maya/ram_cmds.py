@@ -45,24 +45,6 @@ def getSaveFilePath( filePath ):
 
     return saveFilePath
 
-class RamOpenCmd( om.MPxCommand ):
-    name = "ramOpen"
-
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamOpenCmd()
-
-    @staticmethod
-    def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
-
-    def doIt(self, args):
-        ram.log("Command 'open' is not implemented yet!")
-
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
     syntax = om.MSyntax()
