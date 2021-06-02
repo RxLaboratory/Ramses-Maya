@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from .dumaf import getMayaWindow, getCreateGroup # pylint: disable=import-error,no-name-in-module
+from dumaf import getMayaWindow, getCreateGroup # pylint: disable=import-error,no-name-in-module
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
@@ -44,24 +44,6 @@ def getSaveFilePath( filePath ):
         return None
 
     return saveFilePath
-
-class RamOpenCmd( om.MPxCommand ):
-    name = "ramOpen"
-
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamOpenCmd()
-
-    @staticmethod
-    def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
-
-    def doIt(self, args):
-        ram.log("Command 'open' is not implemented yet!")
 
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
@@ -247,15 +229,15 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 currentItem.setStatus(status, currentStep)
             ramses.updateStatus(currentItem, status, currentStep)
 
+        # Alert
+        newVersionStr = str( newVersion )
+        ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
+        cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenterBot', fade=True )
+
         # Publish
         if publish:
             ram.RamFileManager.copyToPublish( saveFilePath )
             ramses.publish( currentItem, saveFilePath, currentStep)
-
-        # Alert
-        newVersionStr = str( newVersion )
-        ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
-        cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetrieveVersion"
@@ -403,7 +385,7 @@ class RamOpenCmd( om.MPxCommand ):
                 ramses.importItem(
                     item,
                     filePath,
-                    step                
+                    stepShortName                
                 )
                 return
             # We're going to import in a group
