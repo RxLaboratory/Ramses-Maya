@@ -33,7 +33,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\n\ncmds.ramOpenRamses()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramOpenRamses()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -80,7 +80,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\n\ncmds.ramSave()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramSave()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -114,7 +114,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\n\ncmds.ramSave( sc=True )" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramSave( sc=True )" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -148,7 +148,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\ncmds.ramSaveVersion()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramSaveVersion()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -182,7 +182,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\ncmds.ramPublishTemplate()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramPublishTemplate()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -229,7 +229,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\ncmds.ramOpen()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramOpen()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -263,7 +263,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\ncmds.ramRetrieveVersion()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramRetrieveVersion()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
@@ -310,7 +310,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\ncmds.ramSettings()" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramSettings()" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
