@@ -1,230 +1,40 @@
 import tempfile, os
-
 import maya.cmds as cmds # pylint: disable=import-error
-
 import ramses as ram # pylint: disable=import-error
+import dumaf as maf # pylint: disable=import-error
+from .ui_publish_mod import PublishModDialog
+from .utils_shaders import exportShaders
 
-nonDeletableObjects = [
-    '|frontShape',
-    '|front',
-    '|perspShape',
-    '|persp',
-    '|sideShape',
-    '|side',
-    '|topShape',
-    '|top',
-]
-
-def safeLoadPlugin(pluginName):
-    ok = cmds.pluginInfo(pluginName, loaded=True, q=True)
-    if not ok:
-        cmds.loadPlugin(pluginName)
-        ram.log("I have loaded the plug-in " + pluginName + ", needed for the current task.")
-        
-def removeAllNamespaces():
-    # Set the current namespace to the root
-    cmds.namespace(setNamespace=':')
-
-    # Remove namespaces containing nodes
-    nodes = cmds.ls()
-    namespaces = []
-    for node in nodes:
-        if ':' in node:
-            nodeNamespaces = node.split(":")[0:-1]
-            for nodeNamespace in nodeNamespaces:
-                if not nodeNamespace in namespaces:
-                    namespaces.append(nodeNamespace)
-    for namespace in namespaces:
-        try:
-            cmds.namespace(removeNamespace=namespace, mergeNamespaceWithRoot=True)
-        except:
-            pass
-
-    # Remove remaining namespaces without merging with root
-    namespaces = cmds.namespaceInfo(listOnlyNamespaces=True, recurse=True)
-    for namespace in namespaces:
-        try:
-            cmds.namespace(removeNamespace=namespace)
-        except:
-            pass
-
-def removeAllAnimCurves():
-    keys = cmds.ls(type='animCurveTL') + cmds.ls(type='animCurveTA') + cmds.ls(type='animCurveTU')
-    for key in keys:
-        try:
-            cmds.delete(key)
-        except:
-            pass
-
-def createTempScene(name=''):
-    # Rename the file because we're going to modify stuff in there
-    tempDir = tempfile.gettempdir()
-    fileName = 'RamsesWorkingFile' + name + '.mb'
-    tempFile = ram.RamFileManager.buildPath((
-        tempDir,
-        fileName
-    ))
-    cmds.file(rename=tempFile)
-    return tempFile
-
-def cleanScene(removeAnimation=True):
-    tempFile = createTempScene(name='')
-
-    # Import all references
-    for ref in cmds.ls(type='reference'):
-        refFile = cmds.referenceQuery(ref, f=True)
-        cmds.file(refFile, importReference=True)
-
-    # Clean names
-    removeAllNamespaces()
-
-    # No animation in the mod step!
-    if removeAnimation:
-        removeAllAnimCurves()
-    
-    return tempFile
-
-def hasParent(node):
-    return cmds.listRelatives(node, p=True, f=True) is not None
-
-def hasChildren(node):
-    return cmds.listRelatives(node, c=True, f=True, type='transform') is not None
-
-def isGroup(node):
-    # A group is a transform node
-    if cmds.objectType(node) != 'transform':
-        return False
-    # And it does not have any child shape
-    return cmds.listRelatives(node,s=True,f=True) is None
-
-def moveToZero(node):
-    cmds.setAttr(node + '.tx',0)
-    cmds.setAttr(node + '.ty',0)
-    cmds.setAttr(node + '.tz',0)
-
-def removeEmptyGroups(node=None):
-    remove = True
-    while remove:
-        nodes = ()
-        remove = False
-        if node is None:
-            nodes = cmds.ls(type='transform')
-        else:
-            nodes = cmds.listRelatives(node, ad=True, f=True, type='transform')
-        if nodes is None:
-            return
-        for node in nodes:
-            if not isGroup(node):
-                continue
-            if not hasChildren(node):
-                cmds.delete(node)
-                remove = True
-
-def freezeTransform(shape):
-        cmds.move(0, 0, 0, shape + ".rotatePivot", absolute=True)
-        cmds.move(0, 0, 0, shape + ".scalePivot", absolute=True)
-        cmds.makeIdentity(shape, apply=True, t=1, r=1, s=1, n=0)
-
-# mode is 'vp' for viewport, 'rdr' for rendering
-def exportShaders(node, mode, folderPath, fileNameBlocks): 
-    # List all nodes containing shaders
-    nodes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
-    # If there are Yeti nodes
-    try:
-        nodes = nodes + cmds.listRelatives(node, ad=True, f=True, type='pgYetiMaya')
-    except:
-        pass
-
-    # Prepare the data info we're exporting
-    shaderData = {}
-    allShadingEngines = []
-
-    # Get shading info
-    for meshNode in nodes:
-        nodeHistory = cmds.listHistory( meshNode, f=True )
-        shadingEngines = cmds.listConnections( nodeHistory, type='shadingEngine')
-        shadingEngine = 'initialShadingGroup'
-
-        # Get the name from parent (transform node for this mesh)
-        objectName = cmds.listRelatives(meshNode, p=True)[0]
-        # Remove namespace if any
-        objectName = objectName.split(':')[-1]
-
-        objectShaderData = {}
-
-        if shadingEngines is not None:
-            objectShaderData['hasShader'] = True
-            shadingEngine = shadingEngines[0]
-            
-            # Get the first surface shader to rename the engine
-            surfaceShaders = cmds.listConnections(shadingEngine + '.surfaceShader')
-            if surfaceShaders is not None:
-                surfaceShader = surfaceShaders[0]
-                surfaceShaderName = surfaceShader.split(':')[-1]
-                # Remove all what's before the first '_'
-                i = surfaceShaderName.find('_')
-                if i >= 0:
-                    surfaceShaderName = surfaceShaderName[i+1:]
-                # And rename
-                if shadingEngine != 'initialShadingGroup':
-                    shadingEngine = cmds.rename( shadingEngine, mode + '_' + surfaceShaderName)
-            
-            objectShaderData['shader'] = shadingEngine
-            
-            # Check if the node is opaque
-            objectShaderData['opaque'] = False
-            try:
-                objectShaderData['opaque'] = cmds.getAttr(meshNode + '.aiOpaque')
-            except:
-                pass
-        else:
-            objectShaderData['hasShader'] = False
-        
-        shaderData[objectName] = objectShaderData
-        allShadingEngines.append(shadingEngine)
-
-    # Select and export shadingEngines
-    cmds.select(allShadingEngines, noExpand=True, r=True)
-    nodeName = node.split('|')[-1].split(':')[-1]
-
-    # extension
-    fileNameBlocks['extension'] = 'mb'
-    # resource
-    if fileNameBlocks['resource'] != '':
-        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + nodeName + '-' + mode + 'Shaders'
-    else:
-        fileNameBlocks['resource'] = nodeName + '-' + mode + 'Shaders'
-    # path
-    filePath = ram.RamFileManager.buildPath((
-        folderPath,
-        ram.RamFileManager.composeRamsesFileName(fileNameBlocks)
-    ))
-    cmds.file( filePath, exportSelected=True, type='mayaBinary', force=True )
-    cmds.select(cl=True)
-
-    # Set MetaData
-    ram.RamMetaDataManager.setValue( filePath, 'shaderData', shaderData )
-
-    return filePath
-
-def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ramses-Maya passed as an arg to the scripts
-
-    # OPTIONS (build UI)
-    removeHidden = True
-    removeLocators = True
-    renameShapes = True
-    onlyRootGroups = False
-    noFreeze = 'Sphere, Torus'
-    noFreezeCaseSensitive = False
+def publishMod(item, filePath, step):
 
     # Checks
-    if step.shortName() != 'MOD':
+    step = ram.RamObject.getObjectShortName(step)
+    if step != 'MOD':
         return
 
-    tempFile = cleanScene()
+    # Show dialog
+    publishModDialog = PublishModDialog( maf.getMayaWindow() )
+    if not publishModDialog.exec_():
+        return
+
+    # Progress
+    progressDialog = maf.ProgressDialog()
+    progressDialog.show()
+    progressDialog.setText("Publishing geometry")
+    cmds.refresh()
+
+    # Options
+    removeHidden = publishModDialog.removeHidden()
+    removeLocators = publishModDialog.removeLocators()
+    renameShapes = publishModDialog.renameShapes()
+    onlyRootGroups = publishModDialog.onlyRootGroups()
+    noFreeze = publishModDialog.noFreeze()
+    noFreezeCaseSensitive = publishModDialog.noFreezeCaseSensitive()
+
+    tempFile = maf.cleanScene()
 
     # We need to use alembic
-    safeLoadPlugin("AbcExport")
+    maf.safeLoadPlugin("AbcExport")
 
     # For all nodes in the publish set
     nodes = ()
@@ -234,8 +44,13 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
         ram.log("Nothing to publish! The asset you need to publish must be listed in a 'Ramses_Publish' set.")
         cmds.inViewMessage( msg='Nothing to publish! The asset you need to publish must be listed in a <hl>Ramses_Pulbish</hl> set.', pos='midCenter', fade=True )
         return
+
+    numNodes = len(nodes)
+    progressDialog.setMaximum(numNodes + 2)
+    progressDialog.setText("Preparing")
+    progressDialog.increment()
     
-    if nodes is None or len(nodes) == 0:
+    if nodes is None or numNodes == 0:
         ram.log("The 'Ramses_Publish' set is empty, there's nothing to publish!")
         cmds.inViewMessage( msg="The <hl>Ramses_Publish</hl> set is empty, there's nothing to publish!", pos='midCenter', fade=True )
         return
@@ -255,8 +70,8 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
         cmds.inViewMessage( msg=ram.Log.MalformedName, pos='midCenter', fade=True )
         cmds.error( ram.Log.MalformedName )
         return
-    version = item.latestVersion()
-    versionFilePath = item.latestVersionFilePath()
+    version = item.latestVersion( fileInfo['resource'], '', step )
+    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
 
     publishFolder = item.publishFolderPath( step )
     if publishFolder == '':
@@ -270,16 +85,19 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
     publishedNodes = []
 
     for node in nodes:
+        progressDialog.setText("Publishing: " + node)
+        progressDialog.increment()
+
         if onlyRootGroups:
             # MOD to publish must be in a group
             # The node must be a root
-            if hasParent(node):
+            if maf.hasParent(node):
                 continue
             # It must be a group
-            if not isGroup(node):
+            if not maf.isGroup(node):
                 continue 
             # It must have children to publish
-            if not hasChildren(node):
+            if not maf.hasChildren(node):
                 continue
 
         # Absolute path to be sure
@@ -292,11 +110,11 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
         childNodes.append(node)
 
         # Empty group, nothing to do
-        if childNodes is None and isGroup(node):
+        if childNodes is None and maf.isGroup(node):
             cmds.delete(node)
             continue
 
-        moveToZero(node)
+        maf.moveToZero(node)
 
         # Clean (remove what we don't want to publish)
         for childNode in childNodes:
@@ -311,7 +129,7 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
 
             if shapes is None:
                 # No shapes, no child: empty group to remove
-                if not hasChildren(childNode):
+                if not maf.hasChildren(childNode):
                     cmds.delete(childNode)
                 # Nothing else to check for groups
                 continue
@@ -332,7 +150,7 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
                 
             if shapeType not in typesToKeep:
                 cmds.delete(shape)
-                if not hasChildren( childNode ):
+                if not maf.hasChildren( childNode ):
                     cmds.delete(childNode)
                 continue
 
@@ -351,13 +169,13 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
                     freeze = False
                     break
             if freeze and shapeType == 'mesh':
-                freezeTransform(childNode)            
+                maf.freezeTransform(childNode)            
 
         # Last steps
         nodeName = node.split('|')[-1]
 
         # Remove remaining empty groups
-        removeEmptyGroups(node)
+        maf.removeEmptyGroups(node)
 
         # Create a root controller
         # Get the bounding box
@@ -422,6 +240,9 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
 
         publishedNodes.append(node)
 
+    progressDialog.setText( "Cleaning" )
+    progressDialog.increment()
+
     # remove all nodes not children or parent of publishedNodes
     allTransformNodes = cmds.ls(transforms=True, long=True)
     allPublishedNodes = []
@@ -441,13 +262,13 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
     for transformNode in allTransformNodes:
         if transformNode in allPublishedNodes:
             continue
-        if transformNode in nonDeletableObjects:
+        if transformNode in maf.nonDeletableObjects:
             continue
         cmds.delete(transformNode)
 
     # Clean scene:
     # Remove empty groups from the scene
-    removeEmptyGroups()
+    maf.removeEmptyGroups()
 
     # Copy published scene to publish
     sceneFileInfo = fileInfo.copy()
@@ -476,10 +297,14 @@ def publishMod(item, filePath, step): # TODO build UI, Add progress window in Ra
     if os.path.isfile(tempFile):
         os.remove(tempFile)
 
-    ram.log("I've published these nodes:")
+    ram.log("I've published these assets:")
     for publishedNode in publishedNodes:
         ram.log(" > " + publishedNode)
-    
-currentScene = cmds.file( q=True, sn=True )
-item = ram.RamItem.fromPath(currentScene)
-publishMod(item, currentScene, ram.RamStep('MOD','MOD'))
+    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenter', fade=True )
+
+    progressDialog.hide()
+
+if __name__ == "__main__":
+    currentScene = cmds.file( q=True, sn=True )
+    item = ram.RamItem.fromPath(currentScene)
+    publishMod(item, currentScene, ram.RamStep('MOD', 'MOD') )
