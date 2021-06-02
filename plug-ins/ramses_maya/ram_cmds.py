@@ -385,7 +385,7 @@ class RamOpenCmd( om.MPxCommand ):
                 ramses.importItem(
                     item,
                     filePath,
-                    step                
+                    stepShortName                
                 )
                 return
             # We're going to import in a group
