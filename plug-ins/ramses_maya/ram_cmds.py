@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from .dumaf import getMayaWindow, getCreateGroup # pylint: disable=import-error,no-name-in-module
+from dumaf import getMayaWindow, getCreateGroup # pylint: disable=import-error,no-name-in-module
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
