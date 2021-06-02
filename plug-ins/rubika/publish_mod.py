@@ -34,7 +34,8 @@ def publishMod(item, filePath, step):
     tempFile = maf.cleanScene()
 
     # We need to use alembic
-    maf.safeLoadPlugin("AbcExport")
+    if maf.safeLoadPlugin("AbcExport"):
+        ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # For all nodes in the publish set
     nodes = ()
