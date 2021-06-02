@@ -229,15 +229,15 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 currentItem.setStatus(status, currentStep)
             ramses.updateStatus(currentItem, status, currentStep)
 
-        # Publish
-        if publish:
-            ram.RamFileManager.copyToPublish( saveFilePath )
-            ramses.publish( currentItem, saveFilePath, currentStep)
-
         # Alert
         newVersionStr = str( newVersion )
         ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
         cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
+
+        # Publish
+        if publish:
+            ram.RamFileManager.copyToPublish( saveFilePath )
+            ramses.publish( currentItem, saveFilePath, currentStep)
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetrieveVersion"
