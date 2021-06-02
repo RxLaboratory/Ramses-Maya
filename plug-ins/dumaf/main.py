@@ -1,5 +1,5 @@
-import sys
-import maya.cmds as cmd # pylint: disable=import-error
+import sys, tempfile
+import maya.cmds as cmds # pylint: disable=import-error
 from PySide2.QtWidgets import ( # pylint: disable=import-error
     QApplication
 )
@@ -37,7 +37,8 @@ def safeLoadPlugin(pluginName):
     ok = cmds.pluginInfo(pluginName, loaded=True, q=True)
     if not ok:
         cmds.loadPlugin(pluginName)
-        ram.log("I have loaded the plug-in " + pluginName + ", needed for the current task.")
+        return True
+    return False
         
 def removeAllNamespaces():
     # Set the current namespace to the root
@@ -78,10 +79,7 @@ def createTempScene(name=''):
     # Rename the file because we're going to modify stuff in there
     tempDir = tempfile.gettempdir()
     fileName = 'RamsesWorkingFile' + name + '.mb'
-    tempFile = ram.RamFileManager.buildPath((
-        tempDir,
-        fileName
-    ))
+    tempFile = tempDir + '/' + fileName
     cmds.file(rename=tempFile)
     return tempFile
 
