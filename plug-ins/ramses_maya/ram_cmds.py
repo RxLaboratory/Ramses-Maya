@@ -232,7 +232,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Alert
         newVersionStr = str( newVersion )
         ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
-        cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenter', fade=True )
+        cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenterBot', fade=True )
 
         # Publish
         if publish:
