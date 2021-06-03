@@ -378,12 +378,22 @@ class RamOpenCmd( om.MPxCommand ):
         result = importDialog.exec_()
 
         if result == 1: # open
+            # If the current file needs to be saved
+            if cmds.file(q=True, modified=True):
+                sceneName = os.path.basename(currentFilePath)
+                if sceneName == '':
+                    sceneName = 'untitled scene'
+                result = cmds.confirmDialog( message="Save changes to " + sceneName + "?", button=("Save", "Don't Save", "Cancel") )
+                if result == 'Cancel':
+                    return
+                if result == 'Save':
+                    cmds.file( save=True, options="v=1;" )
             # Get the file, check if it's a version
             file = importDialog.getFile()
             if ram.RamFileManager.inVersionsFolder( file ):
                 file = ram.RamFileManager.restoreVersionFile( file )
             # Open
-            cmds.file(file, open=True)
+            cmds.file(file, open=True, force=True)
         elif result == 2: # import
             # Get Data
             item = importDialog.getItem()
@@ -516,7 +526,6 @@ class RamOpenRamsesCmd( om.MPxCommand ):
         ramses.showClient()
         
 cmds_classes = (
-    RamOpenCmd,
     RamSaveCmd,
     RamSaveVersionCmd,
     RamRetrieveVersionCmd,
