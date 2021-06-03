@@ -3,7 +3,7 @@ import dumaf as maf # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 
 # mode is 'vp' for viewport, 'rdr' for rendering
-def exportShaders(node, mode, folderPath, fileNameBlocks): 
+def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFilePath=''): 
     # List all nodes containing shaders
     nodes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
     # If there are Yeti nodes
@@ -78,8 +78,11 @@ def exportShaders(node, mode, folderPath, fileNameBlocks):
     ))
     cmds.file( filePath, exportSelected=True, type='mayaBinary', force=True )
     cmds.select(cl=True)
+    shaderData['shaderFilePath'] = filePath
 
     # Set MetaData
-    ram.RamMetaDataManager.setValue( filePath, 'shaderData', shaderData )
+    if associatedGeometryFilePath == '':
+        associatedGeometryFilePath = filePath
+    ram.RamMetaDataManager.setValue( associatedGeometryFilePath, 'shaderData', shaderData )
 
     return filePath
