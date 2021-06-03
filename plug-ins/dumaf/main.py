@@ -4,6 +4,17 @@ from PySide2.QtWidgets import ( # pylint: disable=import-error
     QApplication
 )
 
+def lockTransform( transformNode ):
+    if cmds.nodeType(transformNode) != 'transform':
+        return
+    for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
+        cmds.setAttr(transformNode + a, lock=True )
+
+def getNodeBaseName( node ):
+    nodeName = node.split('|')[-1]
+    nodeName = nodeName.split(':')[-1]
+    return nodeName
+
 def getCreateGroup( groupName, parentNode=None ):
     # Check if exists
     if parentNode is None:
