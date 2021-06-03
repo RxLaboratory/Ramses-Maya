@@ -13,5 +13,7 @@ from .main import (
     moveToZero,
     removeEmptyGroups,
     freezeTransform,
+    lockTransform,
+    getNodeBaseName,
 )
 from .ui_progress import ProgressDialog
