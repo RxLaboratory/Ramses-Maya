@@ -94,8 +94,8 @@ class ImportDialog( QDialog ):
 
         resourcesLayout = QVBoxLayout()
         resourcesLayout.setSpacing(3)
-        resourcesLabel = QLabel("Resource:")
-        resourcesLayout.addWidget(resourcesLabel)
+        self.resourcesLabel = QLabel("Resource:")
+        resourcesLayout.addWidget(self.resourcesLabel)
         self.resourceList = QListWidget()
         resourcesLayout.addWidget(self.resourceList)
         midLayout.addLayout(resourcesLayout)
@@ -222,15 +222,20 @@ class ImportDialog( QDialog ):
         
     @Slot()
     def __actionChanged(self, index):
-        if index == 0:
+        if index == 0: # Open
             self._importButton.hide()
             self._openButton.show()
             self.versionsLabel.setText("Version:")
-        else:
+            self.resourceList.show()
+            self.resourcesLabel.show()
+        else: # Import
             self._importButton.show()
             self._openButton.hide()
             self.versionsLabel.setText("File:")
+            self.resourceList.hide()
+            self.resourcesLabel.hide()
         self.__resourceChanged( self.resourceList.currentRow() )
+        
 
     @Slot()
     def __groupChanged(self, index):
@@ -265,50 +270,79 @@ class ImportDialog( QDialog ):
     def __updateResources(self):
         self.resourceList.clear()
         self._resourceFiles = []
+        self.versionList.clear()
+        self._currentFiles = []
         if self._currentStep is None:
             return
-        # Shots and Assets
-        if self.typeBox.currentIndex() in (0,1):
-            if self._currentItem is None:
-                return
-            # List resources
-            for resource in self._currentItem.stepFilePaths( self._currentStep ):
-                fileName = os.path.basename(resource)
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
-                if fileInfo is None:
-                    continue
-                res = fileInfo['resource']
-                self._resourceFiles.append( resource )
-                if res != "":
-                    self.resourceList.addItem(res)
-                else:
-                    self.resourceList.addItem("Main")
-        # Templates
+
+        # If open, list resources in wip folder
+        if self.actionBox.currentIndex() == 0:
+            # Shots and Assets
+            if self.typeBox.currentIndex() in (0,1):
+                if self._currentItem is None:
+                    return
+                # List resources
+                for resource in self._currentItem.stepFilePaths( self._currentStep ):
+                    fileName = os.path.basename(resource)
+                    fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
+                    if fileInfo is None:
+                        continue
+                    res = fileInfo['resource']
+                    self._resourceFiles.append( resource )
+                    if res != "":
+                        self.resourceList.addItem(res)
+                    else:
+                        self.resourceList.addItem("Main")
+            # Templates
+            else:
+                # List resources
+                folder = self._currentStep.templatesFolderPath()
+                if folder == '':
+                    return
+                for f in os.listdir( folder ):
+                    fileInfo = ram.RamFileManager.decomposeRamsesFileName(f)
+                    if fileInfo is None:
+                        continue
+                    if fileInfo['project'] != self._currentStep.projectShortName():
+                        continue
+                    if fileInfo['step'] != self._currentStep.shortName():
+                        continue 
+                    res = fileInfo['object'] + ' | ' + fileInfo['resource']
+                    self._resourceFiles.append( ram.RamFileManager.buildPath((
+                        folder,
+                        f
+                    )) )
+                    if res != '':
+                        self.resourceList.addItem(res)
+                    else:
+                        self.resourceList.addItem("Main")
+        # If import, list all files in the publish folder
         else:
-            # List resources
-            folder = self._currentStep.templatesFolderPath()
-            if folder == '':
-                return
-            for f in os.listdir( folder ):
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName(f)
+            files = []
+            if self.typeBox.currentIndex() in (0,1):
+                files = self._currentItem.publishFilePaths( None, self._currentStep )
+            else:
+                files = self._currentItem.publishFilePaths( )
+            for f in files:
+                fileName = os.path.basename( f )
+                fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
                 if fileInfo is None:
                     continue
-                if fileInfo['project'] != self._currentStep.projectShortName():
-                    continue
-                if fileInfo['step'] != self._currentStep.shortName():
-                    continue 
-                res = fileInfo['object'] + ' | ' + fileInfo['resource']
-                self._resourceFiles.append( ram.RamFileManager.buildPath((
-                    folder,
-                    f
-                )) )
-                if res != '':
-                    self.resourceList.addItem(res)
-                else:
-                    self.resourceList.addItem("Main")
+                self._currentFiles.append( f )
+                n = fileInfo['resource']
+                if n == '':
+                    n = "Main"
+                n = n + ' (' + fileInfo['extension'] + ')'
+                i = QListWidgetItem( self.versionList )
+                i.setText(n)
+                i.setToolTip(f)
 
     @Slot()
     def __resourceChanged(self, row):
+        if self.actionBox.currentIndex() == 1:
+            self.__updateResources()
+            return
+
         self._importButton.setEnabled(False)
         if row < 0:
             self._currentResource = ''
@@ -331,34 +365,25 @@ class ImportDialog( QDialog ):
         if self._currentStep is None and self.typeBox.currentIndex() in (0,1):
             return
 
-        # List versions or published files
-        if self.actionBox.currentIndex() == 0: # Open action, list versions
-            if self.typeBox.currentIndex() in (0,1):
-                self._currentFiles = self._currentItem.versionFilePaths(self._currentResource, self._currentStep)
-            else:
-                self._currentFiles = self._currentItem.versionFilePaths()
-            self._currentFiles.reverse()
-            # Add current
-            self.versionList.addItem("Current Version")
-            # Add other versions
-            for f in self._currentFiles:
-                fileName = os.path.basename( f )
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
-                if fileInfo is None:
-                    continue
-                comment = ram.RamMetaDataManager.getComment( f )
-                itemText = fileInfo['state'] + ' | ' + str(fileInfo['version'])
-                if comment != "":
-                    itemText = itemText + ' | ' + comment
-                self.versionList.addItem(itemText)
-        else: # Import Action, list published files
-            if self.typeBox.currentIndex() in (0,1):
-                self._currentFiles = self._currentItem.publishFilePaths( self._currentResource, self._currentStep )
-            else:
-                self._currentFiles = self._currentItem.publishFilePaths( )
-            for f in self._currentFiles:
-                fileName = os.path.basename( f )
-                self.versionList.addItem(fileName)
+        # List versions
+        if self.typeBox.currentIndex() in (0,1):
+            self._currentFiles = self._currentItem.versionFilePaths(self._currentResource, self._currentStep)
+        else:
+            self._currentFiles = self._currentItem.versionFilePaths()
+        self._currentFiles.reverse()
+        # Add current
+        self.versionList.addItem("Current Version")
+        # Add other versions
+        for f in self._currentFiles:
+            fileName = os.path.basename( f )
+            fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
+            if fileInfo is None:
+                continue
+            comment = ram.RamMetaDataManager.getComment( f )
+            itemText = fileInfo['state'] + ' | ' + str(fileInfo['version'])
+            if comment != "":
+                itemText = itemText + ' | ' + comment
+            self.versionList.addItem(itemText)
 
     @Slot()
     def __versionChanged(self, row):
