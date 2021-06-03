@@ -86,3 +86,53 @@ def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFile
     ram.RamMetaDataManager.setValue( associatedGeometryFilePath, 'shaderData', shaderData )
 
     return filePath
+
+# mode is 'vp' for viewport, 'rdr' for rendering
+def importShaders(node, mode, filePath, itemShortName=''):
+    # Get shader data
+    shaderData = ram.RamMetaDataManager.getValue(filePath,'shaderData')
+    if shaderData is None:
+        ram.log("I can't find any shader for this geometry, sorry.")
+        return
+    if 'shaderFilePath' not in shaderData:
+        ram.log("I can't find any shader for this geometry, sorry.")
+        return
+    shaderFile = shaderData['shaderFilePath']
+    if not os.path.isfile(shaderFile):
+        ram.log("I can't find the shader file, sorry. It should be there: " + shaderFile)
+        return 
+    
+    # For all mesh
+    meshes = cmds.listRelatives( node, ad=True, type='mesh', f=True)
+    if meshes is None:
+        ram.log("I can't find any geometry to apply the shaders, sorry.")
+        return
+
+    # Reference the shader file
+    cmds.file(shaderFile,r=True,mergeNamespacesOnClash=True,namespace=itemShortName)
+
+    for mesh in meshes:
+        # Get the transform node (which has the name we're looking for)
+        transformNode = cmds.listRelatives(mesh, p=True, type='transform')[0]
+        nodeName = maf.getNodeBaseName( transformNode )
+        if nodeName not in shaderData:
+            continue
+        meshShaderData = shaderData[nodeName]
+        if not meshShaderData['hasShader']:
+            continue
+        # Apply
+        cmds.select(mesh, r=True)
+        shader = meshShaderData['shader']
+        if shader != 'initialShadingGroup':
+            shaderName = itemShortName + ':' + shader
+            cmds.sets(e=True, forceElement = shaderName)
+        else:
+            cmds.sets(e=True,forceElement='initialShadingGroup')
+        # Set opaque
+        if meshShaderData['opaque']:
+            cmds.setAttr(mesh + '.aiOpaque', 1)
+        else:
+            cmds.setAttr(mesh + '.aiOpaque', 0)
+
+    cmds.select(clear=True)
+        

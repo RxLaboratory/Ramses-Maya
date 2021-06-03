@@ -2,68 +2,7 @@ import re, os
 import maya.cmds as cmds
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
-
-def lockTransform( node ):
-    if cmds.nodeType(node) != 'transform':
-        return
-    for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
-        cmds.setAttr(node + a, lock=True )
-
-def getNodeBaseName( node ):
-    nodeName = node.split('|')[-1]
-    nodeName = nodeName.split(':')[-1]
-    return nodeName
-
-# mode is 'vp' for viewport, 'rdr' for rendering
-def importShaders(node, mode, filePath, itemShortName=''):
-    # Get shader data
-    shaderData = ram.RamMetaDataManager.getValue(filePath,'shaderData')
-    if shaderData is None:
-        ram.log("I can't find any shader for this geometry, sorry.")
-        return
-    if 'shaderFilePath' not in shaderData:
-        ram.log("I can't find any shader for this geometry, sorry.")
-        return
-    shaderFile = shaderData['shaderFilePath']
-    if not os.path.isfile(shaderFile):
-        ram.log("I can't find the shader file, sorry. It should be there: " + shaderFile)
-        return 
-    
-    # For all mesh
-    meshes = cmds.listRelatives( node, ad=True, type='mesh', f=True)
-    if meshes is None:
-        ram.log("I can't find any geometry to apply the shaders, sorry.")
-        return
-
-    # Reference the shader file
-    cmds.file(shaderFile,r=True,mergeNamespacesOnClash=True,namespace=itemShortName)
-
-    for mesh in meshes:
-        # Get the transform node (which has the name we're looking for)
-        transformNode = cmds.listRelatives(mesh, p=True, type='transform')[0]
-        nodeName = getNodeBaseName( transformNode )
-        if nodeName not in shaderData:
-            continue
-        meshShaderData = shaderData[nodeName]
-        if not meshShaderData['hasShader']:
-            continue
-        # Apply
-        cmds.select(mesh, r=True)
-        shader = meshShaderData['shader']
-        if shader != 'initialShadingGroup':
-            shaderName = itemShortName + ':' + shader
-            cmds.sets(e=True, forceElement = shaderName)
-        else:
-            cmds.sets(e=True,forceElement='initialShadingGroup')
-        # Set opaque
-        if meshShaderData['opaque']:
-            cmds.setAttr(mesh + '.aiOpaque', 1)
-        else:
-            cmds.setAttr(mesh + '.aiOpaque', 0)
-
-    cmds.select(clear=True)
-        
-
+from .utils_shaders import importShaders
 
 def importMod(item, filePath, step):
 
@@ -165,7 +104,3 @@ def importMod(item, filePath, step):
 
     progressDialog.hide()
 
-item = ram.RamItem.fromPath('C:\\Users\\Duduf\\Ramses\\Projects\\FPE\\04-ASSETS\\Characters\\FPE_A_TRISTAN\\FPE_A_TRISTAN_MOD')
-filePath = 'C:\\Users\\Duduf\\Ramses\\Projects\\FPE\\04-ASSETS\\Characters\\FPE_A_TRISTAN\\FPE_A_TRISTAN_MOD\\_published\\FPE_A_TRISTAN_MOD_Tristan.abc'
-step = 'MOD'
-importMod(item, filePath, step)
