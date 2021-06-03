@@ -8,7 +8,10 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QListWidget,
     QListWidgetItem,
     QLabel,
-    QPushButton
+    QPushButton,
+    QWidget,
+    QRadioButton,
+    QLineEdit
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
@@ -56,18 +59,29 @@ class ImportDialog( QDialog ):
         self.projectBox = QComboBox()
         topLayout.addRow( "Project:", self.projectBox )
 
-        self.typeBox = QComboBox()
-        self.typeBox.addItem("Asset")
-        self.typeBox.addItem("Shot")
-        self.typeBox.addItem("Template")
-        self.typeBox.setCurrentIndex(-1)
-        self.typeBox.setEnabled(False)
-        topLayout.addRow( "Type:", self.typeBox )
+        self.typeWidget = QWidget()
+        typeLayout = QVBoxLayout()
+        typeLayout.setContentsMargins(0,0,0,0)
+        self.assetButton = QRadioButton("Asset")
+        typeLayout.addWidget(self.assetButton)
+        self.shotButton = QRadioButton("Shot")
+        typeLayout.addWidget(self.shotButton)
+        self.templateButton = QRadioButton("Template")
+        typeLayout.addWidget(self.templateButton)
+        self.typeWidget.setLayout(typeLayout)
+        self.typeWidget.setEnabled(False)
+        topLayout.addRow( "Type:", self.typeWidget )
 
-        self.actionBox = QComboBox()
-        self.actionBox.addItem("Open Item")
-        self.actionBox.addItem("Import Item")
-        topLayout.addRow( "Action:", self.actionBox )
+        self.actionWidget = QWidget()
+        actionLayout = QVBoxLayout()
+        actionLayout.setContentsMargins(0,0,0,0)
+        self.openButton = QRadioButton("Open Item")
+        self.openButton.setChecked(True)
+        actionLayout.addWidget(self.openButton)
+        self.importButton = QRadioButton("Import Item")
+        actionLayout.addWidget(self.importButton)
+        self.actionWidget.setLayout(actionLayout)
+        topLayout.addRow( "Action:", self.actionWidget )
 
         midLayout.addLayout( topLayout )
 
@@ -79,6 +93,11 @@ class ImportDialog( QDialog ):
         self.groupBox = QComboBox()
         self.groupBox.hide()
         itemLayout.addWidget(self.groupBox)
+        self.itemSearchField = QLineEdit()
+        self.itemSearchField.setPlaceholderText('Search...')
+        self.itemSearchField.setClearButtonEnabled(True)
+        itemLayout.addWidget(self.itemSearchField)
+        self.itemSearchField.hide()
         self.itemList = QListWidget()
         self.itemList.hide()
         itemLayout.addWidget(self.itemList)
@@ -94,8 +113,8 @@ class ImportDialog( QDialog ):
 
         resourcesLayout = QVBoxLayout()
         resourcesLayout.setSpacing(3)
-        resourcesLabel = QLabel("Resource:")
-        resourcesLayout.addWidget(resourcesLabel)
+        self.resourcesLabel = QLabel("Resource:")
+        resourcesLayout.addWidget(self.resourcesLabel)
         self.resourceList = QListWidget()
         resourcesLayout.addWidget(self.resourceList)
         midLayout.addLayout(resourcesLayout)
@@ -104,6 +123,10 @@ class ImportDialog( QDialog ):
         versionsLayout.setSpacing(3)
         self.versionsLabel = QLabel("Version:")
         versionsLayout.addWidget(self.versionsLabel)
+        self.versionSearchField = QLineEdit()
+        self.versionSearchField.setPlaceholderText('Search...')
+        self.versionSearchField.setClearButtonEnabled(True)
+        versionsLayout.addWidget(self.versionSearchField)
         self.versionList = QListWidget()
         versionsLayout.addWidget(self.versionList)
         midLayout.addLayout(versionsLayout)
@@ -129,8 +152,11 @@ class ImportDialog( QDialog ):
 
     def __connectEvents(self):
         self.projectBox.currentIndexChanged.connect( self.__projectChanged )
-        self.typeBox.currentIndexChanged.connect( self.__typeChanged )
-        self.actionBox.currentIndexChanged.connect( self.__actionChanged )
+        self.assetButton.clicked.connect( self.__typeChanged )
+        self.shotButton.clicked.connect( self.__typeChanged )
+        self.templateButton.clicked.connect( self.__typeChanged )
+        self.openButton.clicked.connect( self.__actionChanged )
+        self.importButton.clicked.connect( self.__actionChanged )
         self._cancelButton.clicked.connect( self.reject )
         self._openButton.clicked.connect( self.accept )
         self._importButton.clicked.connect( self.__import )
@@ -139,13 +165,17 @@ class ImportDialog( QDialog ):
         self.resourceList.currentRowChanged.connect( self.__resourceChanged )
         self.versionList.currentRowChanged.connect( self.__versionChanged )
         self.groupBox.currentIndexChanged.connect( self.__groupChanged )
+        self.itemSearchField.textChanged.connect( self.__searchItem )
+        self.versionSearchField.textChanged.connect( self.__searchVersion )
 
     def __loadProjects(self):
         # Load projects
         projects = ramses.projects()
         self.projectBox.clear()
         if projects is None:
-            self.typeBox.setCurrentIndex(-1)
+            self.assetButton.setChecked(False)
+            self.shotButton.setChecked(False)
+            self.templateButton.setChecked(False)
             return
         for project in ramses.projects():
             n = project.name()
@@ -156,20 +186,44 @@ class ImportDialog( QDialog ):
 
     @Slot()
     def __projectChanged(self, index):
-        self.typeBox.setCurrentIndex(-1)
-        self.typeBox.setEnabled(index != -1)
+        self.assetButton.setChecked(False)
+        self.shotButton.setChecked(False)
+        self.templateButton.setChecked(False)
+        self.typeWidget.setEnabled(index != -1)
         if index == -1:
             self._currentProject = None
             return
         self._currentProject = ramses.project( self.projectBox.currentData() )
 
     @Slot()
-    def __typeChanged( self, index ):
+    def __searchItem(self, text):
+        text = text.lower()
+        for i in range(0, self.itemList.count()):
+            item = self.itemList.item(i)
+            item.setHidden(
+                text != '' and text not in item.text().lower()
+                )
+
+    @Slot()
+    def __searchVersion(self, text):
+        text = text.lower()
+        for i in range(0, self.versionList.count()):
+            item = self.versionList.item(i)
+            item.setHidden(
+                text != '' and text not in item.text().lower()
+                )
+
+    @Slot()
+    def __typeChanged( self ):
+        shot = self.shotButton.isChecked()
+        asset = self.assetButton.isChecked()
+        template = self.templateButton.isChecked()
         # adjust UI
-        if index in (0, 1):
+        if shot or asset:
             self.itemLabel.show()
             self.itemList.show()
-            if index == 0:
+            self.itemSearchField.show()
+            if self.assetButton.isChecked():
                 self.itemLabel.setText("Asset:")
                 self.groupBox.show()
             else:
@@ -179,6 +233,7 @@ class ImportDialog( QDialog ):
             self.itemLabel.hide()
             self.itemList.hide()
             self.groupBox.hide()
+            self.itemSearchField.hidey()
         # reinit lists
         self.itemList.clear()
         self.stepList.clear()
@@ -187,10 +242,10 @@ class ImportDialog( QDialog ):
         self.groupBox.clear()
         self._currentItems = []
         self._currentSteps = []
-        if index == -1:
+        if not shot and not asset and not template:
             return
         # Load asset groups and asset steps
-        if index == 0:
+        if asset:
             if self._currentProject is None:
                 return
             groups = self._currentProject.assetGroups()
@@ -203,14 +258,14 @@ class ImportDialog( QDialog ):
             self.groupBox.blockSignals(False)
             self._currentSteps = self._currentProject.steps( ram.StepType.ASSET_PRODUCTION )
         # Load shots and shot steps
-        elif index == 1:
+        elif shot:
             if self._currentProject is None:
                 return
             self._currentItems = self._currentProject.shots()
             self.__updateItems()
             self._currentSteps = self._currentProject.steps( ram.StepType.SHOT_PRODUCTION )
         # Load templates
-        elif index == 2:
+        elif template:
             self._currentSteps = self._currentProject.steps()
 
         # Populate steps
@@ -221,17 +276,21 @@ class ImportDialog( QDialog ):
             self.stepList.addItem(n)
         
     @Slot()
-    def __actionChanged(self, index):
-        if index == 0:
+    def __actionChanged(self):
+        if self.openButton.isChecked():
             self._importButton.hide()
             self._openButton.show()
             self.versionsLabel.setText("Version:")
-        else:
+            self.resourceList.show()
+            self.resourcesLabel.show()
+        else: # Import
             self._importButton.show()
             self._openButton.hide()
             self.versionsLabel.setText("File:")
+            self.resourceList.hide()
+            self.resourcesLabel.hide()
         self.__resourceChanged( self.resourceList.currentRow() )
-
+        
     @Slot()
     def __groupChanged(self, index):
         # Load assets
@@ -265,50 +324,80 @@ class ImportDialog( QDialog ):
     def __updateResources(self):
         self.resourceList.clear()
         self._resourceFiles = []
+        self.versionList.clear()
+        self._currentFiles = []
         if self._currentStep is None:
             return
-        # Shots and Assets
-        if self.typeBox.currentIndex() in (0,1):
-            if self._currentItem is None:
-                return
-            # List resources
-            for resource in self._currentItem.stepFilePaths( self._currentStep ):
-                fileName = os.path.basename(resource)
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
-                if fileInfo is None:
-                    continue
-                res = fileInfo['resource']
-                self._resourceFiles.append( resource )
-                if res != "":
-                    self.resourceList.addItem(res)
-                else:
-                    self.resourceList.addItem("Main")
-        # Templates
+
+        # If open, list resources in wip folder
+        if self.openButton.isChecked():
+            # Shots and Assets
+            if self.assetButton.isChecked() or self.shotButton.isChecked():
+                if self._currentItem is None:
+                    return
+                # List resources
+                for resource in self._currentItem.stepFilePaths( self._currentStep ):
+                    fileName = os.path.basename(resource)
+                    fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
+                    if fileInfo is None:
+                        continue
+                    res = fileInfo['resource']
+                    self._resourceFiles.append( resource )
+                    if res != "":
+                        self.resourceList.addItem(res)
+                    else:
+                        self.resourceList.addItem("Main")
+            # Templates
+            else:
+                # List resources
+                folder = self._currentStep.templatesFolderPath()
+                if folder == '':
+                    return
+                for f in os.listdir( folder ):
+                    fileInfo = ram.RamFileManager.decomposeRamsesFileName(f)
+                    if fileInfo is None:
+                        continue
+                    if fileInfo['project'] != self._currentStep.projectShortName():
+                        continue
+                    if fileInfo['step'] != self._currentStep.shortName():
+                        continue 
+                    res = fileInfo['object'] + ' | ' + fileInfo['resource']
+                    self._resourceFiles.append( ram.RamFileManager.buildPath((
+                        folder,
+                        f
+                    )) )
+                    if res != '':
+                        self.resourceList.addItem(res)
+                    else:
+                        self.resourceList.addItem("Main")
+        # If import, list all files in the publish folder
         else:
-            # List resources
-            folder = self._currentStep.templatesFolderPath()
-            if folder == '':
-                return
-            for f in os.listdir( folder ):
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName(f)
+            files = []
+            if self.assetButton.isChecked() or self.shotButton.isChecked():
+                files = self._currentItem.publishFilePaths( None, self._currentStep )
+            else:
+                files = self._currentStep.templatesPublishFilePaths( )
+
+            for f in files:
+                fileName = os.path.basename( f )
+                fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
                 if fileInfo is None:
                     continue
-                if fileInfo['project'] != self._currentStep.projectShortName():
-                    continue
-                if fileInfo['step'] != self._currentStep.shortName():
-                    continue 
-                res = fileInfo['object'] + ' | ' + fileInfo['resource']
-                self._resourceFiles.append( ram.RamFileManager.buildPath((
-                    folder,
-                    f
-                )) )
-                if res != '':
-                    self.resourceList.addItem(res)
-                else:
-                    self.resourceList.addItem("Main")
+                self._currentFiles.append( f )
+                n = fileInfo['resource']
+                if n == '':
+                    n = "Main"
+                n = n + ' (' + fileInfo['extension'] + ')'
+                i = QListWidgetItem( self.versionList )
+                i.setText(n)
+                i.setToolTip(f)
 
     @Slot()
     def __resourceChanged(self, row):
+        if self.importButton.isChecked():
+            self.__updateResources()
+            return
+
         self._importButton.setEnabled(False)
         if row < 0:
             self._currentResource = ''
@@ -323,42 +412,33 @@ class ImportDialog( QDialog ):
         self.versionList.clear()
         self._currentFiles = []
 
-        if self.typeBox.currentIndex() == 2 and row in range(0, len(self._resourceFiles)):
+        if self.templateButton.isChecked() and row in range(0, len(self._resourceFiles)):
             self._currentItem = ram.RamItem.fromPath( self._resourceFiles[ row ] )
 
         if self._currentItem is None:
             return
-        if self._currentStep is None and self.typeBox.currentIndex() in (0,1):
+        if self._currentStep is None and ( self.assetButton.isChecked() or self.shotButton.isChecked() ):
             return
 
-        # List versions or published files
-        if self.actionBox.currentIndex() == 0: # Open action, list versions
-            if self.typeBox.currentIndex() in (0,1):
-                self._currentFiles = self._currentItem.versionFilePaths(self._currentResource, self._currentStep)
-            else:
-                self._currentFiles = self._currentItem.versionFilePaths()
-            self._currentFiles.reverse()
-            # Add current
-            self.versionList.addItem("Current Version")
-            # Add other versions
-            for f in self._currentFiles:
-                fileName = os.path.basename( f )
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
-                if fileInfo is None:
-                    continue
-                comment = ram.RamMetaDataManager.getComment( f )
-                itemText = fileInfo['state'] + ' | ' + str(fileInfo['version'])
-                if comment != "":
-                    itemText = itemText + ' | ' + comment
-                self.versionList.addItem(itemText)
-        else: # Import Action, list published files
-            if self.typeBox.currentIndex() in (0,1):
-                self._currentFiles = self._currentItem.publishFilePaths( self._currentResource, self._currentStep )
-            else:
-                self._currentFiles = self._currentItem.publishFilePaths( )
-            for f in self._currentFiles:
-                fileName = os.path.basename( f )
-                self.versionList.addItem(fileName)
+        # List versions
+        if self.assetButton.isChecked() or self.shotButton.isChecked():
+            self._currentFiles = self._currentItem.versionFilePaths(self._currentResource, self._currentStep)
+        else:
+            self._currentFiles = self._currentItem.versionFilePaths()
+        self._currentFiles.reverse()
+        # Add current
+        self.versionList.addItem("Current Version")
+        # Add other versions
+        for f in self._currentFiles:
+            fileName = os.path.basename( f )
+            fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
+            if fileInfo is None:
+                continue
+            comment = ram.RamMetaDataManager.getComment( f )
+            itemText = fileInfo['state'] + ' | ' + str(fileInfo['version'])
+            if comment != "":
+                itemText = itemText + ' | ' + comment
+            self.versionList.addItem(itemText)
 
     @Slot()
     def __versionChanged(self, row):
@@ -393,10 +473,12 @@ class ImportDialog( QDialog ):
 
     def getFile(self):
         row = self.versionList.currentRow()
+        l = -1
         # if open (index 0), there's an extra item on top of the list
-        l = - self.actionBox.currentIndex()
+        if self.openButton.isChecked():
+            l = 0
         if row <= l:
-            if self.typeBox.currentIndex() in (0,1):
+            if self.assetButton.isChecked() or self.shotButton.isChecked():
                 file = self._currentItem.stepFilePath(self._currentResource, "ma", self._currentStep)
                 if file != "":
                     return file
@@ -408,9 +490,12 @@ class ImportDialog( QDialog ):
                 resourceRow = self.resourceList.currentRow()
                 if resourceRow >= 0:
                     return self._resourceFiles[ resourceRow ]
+        r = 0
         # if open (index 0), there's an extra item on top of the list
-        r = 1-self.actionBox.currentIndex()
+        if self.openButton.isChecked():
+            r = 1
         return self._currentFiles[row-r]
+
 
 if __name__ == '__main__':
     importDialog = ImportDialog()

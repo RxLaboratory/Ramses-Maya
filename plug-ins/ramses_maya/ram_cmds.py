@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from dumaf import getMayaWindow, getCreateGroup # pylint: disable=import-error,no-name-in-module
+from dumaf import getMayaWindow, getCreateGroup, hasParent # pylint: disable=import-error,no-name-in-module
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
@@ -362,21 +362,44 @@ class RamOpenCmd( om.MPxCommand ):
 
         # Let's show the dialog
         importDialog = ImportDialog(getMayaWindow())
+        # Get some info from current scene
+        currentFilePath = cmds.file( q=True, sn=True )
+        if currentFilePath != '':
+            fileInfo = ram.RamFileManager.decomposeRamsesFilePath( currentFilePath )
+            if fileInfo is not None:
+                project = ramses.project( fileInfo['project'] )
+                ramses.setCurrentProject(project)
+                importDialog.setProject( project )
+        else:
+            # Try to get project from ramses
+            project = ramses.currentProject()
+            if project is not None:
+                importDialog.setProject( project )
         result = importDialog.exec_()
+
         if result == 1: # open
+            # If the current file needs to be saved
+            if cmds.file(q=True, modified=True):
+                sceneName = os.path.basename(currentFilePath)
+                if sceneName == '':
+                    sceneName = 'untitled scene'
+                result = cmds.confirmDialog( message="Save changes to " + sceneName + "?", button=("Save", "Don't Save", "Cancel") )
+                if result == 'Cancel':
+                    return
+                if result == 'Save':
+                    cmds.file( save=True, options="v=1;" )
             # Get the file, check if it's a version
             file = importDialog.getFile()
             if ram.RamFileManager.inVersionsFolder( file ):
                 file = ram.RamFileManager.restoreVersionFile( file )
             # Open
-            cmds.file(file, open=True)
+            cmds.file(file, open=True, force=True)
         elif result == 2: # import
             # Get Data
             item = importDialog.getItem()
             step = importDialog.getStep()
             filePath = importDialog.getFile()
             itemShortName = item.shortName()
-            projectShortName = item.projectShortName()
             stepShortName = step.shortName()
             resource = importDialog.getResource()
             
@@ -388,6 +411,7 @@ class RamOpenCmd( om.MPxCommand ):
                     stepShortName                
                 )
                 return
+
             # We're going to import in a group
             groupName = ''
 
@@ -397,36 +421,32 @@ class RamOpenCmd( om.MPxCommand ):
             # If it's an asset, let's get the asset group
             itemType = item.itemType()
             if itemType == ram.ItemType.ASSET:
-                groupName = projectShortName + '_A_' + item.group()
-                itemName = projectShortName + '_A_' + itemShortName
+                groupName = 'RamASSETS_' + item.group()
                 if re.match(regex, itemShortName):
-                    itemShortName = 'A' + itemShortName
+                    itemShortName = ram.ItemType.ASSET + itemShortName
             # If it's a shot, let's store in the shots group
             elif itemType == ram.ItemType.SHOT:
-                groupName = projectShortName + '_S_Shots'
-                itemName = projectShortName + '_S_' + itemShortName
+                groupName = 'RamSHOTS'
                 if re.match(regex, itemShortName):
-                    itemShortName = 'S' + itemShortName
+                    itemShortName = ram.ItemType.SHOT + itemShortName
             # If it's a general item, store in a group named after the step
             else:
                 itemShortName = resource
-                groupName = projectShortName + '_G_' + stepShortName
-                itemName = projectShortName + '_G_' + itemShortName
+                groupName = 'RamITEMS'
                 if re.match(regex, itemShortName):
-                    itemShortName = 'G' + itemShortName
-
+                    itemShortName = ram.ItemType.GEENERAL + itemShortName
 
             groupName = getCreateGroup(groupName)
             # Import the file
             newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
             # Add a group for the imported asset
-            itemGroupName = cmds.group(name= itemName, em=True, parent=groupName)
+            itemGroupName = getCreateGroup( itemShortName, groupName)
             for node in newNodes:
-                # when parenting, some shapes won't exist anymore
+                # When parenting the root, children won't exist anymore
                 if not cmds.objExists(node):
                     continue
-                # only the transform nodes
-                if cmds.nodeType(node) == 'transform':
+                # only the root transform nodes
+                if cmds.nodeType(node) == 'transform' and not hasParent(node):
                     cmds.parent(node, itemGroupName)
 
 class RamOpenTemplateCmd( om.MPxCommand ):
@@ -506,7 +526,6 @@ class RamOpenRamsesCmd( om.MPxCommand ):
         ramses.showClient()
         
 cmds_classes = (
-    RamOpenCmd,
     RamSaveCmd,
     RamSaveVersionCmd,
     RamRetrieveVersionCmd,

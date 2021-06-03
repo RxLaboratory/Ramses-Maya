@@ -1,14 +1,43 @@
-import sys, tempfile
+import sys, tempfile, re
 import maya.cmds as cmds # pylint: disable=import-error
 from PySide2.QtWidgets import ( # pylint: disable=import-error
     QApplication
 )
 
-def getCreateGroup( groupName ):
-    n = '|' + groupName
-    if cmds.objExists(n):
-        return n
-    cmds.group( name= groupName, em=True )
+def lockTransform( transformNode ):
+    if cmds.nodeType(transformNode) != 'transform':
+        return
+    for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
+        cmds.setAttr(transformNode + a, lock=True )
+
+def getNodeBaseName( node ):
+    nodeName = node.split('|')[-1]
+    nodeName = nodeName.split(':')[-1]
+    return nodeName
+
+def getCreateGroup( groupName, parentNode=None ):
+    # Check if exists
+    if parentNode is None:
+        if groupName[0] != '|':
+            groupName = '|' + groupName
+        if cmds.objExists(groupName) and isGroup(groupName):
+            return groupName
+    else:
+        # Get parentNode full path
+        parentNode = cmds.ls(parentNode, long=True)[0]
+        c = cmds.listRelatives(parentNode, children=True, type='transform')
+        if c is not None:
+            # May end with a number
+            reStr = '^' + re.escape(groupName) + '\\d*$'
+            regex = re.compile(reStr)
+            for cn in c:
+                if re.match( regex, cn ):
+                    return parentNode + '|' + cn
+    # Create the group
+    n = cmds.group( name= groupName, em=True )
+    if parentNode is not None:
+        n = cmds.parent( n, parentNode )[0]
+        n = parentNode + '|' + n
     return n
 
 def getMayaWindow():
