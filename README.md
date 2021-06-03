@@ -34,8 +34,8 @@ et possibilité d'en ajouter
 #### Asset steps
 
 - [x] Mode
-  - Publish abc
-  - ajouter publish .mb pour les viewport shaders (cf publish setup actuel)
+  - [x] Publish abc
+  - [x] ajouter publish .mb pour les viewport shaders (cf publish setup actuel)
 - [ ] Setup
   - [ ] Import/update le abc de la modé
   - [ ] Publish .ma ou .mb
