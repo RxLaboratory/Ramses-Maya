@@ -96,7 +96,7 @@ def importMod(item, filePath, step):
         # Lock transform
         children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
         for child in children:
-            lockTransform(child)
+            maf.lockTransform(child)
 
         # Import shaders
         importShaders(rootCtrl, 'vp', filePath, itemShortName)

@@ -1,5 +1,6 @@
+import os
 import maya.cmds as cmds # pylint: disable=import-error
-import dumaf as maf # pylint: disable=import-error
+import dumaf as maf
 import ramses as ram # pylint: disable=import-error
 
 # mode is 'vp' for viewport, 'rdr' for rendering
@@ -108,8 +109,21 @@ def importShaders(node, mode, filePath, itemShortName=''):
         ram.log("I can't find any geometry to apply the shaders, sorry.")
         return
 
-    # Reference the shader file
-    cmds.file(shaderFile,r=True,mergeNamespacesOnClash=True,namespace=itemShortName)
+    # Reinit the shaders on everything (in case we're just reloading the shaders)
+    cmds.select(node,r=True)
+    cmds.sets(e=True,forceElement='initialShadingGroup')
+
+    # If already referenced, get the existing reference and clean it
+    isAlreadyReferenced = False
+    try:
+        cmds.referenceQuery( shaderFile, namespace=True )
+        isAlreadyReferenced = True
+    except:
+        pass
+
+    if not isAlreadyReferenced:
+        # Reference the shader file
+        cmds.file(shaderFile,r=True,mergeNamespacesOnClash=True,namespace=itemShortName)
 
     for mesh in meshes:
         # Get the transform node (which has the name we're looking for)
