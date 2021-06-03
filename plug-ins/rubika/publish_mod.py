@@ -1,4 +1,4 @@
-import tempfile, os
+import os
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
@@ -8,7 +8,6 @@ from .utils_shaders import exportShaders
 def publishMod(item, filePath, step):
 
     # Checks
-    step = ram.RamObject.getObjectShortName(step)
     if step != 'MOD':
         return
 
@@ -21,7 +20,6 @@ def publishMod(item, filePath, step):
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
     progressDialog.setText("Publishing geometry")
-    cmds.refresh()
 
     # Options
     removeHidden = publishModDialog.removeHidden()
@@ -202,12 +200,6 @@ def publishMod(item, filePath, step):
         # Parent the node
         cmds.parent(node, controller)
 
-        # Export viewport shaders
-        shaderFilePath = exportShaders(node, 'vp', publishFolder, fileInfo.copy())
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( shaderFilePath, version )
-
         # Save and create Abc
         # Generate file path
         abcFileInfo = fileInfo.copy()
@@ -238,6 +230,12 @@ def publishMod(item, filePath, step):
         # Update Ramses Metadata (version)
         ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
         ram.RamMetaDataManager.setVersion( abcFilePath, version )
+
+        # Export viewport shaders
+        shaderFilePath = exportShaders(node, 'vp', publishFolder, fileInfo.copy(), abcFilePath)
+        # Update Ramses Metadata (version)
+        ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
+        ram.RamMetaDataManager.setVersion( shaderFilePath, version )
 
         publishedNodes.append(node)
 
