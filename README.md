@@ -37,10 +37,12 @@ et possibilité d'en ajouter
   - [x] Publish abc
   - [x] ajouter publish .mb pour les viewport shaders (cf publish setup actuel)
 - [ ] Setup
-  - [ ] Import/update le abc de la modé
+  - [x] Import modé
+  - [ ] Update modé
   - [ ] Publish .ma ou .mb
 - [ ] Shading
-  - [ ] Import le abc de la modé
+  - [x] Import modé
+  - [ ] Update modé
   - [ ] Publish .mb
 
 #### Shots steps
