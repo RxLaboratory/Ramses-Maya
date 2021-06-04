@@ -49,7 +49,7 @@ class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
     syntax = om.MSyntax()
     syntax.addFlag('-c', "-comment", om.MSyntax.kString )
-    syntax.addFlag('-sc', "-set_comment", om.MSyntax.kBoolean )
+    syntax.addFlag('-sc', "-setComment", om.MSyntax.kBoolean )
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -150,6 +150,13 @@ class RamSaveCmd( om.MPxCommand ):
 
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
+    syntax = om.MSyntax()
+    syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
+    syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
+
+    # Defaults
+    updateSatus = True
+    publish = False
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -160,8 +167,20 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
+        return RamSaveVersionCmd.syntax
+
+    def parseArgs(self, args):
+        parser = om.MArgParser( RamSaveVersionCmd.syntax, args)
+
+        try:
+            self.updateSatus = parser.flagArgumentBool('-us', 0)
+        except:
+            self.updateSatus = True
+
+        try:
+            self.publish = parser.flagArgumentBool('-p', 0)
+        except:
+            self.publish = False
 
     def doIt(self, args):
         # The current maya file
@@ -177,6 +196,8 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if not saveFilePath:
             return
 
+        self.parseArgs(args)
+
         # Update status
         saveFileName = os.path.basename( saveFilePath )
         saveFileDict = ram.RamFileManager.decomposeRamsesFileName( saveFileName )
@@ -186,23 +207,25 @@ class RamSaveVersionCmd( om.MPxCommand ):
             cmds.warning( ram.Log.NotAnItem )
             cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
         currentStatus = currentItem.currentStatus( currentStep )
-        # Show status dialog
-        statusDialog = StatusDialog(getMayaWindow())
-        statusDialog.setOffline(not settings.online)
-        if currentStatus is not None:
-            statusDialog.setStatus( currentStatus )
-        update = statusDialog.exec_()
-        if update == 0:
-            return
         status = None
-        publish = False
-        if update == 1:
-            status = ram.RamStatus(
-                statusDialog.getState(),
-                statusDialog.getComment(),
-                statusDialog.getCompletionRatio()
-            )
-            publish = statusDialog.isPublished()
+
+        if self.updateSatus:
+            # Show status dialog
+            statusDialog = StatusDialog(getMayaWindow())
+            statusDialog.setOffline(not settings.online)
+            statusDialog.setPublish( self.publish )
+            if currentStatus is not None:
+                statusDialog.setStatus( currentStatus )
+            update = statusDialog.exec_()
+            if update == 0:
+                return
+            if update == 1:
+                status = ram.RamStatus(
+                    statusDialog.getState(),
+                    statusDialog.getComment(),
+                    statusDialog.getCompletionRatio()
+                )
+                self.publish = statusDialog.isPublished()
 
         # Set the save name and save
         cmds.file( rename = saveFilePath )
@@ -235,8 +258,10 @@ class RamSaveVersionCmd( om.MPxCommand ):
         cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenterBot', fade=True )
 
         # Publish
-        if publish:
-            ram.RamFileManager.copyToPublish( saveFilePath )
+        if self.publish:
+            publishedFilePath = ram.RamFileManager.copyToPublish( saveFilePath )
+            ram.RamMetaDataManager.setVersion( publishedFilePath, newVersion )
+            ram.RamMetaDataManager.setVersionFilePath( publishedFilePath, backupFilePath )
             ramses.publish( currentItem, saveFilePath, currentStep)
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
