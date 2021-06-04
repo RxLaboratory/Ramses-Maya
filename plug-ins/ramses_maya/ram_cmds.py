@@ -168,7 +168,7 @@ class RamSaveCmd( om.MPxCommand ):
             ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because the previous version was ' + incrementReason )
             ram.log("I've incremented the version for you because it was " + incrementReason)
 
-class RamSaveAsCmd( om.MPxCommand ):
+class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement browse button
     name = "ramSaveAs"
     syntax = om.MSyntax()
 
@@ -193,8 +193,34 @@ class RamSaveAsCmd( om.MPxCommand ):
         item = ram.RamItem.fromPath( currentFilePath )
 
         saveAsDialog = SaveAsDialog(getMayaWindow())
+        if project is not None:
+            saveAsDialog.setProject( project )
+        if item is not None:
+            saveAsDialog.setItem(item)
+        if step is not None:
+            saveAsDialog.setStep( step )
         if not saveAsDialog.exec_():
             return
+
+        filePath = saveAsDialog.getFilePath()
+        if filePath == '':
+            return
+        # Create folder
+        folder = os.path.dirname(filePath)
+        fileName = os.path.basename(filePath)
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+        # Check if file exists
+        if os.path.isfile( filePath ):
+            result = cmds.confirmDialog( message="The corresponding file already exits. Do you want to overwrite it?", button=("Overwrite and Save", "Cancel") )
+            if result == 'Cancel':
+                return
+
+        cmds.file(rename = filePath )
+        cmds.file( save=True, options="v=1;", f=True )
+
+        ram.log( "Scene saved as: " + filePath )
+        cmds.inViewMessage( msg='Scene saved as: <hl>' + fileName + '</hl>.', pos='midCenter', fade=True )
 
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
