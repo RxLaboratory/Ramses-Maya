@@ -104,7 +104,7 @@ class PublishTemplateDialog( QDialog ):
         # Load projects
         projects = ramses.projects()
         self.projectBox.clear()
-        if projects is None:
+        if len(projects) == 0:
             self.setOffline()
             self.__loadSteps( )
             return
