@@ -143,6 +143,9 @@ class StatusDialog( QDialog ):
         self.completionBox.setVisible(online)
         self.commentEdit.setVisible(online)
 
+    def setPublish(self, pub=True):
+        self.publishBox.setChecked(pub)
+
 if __name__ == '__main__':
     statusDialog = StatusDialog()
     ok = statusDialog.exec_()
