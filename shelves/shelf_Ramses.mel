@@ -129,7 +129,7 @@ global proc shelf_Ramses () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Save new version" 
+        -annotation "Incremental Save" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
@@ -182,7 +182,7 @@ global proc shelf_Ramses () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramSaveVersion( updateStatus=False )" 
+        -command "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramSaveVersion( updateStatus=True )" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1
