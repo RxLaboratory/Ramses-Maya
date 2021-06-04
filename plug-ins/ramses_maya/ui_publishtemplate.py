@@ -104,7 +104,7 @@ class PublishTemplateDialog( QDialog ):
         # Load projects
         projects = ramses.projects()
         self.projectBox.clear()
-        if projects is None:
+        if len(projects) == 0:
             self.setOffline()
             self.__loadSteps( )
             return
@@ -223,7 +223,7 @@ class PublishTemplateDialog( QDialog ):
         if n == "":
             n = step.shortName()
         self.stepBox.addItem(n, step.shortName())
-        self.stepBox.setCurrentIndex( self.projectBox.count() - 1)
+        self.stepBox.setCurrentIndex( self.stepBox.count() - 1)
         
     def setOffline(self, offline=True):
         online = not offline
