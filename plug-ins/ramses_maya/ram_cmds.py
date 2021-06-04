@@ -334,15 +334,21 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         publishDialog = PublishTemplateDialog(getMayaWindow())
         if not settings.online:
             publishDialog.setOffline()
+
         # Set the project and step
-        project = ramses.currentProject()
-        step = None
-        if project is None:
-            # Try to get from current file
+        project = None
+        step = None        
+        if fileInfo is not None:
             project = ramses.project( fileInfo['project'] )
+            ramses.setCurrentProject( project )
+        # Try to get the current project
+        if project is None:
+            project = ramses.currentProject()
+        # Set
         if project is not None:
             publishDialog.setProject( project )
-            step = project.step(fileInfo['step'])
+            if fileInfo is not None:
+                step = project.step(fileInfo['step'])
             if step is not None:
                 publishDialog.setStep( step )
         

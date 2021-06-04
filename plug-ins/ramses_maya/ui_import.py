@@ -449,6 +449,9 @@ class ImportDialog( QDialog ):
         self.done(2)
 
     def setProject(self, project):
+        if project is None:
+            self.projectBox.setCurrentIndex(-1)
+            return
         for i in range(self.projectBox.count()):
             if self.projectBox.itemData(i) == project.shortName():
                 self.projectBox.setCurrentIndex(i)
