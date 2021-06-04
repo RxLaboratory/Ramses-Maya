@@ -4,13 +4,14 @@ from datetime import datetime, timedelta
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
-from dumaf import getMayaWindow, getCreateGroup, hasParent # pylint: disable=import-error,no-name-in-module
+from dumaf import getMayaWindow, getCreateGroup, hasParent
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
 from .ui_publishtemplate import PublishTemplateDialog # pylint: disable=import-error,no-name-in-module
 from .ui_comment import CommentDialog # pylint: disable=import-error,no-name-in-module
 from .ui_import import ImportDialog # pylint: disable=import-error,no-name-in-module
+from .ui_saveas import SaveAsDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -44,6 +45,25 @@ def getSaveFilePath( filePath ):
         return None
 
     return saveFilePath
+
+def getCurrentProject( filePath ):
+    fileInfo = ram.RamFileManager.decomposeRamsesFilePath(filePath)
+    # Set the project and step
+    project = None
+    if fileInfo is not None:
+        project = ramses.project( fileInfo['project'] )
+        ramses.setCurrentProject( project )
+    # Try to get the current project
+    if project is None:
+        project = ramses.currentProject()
+
+    return project
+
+def getStep( filePath ):
+    project = getCurrentProject( filePath )
+    fileInfo = ram.RamFileManager.decomposeRamsesFilePath(filePath)
+    if fileInfo is not None and project is not None:
+        return project.step( fileInfo['step'] )
 
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
@@ -147,6 +167,34 @@ class RamSaveCmd( om.MPxCommand ):
         elif increment:
             ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because the previous version was ' + incrementReason )
             ram.log("I've incremented the version for you because it was " + incrementReason)
+
+class RamSaveAsCmd( om.MPxCommand ):
+    name = "ramSaveAs"
+    syntax = om.MSyntax()
+
+    def __init__(self):
+        om.MPxCommand.__init__(self)
+
+    @staticmethod
+    def createCommand():
+        return RamSaveAsCmd()
+
+    @staticmethod
+    def createSyntax():
+        return RamSaveAsCmd.syntax
+
+    def doIt(self, args):
+        # Get current info
+        currentFilePath = cmds.file( q=True, sn=True )
+
+        # Info
+        project = getCurrentProject( currentFilePath )
+        step = getStep( currentFilePath )
+        item = ram.RamItem.fromPath( currentFilePath )
+
+        saveAsDialog = SaveAsDialog(getMayaWindow())
+        if not saveAsDialog.exec_():
+            return
 
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
@@ -328,7 +376,6 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
         # Get info from the current file
         currentFilePath = cmds.file( q=True, sn=True )
-        fileInfo = ram.RamFileManager.decomposeRamsesFilePath( currentFilePath )
 
         # Prepare the dialog
         publishDialog = PublishTemplateDialog(getMayaWindow())
@@ -336,21 +383,13 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             publishDialog.setOffline()
 
         # Set the project and step
-        project = None
-        step = None        
-        if fileInfo is not None:
-            project = ramses.project( fileInfo['project'] )
-            ramses.setCurrentProject( project )
-        # Try to get the current project
-        if project is None:
-            project = ramses.currentProject()
+        project = getCurrentProject( currentFilePath )
+        step = getStep( currentFilePath )
         # Set
         if project is not None:
             publishDialog.setProject( project )
-            if fileInfo is not None:
-                step = project.step(fileInfo['step'])
-            if step is not None:
-                publishDialog.setStep( step )
+        if step is not None:
+            publishDialog.setStep( step )
         
         if publishDialog.exec_():
             # save as template
@@ -558,6 +597,7 @@ class RamOpenRamsesCmd( om.MPxCommand ):
         
 cmds_classes = (
     RamSaveCmd,
+    RamSaveAsCmd,
     RamSaveVersionCmd,
     RamRetrieveVersionCmd,
     RamPublishTemplateCmd,
