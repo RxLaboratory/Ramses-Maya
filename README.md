@@ -38,11 +38,11 @@ et possibilité d'en ajouter
   - [x] ajouter publish .mb pour les viewport shaders (cf publish setup actuel)
 - [ ] Setup
   - [x] Import modé
-  - [ ] Update modé
+  - [x] Update modé
   - [ ] Publish .ma ou .mb
 - [ ] Shading
   - [x] Import modé
-  - [ ] Update modé
+  - [x] Update modé
   - [ ] Publish .mb
 
 #### Shots steps

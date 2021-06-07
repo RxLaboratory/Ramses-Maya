@@ -17,8 +17,6 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
 class PublishModDialog( QDialog ):
 
     def __init__(self, parent=None):
-        if parent is None:
-            parent = getMayaWindow()
         super(PublishModDialog, self).__init__(parent)
         self.__setupUi()
         self.__connectEvents()

@@ -1,5 +1,5 @@
 import re, os
-import maya.cmds as cmds
+import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
 from .utils_shaders import importShaders
@@ -40,6 +40,10 @@ def importMod(item, filePath, step):
 
     # Get the Item Group
     itemGroup = maf.getCreateGroup( itemShortName, assetGroup )
+
+    # We need to use alembic
+    if maf.safeLoadPlugin("AbcImport"):
+        ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # Import the file
     progressDialog.setText("Importing file...")
@@ -83,8 +87,12 @@ def importMod(item, filePath, step):
 
         # Store Ramses Data!
         setRamsesManaged( rootCtrl )
-        setRamsesAttr( rootCtrl, RamsesAttribute.GEO_FILE, filePath, 'string')
-        setRamsesAttr( rootCtrl, RamsesAttribute.GEO_TIME, timestamp, 'long')
+        setRamsesAttr( rootCtrl, RamsesAttribute.GEO_FILE, filePath, 'string' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.GEO_TIME, timestamp, 'long' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.STEP, step, 'string' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.ITEM, item.shortName(), 'string' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.ITEM_TYPE, itemType, 'string' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.ASSET_GROUP, item.group(), 'string' )
 
         # Lock transform
         children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
@@ -93,8 +101,7 @@ def importMod(item, filePath, step):
 
         # Import shaders
         importShaders(rootCtrl, 'vp', filePath, itemShortName)
-        
-
 
     progressDialog.hide()
+    return rootCtrl
 

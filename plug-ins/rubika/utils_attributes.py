@@ -1,7 +1,13 @@
 import maya.cmds as cmds # pylint: disable=import-error
+import dumaf as maf # pylint: disable=import-error
+
 
 class RamsesAttribute():
     MANAGED = 'ramsesManaged'
+    STEP = 'ramsesStep'
+    ITEM = 'ramsesItem'
+    ASSET_GROUP = 'ramsesAssetGroup'
+    ITEM_TYPE = 'ramsesItemType'
     GEO_FILE = 'ramsesGeoFilePath'
     GEO_TIME = 'ramsesGeoTimeStamp'
     SHADING_TYPE = 'ramsesShadingType'
@@ -27,5 +33,31 @@ def setRamsesAttr( node, attr, value, t):
     # Lock
     cmds.setAttr( node + '.' + attr, lock=True )
 
+def getRamsesAttr( node, attr):
+    if attr not in cmds.listAttr(node):
+        return None
+    return cmds.getAttr(node + '.' + attr)
+
 def setRamsesManaged(node, managed=True):
     setRamsesAttr( node, RamsesAttribute.MANAGED, True, 'bool' )
+
+def isRamsesManaged(node):
+    return getRamsesAttr( node, RamsesAttribute.MANAGED )
+
+def listRamsesNodes():
+    # Scan all transform nodes
+    transformNodes = cmds.ls(type='transform', long=True)
+    nodes = []
+
+    progressDialog = maf.ProgressDialog()
+    progressDialog.show()
+    progressDialog.setText("Scanning Scene for Ramses Nodes")
+    progressDialog.setMaximum(len(nodes))
+
+    for node in transformNodes:
+        progressDialog.increment()
+        if isRamsesManaged(node):
+            nodes.append(node)
+
+    progressDialog.hide()
+    return nodes
