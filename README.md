@@ -11,6 +11,12 @@
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
 
+## NOTES / DOC
+
+### Required steps (at least)
+
+- MOD - Modelisation
+- RIG - Rigging
 
 ## TODO
 
