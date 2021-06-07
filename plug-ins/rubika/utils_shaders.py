@@ -2,6 +2,7 @@ import os
 import maya.cmds as cmds # pylint: disable=import-error
 import dumaf as maf
 import ramses as ram # pylint: disable=import-error
+from .utils_attributes import * # pylint: disable=import-error
 
 # mode is 'vp' for viewport, 'rdr' for rendering
 def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFilePath=''): 
@@ -101,7 +102,7 @@ def importShaders(node, mode, filePath, itemShortName=''):
     shaderFile = shaderData['shaderFilePath']
     if not os.path.isfile(shaderFile):
         ram.log("I can't find the shader file, sorry. It should be there: " + shaderFile)
-        return 
+        return
     
     # For all mesh
     meshes = cmds.listRelatives( node, ad=True, type='mesh', f=True)
@@ -149,4 +150,11 @@ def importShaders(node, mode, filePath, itemShortName=''):
             cmds.setAttr(mesh + '.aiOpaque', 0)
 
     cmds.select(clear=True)
-        
+
+    # Shading Data
+    timestamp = os.path.getmtime( shaderFile )
+
+    setRamsesManaged( node )
+    setRamsesAttr( node, RamsesAttribute.SHADING_TYPE, mode, 'string')
+    setRamsesAttr( node, RamsesAttribute.SHADING_FILE, shaderFile, 'string')
+    setRamsesAttr( node, RamsesAttribute.SHADING_TIME, timestamp, 'long')

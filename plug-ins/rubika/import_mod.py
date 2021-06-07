@@ -3,6 +3,7 @@ import maya.cmds as cmds
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
 from .utils_shaders import importShaders
+from .utils_attributes import * # pylint: disable=import-error
 
 def importMod(item, filePath, step):
 
@@ -79,19 +80,11 @@ def importMod(item, filePath, step):
         # Adjust root object
         cmds.setAttr(rootCtrl+'.useOutlinerColor',1)
         cmds.setAttr(rootCtrl+'.outlinerColor',0.392,0.863,1)
+
         # Store Ramses Data!
-        # Source file
-        cmds.addAttr(rootCtrl,ln="ramSourceFilePath",dt="string")
-        cmds.setAttr(rootCtrl+'.ramSourceFilePath',filePath,type='string')
-        cmds.setAttr(rootCtrl+'.ramSourceFilePath', lock=True )
-        cmds.addAttr(rootCtrl,ln='ramTimeStamp',at='long')
-        cmds.setAttr(rootCtrl+'.ramTimeStamp', timestamp)
-        cmds.setAttr(rootCtrl+'.ramTimeStamp', lock=True )
-        # Shading
-        cmds.addAttr(rootCtrl,ln="ramShading",dt="string")
-        cmds.setAttr(rootCtrl+'.ramShading','vp',type='string')
-        cmds.setAttr(rootCtrl+'.ramShading', lock=True )
-        cmds.addAttr(rootCtrl,ln="ramShadingFilePath",dt="string")
+        setRamsesManaged( rootCtrl )
+        setRamsesAttr( rootCtrl, RamsesAttribute.GEO_FILE, filePath, 'string')
+        setRamsesAttr( rootCtrl, RamsesAttribute.GEO_TIME, timestamp, 'long')
 
         # Lock transform
         children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
@@ -100,6 +93,7 @@ def importMod(item, filePath, step):
 
         # Import shaders
         importShaders(rootCtrl, 'vp', filePath, itemShortName)
+        
 
 
     progressDialog.hide()
