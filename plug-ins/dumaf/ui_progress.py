@@ -23,8 +23,8 @@ class ProgressDialog( QMainWindow ):
         self.__connectEvents()
 
     def __setupUi(self):
-        self.setWindowTitle( "Working..." )
-        self.setMinimumWidth( 250 )
+        self.setWindowTitle( "Ramses is Working..." )
+        self.setMinimumWidth( 300 )
         self.setMaximumHeight(50)
 
         mainLayout = QVBoxLayout()
