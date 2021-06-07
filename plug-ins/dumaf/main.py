@@ -1,8 +1,26 @@
 import sys, tempfile, re
 import maya.cmds as cmds # pylint: disable=import-error
-from PySide2.QtWidgets import ( # pylint: disable=import-error
+from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-in-module
     QApplication
 )
+
+
+def snapNodeTo( nodeFrom, nodeTo):
+    prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)
+    if prevParent is not None:
+        prevParent = prevParent[0]
+    nodeFrom = cmds.parent( nodeFrom, nodeTo, relative = True )[0] 
+    # Maya, the absolute path please...
+    nodeFrom = nodeTo + '|' + nodeFrom
+
+    if prevParent is not None:
+        nodeFrom = cmds.parent( nodeFrom, prevParent )[0]
+        # Maya, the absolute path please...
+        return prevParent + '|' + nodeFrom
+    
+    nodeFrom = cmds.parent( nodeFrom, world=True)[0]
+    # Maya, the absolute path please...
+    return '|' + nodeFrom
 
 def lockTransform( transformNode ):
     if cmds.nodeType(transformNode) != 'transform':
