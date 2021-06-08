@@ -1,3 +1,5 @@
+import os
+
 from .utils_shaders import exportShaders
 from .utils_nodes import getPublishNodes
 from .utils_items import getFileInfo, getPublishFolder
@@ -30,7 +32,7 @@ def publishShaders( item, filePath, step, mode):
         return
 
     numNodes = len(nodes)
-    progressDialog.setMaximum(numNodes + 2)
+    progressDialog.setMaximum(numNodes + 1)
     progressDialog.setText("Preparing")
     progressDialog.increment()
 
@@ -45,7 +47,7 @@ def publishShaders( item, filePath, step, mode):
     publishFolder = getPublishFolder(item, step)
     if publishFolder == '':
         return
-    ram.log( "I'm publishing geometry in " + publishFolder )
+    ram.log( "I'm publishing the shaders in " + publishFolder )
 
     for node in nodes:
         progressDialog.setText("Publishing: " + node)
@@ -81,4 +83,15 @@ def publishShaders( item, filePath, step, mode):
         ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
         ram.RamMetaDataManager.setVersion( shaderFilePath, version )
 
-        
+    progressDialog.setText("Cleaning...")
+
+    # Re-Open initial scene
+    cmds.file(filePath,o=True,f=True)
+
+    # Remove temp file
+    if os.path.isfile(tempFile):
+        os.remove(tempFile)
+
+    ram.log("I've published these assets:")
+
+    progressDialog.hide()

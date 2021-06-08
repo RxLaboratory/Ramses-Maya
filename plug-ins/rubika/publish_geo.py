@@ -252,8 +252,3 @@ def publishGeo(item, filePath, step, shaderMode):
     cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenter', fade=True )
 
     progressDialog.hide()
-
-if __name__ == "__main__":
-    currentScene = cmds.file( q=True, sn=True )
-    item = ram.RamItem.fromPath(currentScene)
-    publishMod(item, currentScene, ram.RamStep('MOD', 'MOD') )

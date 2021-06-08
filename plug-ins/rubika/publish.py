@@ -19,22 +19,27 @@ def publishSorter(item, filePath, step):
                     geo = True
                 if pipeType == 'vpShaders':
                     vpShaders = True
+                if pipeType == 'rdrShaders':
+                    rdrShaders = True
 
         if geo:
             ram.log( "I'm publishing the geometry." )
             if vpShaders:
                 publishGeo( item, filePath, step, 'vp' )
-            if rdrShaders:
+            elif rdrShaders:
                 publishGeo( item, filePath, step, 'rdr' )
-        elif vpShaders:
-            ram.log( "I'm publishing the viewport shaders." )
-            publishShaders( item, filePath, step, 'vp' )
-        if rdrShaders:
-            ram.log( "I'm publishing the render shaders." )
-            publishShaders( item, filePath, step, 'rdr' )
+            else:
+                publishGeo( item, filePath, step, '' )
+        else:
+            if vpShaders:
+                ram.log( "I'm publishing the viewport shaders." )
+                publishShaders( item, filePath, step, 'vp' )
+            if rdrShaders:
+                ram.log( "I'm publishing the render shaders." )
+                publishShaders( item, filePath, step, 'rdr' )
 
     else:
         step = ram.RamObject.getObjectShortName(step)
         if step == 'MOD':
             ram.log( "I'm publishing the Modeling step." )
-            publishGeo( item, filePath, step, True)
+            publishGeo( item, filePath, step, 'vp')
