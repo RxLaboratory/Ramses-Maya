@@ -233,7 +233,7 @@ class ImportDialog( QDialog ):
             self.itemLabel.hide()
             self.itemList.hide()
             self.groupBox.hide()
-            self.itemSearchField.hidey()
+            self.itemSearchField.hide()
         # reinit lists
         self.itemList.clear()
         self.stepList.clear()
@@ -294,7 +294,7 @@ class ImportDialog( QDialog ):
     @Slot()
     def __groupChanged(self, index):
         # Load assets
-        self._currentItems = self._currentProject.assets( self.groupBox.currentData() )
+        self._currentItems = self._currentProject.assets( self.groupBox.itemData( index ) )
         self.__updateItems()
 
     def __updateItems(self):
@@ -336,7 +336,8 @@ class ImportDialog( QDialog ):
                 if self._currentItem is None:
                     return
                 # List resources
-                for resource in self._currentItem.stepFilePaths( self._currentStep ):
+                resources = self._currentItem.stepFilePaths( self._currentStep )
+                for resource in resources:
                     fileName = os.path.basename(resource)
                     fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
                     if fileInfo is None:
@@ -347,6 +348,8 @@ class ImportDialog( QDialog ):
                         self.resourceList.addItem(res)
                     else:
                         self.resourceList.addItem("Main")
+                        self._openButton.setEnabled(True)
+                        self._currentResource = ""               
             # Templates
             else:
                 # List resources
@@ -370,6 +373,8 @@ class ImportDialog( QDialog ):
                         self.resourceList.addItem(res)
                     else:
                         self.resourceList.addItem("Main")
+                        self._openButton.setEnabled(True)
+                        self._currentResource = ""
         # If import, list all files in the publish folder
         else:
             files = []
@@ -498,7 +503,6 @@ class ImportDialog( QDialog ):
         if self.openButton.isChecked():
             r = 1
         return self._currentFiles[row-r]
-
 
 if __name__ == '__main__':
     importDialog = ImportDialog()
