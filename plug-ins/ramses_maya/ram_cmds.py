@@ -267,7 +267,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        if not saveFilePath:
+        if saveFilePath == '':
             return
 
         self.parseArgs(args)
@@ -508,77 +508,79 @@ class RamOpenCmd( om.MPxCommand ):
             # Get Data
             item = importDialog.getItem()
             step = importDialog.getStep()
-            filePath = importDialog.getFile()
+            filePaths = importDialog.getFiles()
             itemShortName = item.shortName()
             resource = importDialog.getResource()
-
-            # If file path is empty, let's import the default
-            if filePath == "":
-                publishFolder = item.publishFolderPath( step )
-                publishFileName = ram.RamFileManager.buildRamsesFileName(
-                    item.projectShortName(),
-                    step.shortName(),
-                    '',
-                    item.itemType(),
-                    item.shortName()
-                )
-                filePath = ram.RamFileManager.buildPath((
-                    publishFolder,
-                    publishFileName
-                ))
-                testFilePath = filePath + '.ma'
-                if not os.path.isfile(testFilePath):
-                    testFilePath = filePath + '.mb'
-                    if not os.path.isfile(testFilePath):
-                        ram.log("Sorry, I can't find anything to import...")
-                        return
-                filePath = testFilePath
 
             # Let's import only if there's no user-defined import scripts
             if len( ramses.importScripts ) > 0:
                 ramses.importItem(
                     item,
-                    filePath,
+                    filePaths,
                     step                
                 )
                 return
 
-            # We're going to import in a group
-            groupName = ''
+            for filePath in filePaths:
 
-            # Prepare names
-            # Check if the short name is not made only of numbers
-            regex = re.compile('^\\d+$')
-            # If it's an asset, let's get the asset group
-            itemType = item.itemType()
-            if itemType == ram.ItemType.ASSET:
-                groupName = 'RamASSETS_' + item.group()
-                if re.match(regex, itemShortName):
-                    itemShortName = ram.ItemType.ASSET + itemShortName
-            # If it's a shot, let's store in the shots group
-            elif itemType == ram.ItemType.SHOT:
-                groupName = 'RamSHOTS'
-                if re.match(regex, itemShortName):
-                    itemShortName = ram.ItemType.SHOT + itemShortName
-            # If it's a general item, store in a group named after the step
-            else:
-                itemShortName = resource
-                groupName = 'RamITEMS'
-                if re.match(regex, itemShortName):
-                    itemShortName = ram.ItemType.GEENERAL + itemShortName
+                # If file path is empty, let's import the default
+                if filePath == "":
+                    publishFolder = item.publishFolderPath( step )
+                    publishFileName = ram.RamFileManager.buildRamsesFileName(
+                        item.projectShortName(),
+                        step.shortName(),
+                        '',
+                        item.itemType(),
+                        item.shortName()
+                    )
+                    filePath = ram.RamFileManager.buildPath((
+                        publishFolder,
+                        publishFileName
+                    ))
+                    testFilePath = filePath + '.ma'
+                    if not os.path.isfile(testFilePath):
+                        testFilePath = filePath + '.mb'
+                        if not os.path.isfile(testFilePath):
+                            ram.log("Sorry, I can't find anything to import...")
+                            return
+                    filePath = testFilePath
 
-            groupName = getCreateGroup(groupName)
-            # Import the file
-            newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
-            # Add a group for the imported asset
-            itemGroupName = getCreateGroup( itemShortName, groupName)
-            for node in newNodes:
-                # When parenting the root, children won't exist anymore
-                if not cmds.objExists(node):
-                    continue
-                # only the root transform nodes
-                if cmds.nodeType(node) == 'transform' and not hasParent(node):
-                    cmds.parent(node, itemGroupName)
+                # We're going to import in a group
+                groupName = ''
+
+                # Prepare names
+                # Check if the short name is not made only of numbers
+                regex = re.compile('^\\d+$')
+                # If it's an asset, let's get the asset group
+                itemType = item.itemType()
+                if itemType == ram.ItemType.ASSET:
+                    groupName = 'RamASSETS_' + item.group()
+                    if re.match(regex, itemShortName):
+                        itemShortName = ram.ItemType.ASSET + itemShortName
+                # If it's a shot, let's store in the shots group
+                elif itemType == ram.ItemType.SHOT:
+                    groupName = 'RamSHOTS'
+                    if re.match(regex, itemShortName):
+                        itemShortName = ram.ItemType.SHOT + itemShortName
+                # If it's a general item, store in a group named after the step
+                else:
+                    itemShortName = resource
+                    groupName = 'RamITEMS'
+                    if re.match(regex, itemShortName):
+                        itemShortName = ram.ItemType.GEENERAL + itemShortName
+
+                groupName = getCreateGroup(groupName)
+                # Import the file
+                newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
+                # Add a group for the imported asset
+                itemGroupName = getCreateGroup( itemShortName, groupName)
+                for node in newNodes:
+                    # When parenting the root, children won't exist anymore
+                    if not cmds.objExists(node):
+                        continue
+                    # only the root transform nodes
+                    if cmds.nodeType(node) == 'transform' and not hasParent(node):
+                        cmds.parent(node, itemGroupName)
 
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
