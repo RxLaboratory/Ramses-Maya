@@ -7,7 +7,7 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 
-def importer(item, filePath, step):
+def importer(item, filePaths, step):
     # Check what needs to be imported
 
     # Get the output pipes from the step being imported
@@ -53,7 +53,7 @@ def importer(item, filePath, step):
         rdrShaderFiles = []
 
         # Find the files if needed
-        if len(filePath) == 0:
+        if filePaths[0] == '':
             # List all files, and get correspondance
             publishFolder = item.publishFolderPath( step )
 
@@ -63,6 +63,18 @@ def importer(item, filePath, step):
                 vpShaderFiles = vpShadersPipeFile.getFiles( publishFolder )
             if rdrShadersPipeFile:
                 rdrShaderFiles = rdrShadersPipeFile.getFiles( publishFolder )
+        else:
+            for file in filePaths:
+                if geoPipeFile:
+                    if geoPipeFile.check(file):
+                        geoFiles.append( file )
+                if vpShadersPipeFile:
+                    if vpShadersPipeFile.check(file):
+                        vpShaderFiles.append( file )
+                if rdrShadersPipeFile:
+                    if rdrShadersPipeFile.check(file):
+                        rdrShaderFiles.append( file )
+
 
         # Keep the Geo nodes and the selection to import the shaders on them automatically
         geoNodes = cmds.ls(selection=True, type='transform', long=True)
@@ -86,7 +98,7 @@ def importer(item, filePath, step):
     else:
         step = ram.RamObject.getObjectShortName(step)
         if step == 'MOD':
-            ram.log( "I'm publishing the Modeling step." )
+            ram.log( "I'm importing the Modeling step." )
             importGeo()
         elif step == 'SHADE':
-            ram.log( "I'm publishing the Shading step." )
+            ram.log( "I'm importing the Shading step." )
