@@ -11,7 +11,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QPushButton,
     QWidget,
     QRadioButton,
-    QLineEdit
+    QLineEdit,
+    QAbstractItemView
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
@@ -283,12 +284,14 @@ class ImportDialog( QDialog ):
             self.versionsLabel.setText("Version:")
             self.resourceList.show()
             self.resourcesLabel.show()
+            self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
         else: # Import
             self._importButton.show()
             self._openButton.hide()
             self.versionsLabel.setText("File:")
             self.resourceList.hide()
             self.resourcesLabel.hide()
+            self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.__resourceChanged( self.resourceList.currentRow() )
         
     @Slot()
@@ -486,13 +489,12 @@ class ImportDialog( QDialog ):
             resource = resource[0:-1]
         return resource
 
-    def getFile(self):
-        row = self.versionList.currentRow()
+    def _getFile(self, versionIndex):
 
-        if self.importButton.isChecked() and row <= 0:
+        if self.importButton.isChecked() and versionIndex <= 0:
             return ""
             
-        if row <= 0:
+        if versionIndex <= 0:
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 file = self._currentItem.stepFilePath(self._currentResource, "ma", self._currentStep)
                 if file != "":
@@ -506,7 +508,23 @@ class ImportDialog( QDialog ):
                 if resourceRow > 0:
                     return self._resourceFiles[ resourceRow ]
 
-        return self._currentFiles[row-1]
+        return self._currentFiles[versionIndex-1]
+
+    def getFile(self):
+        row = self.versionList.currentRow()
+        return self._getFile(row)
+        
+    def getFiles(self):
+        items = self.versionList.selectedItems()
+        if len(items) == 0:
+            return [ self.getFile() ]
+        
+        files = []
+        for i in range(0, self.versionList.count()):
+            if self.versionList.item(i).isSelected():
+                files.append( self._getFile(i) )
+        return files
+
 
 if __name__ == '__main__':
     importDialog = ImportDialog()
@@ -519,6 +537,7 @@ if __name__ == '__main__':
     projectShortName = item.projectShortName()
     stepShortName = step.shortName()
     resource = importDialog.getResource()
+    files = importDialog.getFiles()
 
     print(item)
     print(step)
@@ -528,3 +547,4 @@ if __name__ == '__main__':
     print(stepShortName)
     print(resource)
     print(ok)
+    print(files)
