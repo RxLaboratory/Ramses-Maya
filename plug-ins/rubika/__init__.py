@@ -1,6 +1,6 @@
 from .publish_manager import publisher
 from .import_manager import importer
-from .update import updateRamsesItems
+from .update_manager import updateRamsesItems
 import ramses as ram
 
 ramses = ram.Ramses.instance()

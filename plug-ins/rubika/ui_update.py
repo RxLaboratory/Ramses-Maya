@@ -99,7 +99,7 @@ class UpdateDialog( QDialog ):
             item = QListWidgetItem( self.itemList )
             item.setData(Qt.UserRole, node)
             item.setToolTip(node)
-            print(node)
+
             itemText = name + ' (' + step + ') - ' + node.split(':')[-1]
             # Check timestamp
             geoFile = getRamsesAttr(node, RamsesAttribute.GEO_FILE)
