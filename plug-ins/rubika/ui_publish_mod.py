@@ -1,3 +1,5 @@
+from dumaf import getMayaWindow # pylint: disable=import-error
+
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
     QDialog,
     QHBoxLayout,
@@ -12,10 +14,10 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
     Slot,
 )
 
-class PublishGeoDialog( QDialog ):
+class PublishModDialog( QDialog ):
 
     def __init__(self, parent=None):
-        super(PublishGeoDialog, self).__init__(parent)
+        super(PublishModDialog, self).__init__(parent)
         self.__setupUi()
         self.__connectEvents()
 
