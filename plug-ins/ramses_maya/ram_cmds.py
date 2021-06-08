@@ -322,9 +322,16 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         if status is not None:
-            if settings.online:
-                currentItem.setStatus(status, currentStep)
-            ramses.updateStatus(currentItem, status, currentStep)
+            # We need the RamStep, get it from the project
+            project = currentItem.project()
+            step = None
+            if project is not None:
+                step = project.step(currentStep)
+                ramses.setCurrentProject(project)
+                
+            if step is not None:
+                currentItem.setStatus(status, step)
+                ramses.updateStatus(currentItem, status, step)
 
         # Alert
         newVersionStr = str( newVersion )
@@ -336,7 +343,14 @@ class RamSaveVersionCmd( om.MPxCommand ):
             publishedFilePath = ram.RamFileManager.copyToPublish( saveFilePath )
             ram.RamMetaDataManager.setVersion( publishedFilePath, newVersion )
             ram.RamMetaDataManager.setVersionFilePath( publishedFilePath, backupFilePath )
-            ramses.publish( currentItem, saveFilePath, currentStep)
+            # We need the RamStep, get it from the project
+            project = currentItem.project()
+            step = None
+            if project is not None:
+                step = project.step(currentStep)
+                ramses.setCurrentProject(project)
+            if step is not None:
+                ramses.publish( currentItem, saveFilePath, step)
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetrieveVersion"
@@ -496,15 +510,14 @@ class RamOpenCmd( om.MPxCommand ):
             step = importDialog.getStep()
             filePath = importDialog.getFile()
             itemShortName = item.shortName()
-            stepShortName = step.shortName()
             resource = importDialog.getResource()
-            
+
             # Let's import only if there's no user-defined import scripts
             if len( ramses.importScripts ) > 0:
                 ramses.importItem(
                     item,
                     filePath,
-                    stepShortName                
+                    step                
                 )
                 return
 
