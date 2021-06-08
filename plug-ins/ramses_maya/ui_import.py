@@ -233,7 +233,7 @@ class ImportDialog( QDialog ):
             self.itemLabel.hide()
             self.itemList.hide()
             self.groupBox.hide()
-            self.itemSearchField.hidey()
+            self.itemSearchField.hide()
         # reinit lists
         self.itemList.clear()
         self.stepList.clear()
@@ -294,7 +294,7 @@ class ImportDialog( QDialog ):
     @Slot()
     def __groupChanged(self, index):
         # Load assets
-        self._currentItems = self._currentProject.assets( self.groupBox.currentData() )
+        self._currentItems = self._currentProject.assets( self.groupBox.itemData( index ) )
         self.__updateItems()
 
     def __updateItems(self):
@@ -336,7 +336,8 @@ class ImportDialog( QDialog ):
                 if self._currentItem is None:
                     return
                 # List resources
-                for resource in self._currentItem.stepFilePaths( self._currentStep ):
+                resources = self._currentItem.stepFilePaths( self._currentStep )
+                for resource in resources:
                     fileName = os.path.basename(resource)
                     fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
                     if fileInfo is None:
@@ -347,6 +348,8 @@ class ImportDialog( QDialog ):
                         self.resourceList.addItem(res)
                     else:
                         self.resourceList.addItem("Main")
+                        self._openButton.setEnabled(True)
+                        self._currentResource = ""               
             # Templates
             else:
                 # List resources
@@ -370,6 +373,8 @@ class ImportDialog( QDialog ):
                         self.resourceList.addItem(res)
                     else:
                         self.resourceList.addItem("Main")
+                        self._openButton.setEnabled(True)
+                        self._currentResource = ""
         # If import, list all files in the publish folder
         else:
             files = []
@@ -377,6 +382,13 @@ class ImportDialog( QDialog ):
                 files = self._currentItem.publishFilePaths( None, self._currentStep )
             else:
                 files = self._currentStep.templatesPublishFilePaths( )
+
+            # Add an "Auto" field
+            if len(files) > 0:
+                i = QListWidgetItem( self.versionList )
+                i.setText("Auto")
+                i.setToolTip( "Automatically selects the files according to the current step." )
+                self._importButton.setEnabled(True)
 
             for f in files:
                 fileName = os.path.basename( f )
@@ -476,11 +488,11 @@ class ImportDialog( QDialog ):
 
     def getFile(self):
         row = self.versionList.currentRow()
-        l = -1
-        # if open (index 0), there's an extra item on top of the list
-        if self.openButton.isChecked():
-            l = 0
-        if row <= l:
+
+        if self.importButton.isChecked() and row <= 0:
+            return ""
+            
+        if row <= 0:
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 file = self._currentItem.stepFilePath(self._currentResource, "ma", self._currentStep)
                 if file != "":
@@ -491,14 +503,10 @@ class ImportDialog( QDialog ):
                 return ""
             else:
                 resourceRow = self.resourceList.currentRow()
-                if resourceRow >= 0:
+                if resourceRow > 0:
                     return self._resourceFiles[ resourceRow ]
-        r = 0
-        # if open (index 0), there's an extra item on top of the list
-        if self.openButton.isChecked():
-            r = 1
-        return self._currentFiles[row-r]
 
+        return self._currentFiles[row-1]
 
 if __name__ == '__main__':
     importDialog = ImportDialog()

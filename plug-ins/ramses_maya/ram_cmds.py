@@ -512,6 +512,28 @@ class RamOpenCmd( om.MPxCommand ):
             itemShortName = item.shortName()
             resource = importDialog.getResource()
 
+            # If file path is empty, let's import the default
+            if filePath == "":
+                publishFolder = item.publishFolderPath( step )
+                publishFileName = ram.RamFileManager.buildRamsesFileName(
+                    item.projectShortName(),
+                    step.shortName(),
+                    '',
+                    item.itemType(),
+                    item.shortName()
+                )
+                filePath = ram.RamFileManager.buildPath((
+                    publishFolder,
+                    publishFileName
+                ))
+                testFilePath = filePath + '.ma'
+                if not os.path.isfile(testFilePath):
+                    testFilePath = filePath + '.mb'
+                    if not os.path.isfile(testFilePath):
+                        ram.log("Sorry, I can't find anything to import...")
+                        return
+                filePath = testFilePath
+
             # Let's import only if there's no user-defined import scripts
             if len( ramses.importScripts ) > 0:
                 ramses.importItem(
@@ -557,42 +579,6 @@ class RamOpenCmd( om.MPxCommand ):
                 # only the root transform nodes
                 if cmds.nodeType(node) == 'transform' and not hasParent(node):
                     cmds.parent(node, itemGroupName)
-
-class RamOpenTemplateCmd( om.MPxCommand ):
-    name = "ramOpenTemplate"
-
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamOpenTemplateCmd()
-
-    @staticmethod
-    def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
-
-    def doIt(self, args):
-        ram.log("Command 'open template' is not implemented yet!")
-
-class RamImportTemplateCmd( om.MPxCommand ):
-    name = "ramImportTemplate"
-
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamImportTemplateCmd()
-
-    @staticmethod
-    def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
-
-    def doIt(self, args):
-        ram.log("Command 'import template' is not implemented yet!")
 
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
@@ -641,8 +627,6 @@ cmds_classes = (
     RamRetrieveVersionCmd,
     RamPublishTemplateCmd,
     RamOpenCmd,
-    RamOpenTemplateCmd,
-    RamImportTemplateCmd,
     RamSettingsCmd,
     RamOpenRamsesCmd,
 )
