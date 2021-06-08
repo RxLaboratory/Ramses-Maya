@@ -16,6 +16,6 @@ def updateRamsesItems():
         nodes = updateDialog.getSelectedNodes()
 
     for node in nodes:
-        step = getRamsesAttr(node, RamsesAttribute.STEP)
-        if step == 'MOD':
+        geoFile = getRamsesAttr(node, RamsesAttribute.GEO_FILE)
+        if geoFile:
             updateGeo( node )
