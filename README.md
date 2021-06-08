@@ -13,10 +13,27 @@
 
 ## NOTES / DOC
 
-### Required steps (at least)
+### INFO / HELP
 
-- MOD - Modelisation
-- RIG - Rigging
+Le but est de garder une certaine souplesse dans le pipe (pour évolutions/cas particuliers)
+
+Il s'adaptera en fonction des paramètres et surtout de la config du pipe dans l'appli ramses: 
+
+Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont reconnus par l'addon :
+
+- "Geo"
+- "vpShader"
+- "rdrShader"
+- "Rig"
+- "Anim"
+
+-> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
+
+Si il ne trouve pas cette info, il se basera sur l'ID des steps :
+
+- MOD - Modelisation (-> publie Geo et vpShader)
+- SHAD - Shading (-> publie rdrShader)
+- RIG - Rigging (-> publie Rig)
 
 ## TODO
 
@@ -71,4 +88,7 @@ et possibilité d'en ajouter
   - [ ] Import/update les exr, eventuelle prépare un arbre, etc
   - [ ] Publish Rendu exr ou png
 
-### Divers
+### Questions
+
+- Les shaders sont en référence, pas de souci ?
+- Dans pipou, la modé est importée en référence pour le shading, un intérêt ?
