@@ -267,7 +267,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        if not saveFilePath:
+        if saveFilePath == '':
             return
 
         self.parseArgs(args)
@@ -512,6 +512,15 @@ class RamOpenCmd( om.MPxCommand ):
             itemShortName = item.shortName()
             resource = importDialog.getResource()
 
+            # Let's import only if there's no user-defined import scripts
+            if len( ramses.importScripts ) > 0:
+                ramses.importItem(
+                    item,
+                    filePath,
+                    step                
+                )
+                return
+
             # If file path is empty, let's import the default
             if filePath == "":
                 publishFolder = item.publishFolderPath( step )
@@ -533,15 +542,6 @@ class RamOpenCmd( om.MPxCommand ):
                         ram.log("Sorry, I can't find anything to import...")
                         return
                 filePath = testFilePath
-
-            # Let's import only if there's no user-defined import scripts
-            if len( ramses.importScripts ) > 0:
-                ramses.importItem(
-                    item,
-                    filePath,
-                    step                
-                )
-                return
 
             # We're going to import in a group
             groupName = ''
