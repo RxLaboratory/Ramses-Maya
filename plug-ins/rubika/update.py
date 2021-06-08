@@ -1,6 +1,6 @@
 from .ui_update import UpdateDialog
 from .utils_attributes import * # pylint: disable=import-error
-from .import_mod import importMod
+from .import_geo import importGeo
 import dumaf as maf
 import ramses as ram # pylint: disable=import-error
 
@@ -26,7 +26,7 @@ def updateMod( rootCtrl ):
     assetGroup = getRamsesAttr( rootCtrl, RamsesAttribute.ASSET_GROUP )
     filePath = getRamsesAttr( rootCtrl, RamsesAttribute.GEO_FILE )
     item = ram.RamAsset('', itemShortName, '', assetGroup)
-    newRootCtrl = importMod( item, filePath, 'MOD')
+    newRootCtrl = importGeo( item, filePath, 'MOD')
 
     # Move to the locator
     newRootCtrl = maf.snapNodeTo( newRootCtrl, rootLocator )

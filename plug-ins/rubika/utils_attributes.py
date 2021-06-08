@@ -13,6 +13,7 @@ class RamsesAttribute():
     SHADING_TYPE = 'ramsesShadingType'
     SHADING_FILE = 'ramsesShadingFilePath'
     SHADING_TIME = 'ramsesShadingTimeStamp'
+    SHADED_OBJECTS = 'ramsesShadedObjects'
     DT_TYPES = ('string')
     AT_TYPES = ('long', 'bool')
 

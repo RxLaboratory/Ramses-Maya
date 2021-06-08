@@ -2,7 +2,7 @@ from .publish_geo import publishGeo
 from .publish_shaders import publishShaders
 import ramses as ram
 
-def publishSorter(item, filePath, step):
+def publisher(item, filePath, step):
     # Check what needs to be published
 
     # From pipes first
@@ -15,11 +15,11 @@ def publishSorter(item, filePath, step):
         for pipe in pipes:
             for pipeFile in pipe.pipeFiles():
                 pipeType = pipeFile.shortName()
-                if pipeType == 'Geo':
+                if pipeType == 'Geometry':
                     geo = True
-                if pipeType == 'vpShaders':
+                elif pipeType == 'vpShaders':
                     vpShaders = True
-                if pipeType == 'rdrShaders':
+                elif pipeType == 'rdrShaders':
                     rdrShaders = True
 
         if geo:
@@ -37,9 +37,12 @@ def publishSorter(item, filePath, step):
             if rdrShaders:
                 ram.log( "I'm publishing the render shaders." )
                 publishShaders( item, filePath, step, 'rdr' )
-
+    # From step if we did not find the pipes
     else:
         step = ram.RamObject.getObjectShortName(step)
         if step == 'MOD':
             ram.log( "I'm publishing the Modeling step." )
             publishGeo( item, filePath, step, 'vp')
+        elif step == 'SHADE':
+            ram.log( "I'm publishing the Shading step." )
+            publishShaders( item, filePath, step, 'rdr' )

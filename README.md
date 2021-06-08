@@ -11,6 +11,10 @@
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
 
+## TODO
+
+- Don't use the name of the ramPipe in the filename but store it in the ramses metadata
+
 ## NOTES / DOC
 
 ### INFO / HELP

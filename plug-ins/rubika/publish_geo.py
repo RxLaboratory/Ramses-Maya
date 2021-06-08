@@ -156,9 +156,9 @@ def publishGeo(item, filePath, step, shaderMode):
         abcFileInfo['extension'] = 'abc'
         # resource
         if abcFileInfo['resource'] != '':
-            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName
+            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-Geometry'
         else:
-            abcFileInfo['resource'] = nodeName
+            abcFileInfo['resource'] = nodeName + '-Geometry'
         # path
         abcFilePath = ram.RamFileManager.buildPath((
             publishFolder,

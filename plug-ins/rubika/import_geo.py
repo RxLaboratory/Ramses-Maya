@@ -2,17 +2,12 @@ import re, os
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
-from .utils_shaders import importShaders
 from .utils_attributes import * # pylint: disable=import-error
 
-def importMod(item, filePath, step):
+def importGeo(item, filePath, step):
 
     # Checks
     step = ram.RamObject.getObjectShortName(step)
-
-    if item.itemType() != ram.ItemType.ASSET:
-        ram.log("Sorry, this is not a valid Asset, I won't import it.")
-        return
 
     # Progress
     progressDialog = maf.ProgressDialog()
@@ -53,7 +48,7 @@ def importMod(item, filePath, step):
     progressDialog.setText("Tidying...")
     progressDialog.increment()
     progressDialog.setMaximum( len(newNodes) + 2 )
-    rootCtrl = ''
+    rootCtrls = []
     rootCtrlShape = ''
     for node in newNodes:
         progressDialog.increment()
@@ -98,9 +93,8 @@ def importMod(item, filePath, step):
         for child in children:
             maf.lockTransform(child)
 
-        # Import shaders
-        importShaders(rootCtrl, 'vp', filePath, itemShortName)
+        rootCtrls.append( rootCtrl )
 
     progressDialog.hide()
-    return rootCtrl
+    return rootCtrls
 
