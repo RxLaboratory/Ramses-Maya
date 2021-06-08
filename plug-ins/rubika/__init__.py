@@ -1,4 +1,4 @@
-from .publish_mod import publishMod
+from .publish import publishSorter
 from .import_mod import importMod
 from .update import updateRamsesItems
 import ramses as ram
@@ -6,7 +6,7 @@ import ramses as ram
 ramses = ram.Ramses.instance()
 
 # Register publish scripts
-ramses.publishScripts.append(publishMod)
+ramses.publishScripts.append(publishSorter)
 
 # Register import scripts
 ramses.importScripts.append(importMod)

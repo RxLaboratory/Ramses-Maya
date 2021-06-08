@@ -4,6 +4,44 @@ from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-i
     QApplication
 )
 
+def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True ):
+    # The shape(s) of this node
+    shapes = cmds.listRelatives(node,s=True,f=True)
+
+    if shapes is None:
+        # No shapes, no child: empty group to remove
+        if not hasChildren(node) and deleteIfEmpty:
+            cmds.delete(node)
+        # Finished
+        return False
+
+    # Remove supplementary shapes
+    # (Maya may store more than a single shape in transform nodes because of the dependency graph)
+    if len(shapes) > 1:
+        cmds.delete(shapes[1:])
+
+    # The single remaining shape for this child
+    shape = shapes[0]
+
+    # Check type
+    shapeType = cmds.nodeType( shape )
+        
+    if shapeType not in typesToKeep:
+        cmds.delete(shape)
+        if not hasChildren( node ) and deleteIfEmpty:
+            cmds.delete( node )
+            return False
+
+    # Delete history
+    cmds.delete(shape, constructionHistory=True)
+
+    # Rename shapes after transform nodes
+    if renameShapes:
+        cmds.rename(shape, node.split('|')[-1] + 'Shape')
+
+    # Freeze transform & center pivot
+    if freezeTranform and shapeType == 'mesh':
+        freezeTransform(node)
 
 def snapNodeTo( nodeFrom, nodeTo):
     prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)

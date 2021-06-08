@@ -16,5 +16,6 @@ from .main import (
     lockTransform,
     getNodeBaseName,
     snapNodeTo,
+    cleanNode,
 )
 from .ui_progress import ProgressDialog

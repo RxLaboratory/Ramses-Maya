@@ -2,18 +2,18 @@ import os
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
-from .ui_publish_mod import PublishModDialog
+from .ui_publish_geo import PublishGeoDialog
 from .utils_shaders import exportShaders
+from .utils_nodes import getPublishNodes
+from .utils_items import getFileInfo, getPublishFolder
 
-def publishMod(item, filePath, step):
+def publishGeo(item, filePath, step, shaderMode):
 
-    # Checks
-    if step != 'MOD':
-        return
+    step = ram.RamObject.getObjectShortName(step)
 
     # Show dialog
-    publishModDialog = PublishModDialog( maf.getMayaWindow() )
-    if not publishModDialog.exec_():
+    publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
+    if not publishGeoDialog.exec_():
         return
 
     # Progress
@@ -22,12 +22,12 @@ def publishMod(item, filePath, step):
     progressDialog.setText("Publishing geometry")
 
     # Options
-    removeHidden = publishModDialog.removeHidden()
-    removeLocators = publishModDialog.removeLocators()
-    renameShapes = publishModDialog.renameShapes()
-    onlyRootGroups = publishModDialog.onlyRootGroups()
-    noFreeze = publishModDialog.noFreeze()
-    noFreezeCaseSensitive = publishModDialog.noFreezeCaseSensitive()
+    removeHidden = publishGeoDialog.removeHidden()
+    removeLocators = publishGeoDialog.removeLocators()
+    renameShapes = publishGeoDialog.renameShapes()
+    onlyRootGroups = publishGeoDialog.onlyRootGroups()
+    noFreeze = publishGeoDialog.noFreeze()
+    noFreezeCaseSensitive = publishGeoDialog.noFreezeCaseSensitive()
 
     tempFile = maf.cleanScene()
 
@@ -36,12 +36,8 @@ def publishMod(item, filePath, step):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # For all nodes in the publish set
-    nodes = ()
-    try:
-        nodes = cmds.sets( 'Ramses_Publish', nodesOnly=True, q=True )
-    except ValueError:
-        ram.log("Nothing to publish! The asset you need to publish must be listed in a 'Ramses_Publish' set.")
-        cmds.inViewMessage( msg='Nothing to publish! The asset you need to publish must be listed in a <hl>Ramses_Pulbish</hl> set.', pos='midCenter', fade=True )
+    nodes = getPublishNodes()
+    if len(nodes) == 0:
         return
 
     numNodes = len(nodes)
@@ -49,11 +45,6 @@ def publishMod(item, filePath, step):
     progressDialog.setText("Preparing")
     progressDialog.increment()
     
-    if nodes is None or numNodes == 0:
-        ram.log("The 'Ramses_Publish' set is empty, there's nothing to publish!")
-        cmds.inViewMessage( msg="The <hl>Ramses_Publish</hl> set is empty, there's nothing to publish!", pos='midCenter', fade=True )
-        return
-
     # Prepare options
     # Freeze transform & center pivot
     if not noFreezeCaseSensitive:
@@ -63,22 +54,17 @@ def publishMod(item, filePath, step):
     noFreeze = noFreeze.split(',')
 
     # Item info
-    fileInfo = ram.RamFileManager.decomposeRamsesFilePath( filePath )
+    fileInfo = getFileInfo( filePath )
     if fileInfo is None:
-        ram.log(ram.Log.MalformedName, ram.LogLevel.Fatal)
-        cmds.inViewMessage( msg=ram.Log.MalformedName, pos='midCenter', fade=True )
-        cmds.error( ram.Log.MalformedName )
         return
     version = item.latestVersion( fileInfo['resource'], '', step )
     versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
 
-    publishFolder = item.publishFolderPath( step )
+    # Publish folder
+    publishFolder = getPublishFolder(item, step)
     if publishFolder == '':
-        ram.log("I can't find the publish folder for this item, maybe it does not respect the ramses naming scheme or it is out of place.", ram.LogLevel.Fatal)
-        cmds.inViewMessage( msg="Can't find the publish folder for this scene, sorry. Check its name and location.", pos='midCenter', fade=True )
-        cmds.error( "Can't find publish folder." )
         return
-    ram.log( "I'm publishing in " + publishFolder )
+    ram.log( "I'm publishing geometry in " + publishFolder )
 
     # Let's count how many objects are published
     publishedNodes = []
@@ -98,9 +84,6 @@ def publishMod(item, filePath, step):
             # It must have children to publish
             if not maf.hasChildren(node):
                 continue
-
-        # Absolute path to be sure
-        # node = '|' + node
 
         # Get all children
         childNodes = cmds.listRelatives( node, ad=True, f=True, type='transform')
@@ -123,52 +106,18 @@ def publishMod(item, filePath, step):
                 cmds.delete(childNode)
                 continue
 
-            # The shape(s) of this child
-            shapes = cmds.listRelatives(childNode,s=True,f=True)
-
-            if shapes is None:
-                # No shapes, no child: empty group to remove
-                if not maf.hasChildren(childNode):
-                    cmds.delete(childNode)
-                # Nothing else to check for groups
-                continue
-
-            # Remove supplementary shapes
-            # (Maya may store more than a single shape in transform nodes because of the dependency graph)
-            if len(shapes) > 1:
-                cmds.delete(shapes[1:])
-
-            # The single remaining shape for this child
-            shape = shapes[0]
-
-            # Check type
-            shapeType = cmds.nodeType( shape )
             typesToKeep = ['mesh']
             if not removeLocators:
                 typesToKeep.append('locator')
-                
-            if shapeType not in typesToKeep:
-                cmds.delete(shape)
-                if not maf.hasChildren( childNode ):
-                    cmds.delete(childNode)
-                continue
 
-            # Delete history
-            cmds.delete(shape, constructionHistory=True)
-
-            # Rename shapes after transform nodes
-            if renameShapes:
-                cmds.rename(shape, childNode.split('|')[-1] + 'Shape')
-
-            # Freeze transform & center pivot
             freeze = True
             childName = childNode.lower()
             for no in noFreeze:
                 if no in childName:
                     freeze = False
                     break
-            if freeze and shapeType == 'mesh':
-                maf.freezeTransform(childNode)            
+
+            maf.cleanNode( childNode, True, typesToKeep, renameShapes, freeze)     
 
         # Last steps
         nodeName = node.split('|')[-1]
@@ -232,7 +181,8 @@ def publishMod(item, filePath, step):
         ram.RamMetaDataManager.setVersion( abcFilePath, version )
 
         # Export viewport shaders
-        shaderFilePath = exportShaders(node, 'vp', publishFolder, fileInfo.copy(), abcFilePath)
+        if shaderMode != '':
+            shaderFilePath = exportShaders(node, shaderMode, publishFolder, fileInfo.copy(), abcFilePath)
         # Update Ramses Metadata (version)
         ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
         ram.RamMetaDataManager.setVersion( shaderFilePath, version )
@@ -258,7 +208,7 @@ def publishMod(item, filePath, step):
         published = cmds.ls(publishedNode, transforms=True, long=True)
         if published is not None:
             allPublishedNodes = allPublishedNodes + published
-    for transformNode in allTransformNodes:
+    for transformNode in reversed(allTransformNodes):
         if transformNode in allPublishedNodes:
             continue
         if transformNode in maf.nonDeletableObjects:
@@ -274,9 +224,9 @@ def publishMod(item, filePath, step):
     sceneFileInfo['extension'] = 'mb'
     # resource
     if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-CleanPub'
+        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-Geometry'
     else:
-        sceneFileInfo['resource'] = 'CleanPub'
+        sceneFileInfo['resource'] = 'Geometry'
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
