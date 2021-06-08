@@ -32,7 +32,7 @@ Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont
 Si il ne trouve pas cette info, il se basera sur l'ID des steps :
 
 - MOD - Modelisation (-> publie Geo et vpShader)
-- SHAD - Shading (-> publie rdrShader)
+- SHADE - Shading (-> publie rdrShader)
 - RIG - Rigging (-> publie Rig)
 
 ## TODO
