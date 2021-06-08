@@ -267,7 +267,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        if not saveFilePath:
+        if saveFilePath == '':
             return
 
         self.parseArgs(args)
@@ -322,9 +322,16 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         if status is not None:
-            if settings.online:
-                currentItem.setStatus(status, currentStep)
-            ramses.updateStatus(currentItem, status, currentStep)
+            # We need the RamStep, get it from the project
+            project = currentItem.project()
+            step = None
+            if project is not None:
+                step = project.step(currentStep)
+                ramses.setCurrentProject(project)
+                
+            if step is not None:
+                currentItem.setStatus(status, step)
+                ramses.updateStatus(currentItem, status, step)
 
         # Alert
         newVersionStr = str( newVersion )
@@ -336,7 +343,14 @@ class RamSaveVersionCmd( om.MPxCommand ):
             publishedFilePath = ram.RamFileManager.copyToPublish( saveFilePath )
             ram.RamMetaDataManager.setVersion( publishedFilePath, newVersion )
             ram.RamMetaDataManager.setVersionFilePath( publishedFilePath, backupFilePath )
-            ramses.publish( currentItem, saveFilePath, currentStep)
+            # We need the RamStep, get it from the project
+            project = currentItem.project()
+            step = None
+            if project is not None:
+                step = project.step(currentStep)
+                ramses.setCurrentProject(project)
+            if step is not None:
+                ramses.publish( currentItem, saveFilePath, step)
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetrieveVersion"
@@ -494,92 +508,79 @@ class RamOpenCmd( om.MPxCommand ):
             # Get Data
             item = importDialog.getItem()
             step = importDialog.getStep()
-            filePath = importDialog.getFile()
+            filePaths = importDialog.getFiles()
             itemShortName = item.shortName()
-            stepShortName = step.shortName()
             resource = importDialog.getResource()
-            
+
             # Let's import only if there's no user-defined import scripts
             if len( ramses.importScripts ) > 0:
                 ramses.importItem(
                     item,
-                    filePath,
-                    stepShortName                
+                    filePaths,
+                    step                
                 )
                 return
 
-            # We're going to import in a group
-            groupName = ''
+            for filePath in filePaths:
 
-            # Prepare names
-            # Check if the short name is not made only of numbers
-            regex = re.compile('^\\d+$')
-            # If it's an asset, let's get the asset group
-            itemType = item.itemType()
-            if itemType == ram.ItemType.ASSET:
-                groupName = 'RamASSETS_' + item.group()
-                if re.match(regex, itemShortName):
-                    itemShortName = ram.ItemType.ASSET + itemShortName
-            # If it's a shot, let's store in the shots group
-            elif itemType == ram.ItemType.SHOT:
-                groupName = 'RamSHOTS'
-                if re.match(regex, itemShortName):
-                    itemShortName = ram.ItemType.SHOT + itemShortName
-            # If it's a general item, store in a group named after the step
-            else:
-                itemShortName = resource
-                groupName = 'RamITEMS'
-                if re.match(regex, itemShortName):
-                    itemShortName = ram.ItemType.GEENERAL + itemShortName
+                # If file path is empty, let's import the default
+                if filePath == "":
+                    publishFolder = item.publishFolderPath( step )
+                    publishFileName = ram.RamFileManager.buildRamsesFileName(
+                        item.projectShortName(),
+                        step.shortName(),
+                        '',
+                        item.itemType(),
+                        item.shortName()
+                    )
+                    filePath = ram.RamFileManager.buildPath((
+                        publishFolder,
+                        publishFileName
+                    ))
+                    testFilePath = filePath + '.ma'
+                    if not os.path.isfile(testFilePath):
+                        testFilePath = filePath + '.mb'
+                        if not os.path.isfile(testFilePath):
+                            ram.log("Sorry, I can't find anything to import...")
+                            return
+                    filePath = testFilePath
 
-            groupName = getCreateGroup(groupName)
-            # Import the file
-            newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
-            # Add a group for the imported asset
-            itemGroupName = getCreateGroup( itemShortName, groupName)
-            for node in newNodes:
-                # When parenting the root, children won't exist anymore
-                if not cmds.objExists(node):
-                    continue
-                # only the root transform nodes
-                if cmds.nodeType(node) == 'transform' and not hasParent(node):
-                    cmds.parent(node, itemGroupName)
+                # We're going to import in a group
+                groupName = ''
 
-class RamOpenTemplateCmd( om.MPxCommand ):
-    name = "ramOpenTemplate"
+                # Prepare names
+                # Check if the short name is not made only of numbers
+                regex = re.compile('^\\d+$')
+                # If it's an asset, let's get the asset group
+                itemType = item.itemType()
+                if itemType == ram.ItemType.ASSET:
+                    groupName = 'RamASSETS_' + item.group()
+                    if re.match(regex, itemShortName):
+                        itemShortName = ram.ItemType.ASSET + itemShortName
+                # If it's a shot, let's store in the shots group
+                elif itemType == ram.ItemType.SHOT:
+                    groupName = 'RamSHOTS'
+                    if re.match(regex, itemShortName):
+                        itemShortName = ram.ItemType.SHOT + itemShortName
+                # If it's a general item, store in a group named after the step
+                else:
+                    itemShortName = resource
+                    groupName = 'RamITEMS'
+                    if re.match(regex, itemShortName):
+                        itemShortName = ram.ItemType.GEENERAL + itemShortName
 
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamOpenTemplateCmd()
-
-    @staticmethod
-    def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
-
-    def doIt(self, args):
-        ram.log("Command 'open template' is not implemented yet!")
-
-class RamImportTemplateCmd( om.MPxCommand ):
-    name = "ramImportTemplate"
-
-    def __init__(self):
-        om.MPxCommand.__init__(self)
-
-    @staticmethod
-    def createCommand():
-        return RamImportTemplateCmd()
-
-    @staticmethod
-    def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
-
-    def doIt(self, args):
-        ram.log("Command 'import template' is not implemented yet!")
+                groupName = getCreateGroup(groupName)
+                # Import the file
+                newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
+                # Add a group for the imported asset
+                itemGroupName = getCreateGroup( itemShortName, groupName)
+                for node in newNodes:
+                    # When parenting the root, children won't exist anymore
+                    if not cmds.objExists(node):
+                        continue
+                    # only the root transform nodes
+                    if cmds.nodeType(node) == 'transform' and not hasParent(node):
+                        cmds.parent(node, itemGroupName)
 
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
@@ -628,8 +629,6 @@ cmds_classes = (
     RamRetrieveVersionCmd,
     RamPublishTemplateCmd,
     RamOpenCmd,
-    RamOpenTemplateCmd,
-    RamImportTemplateCmd,
     RamSettingsCmd,
     RamOpenRamsesCmd,
 )
