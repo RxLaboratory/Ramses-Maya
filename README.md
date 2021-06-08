@@ -13,6 +13,7 @@
 
 ## TODO
 
+- Implement import when pipes are not available
 - Don't use the name of the ramPipe in the filename but store it in the ramses metadata
 
 ## NOTES / DOC
@@ -70,7 +71,7 @@ et possibilité d'en ajouter
 - [ ] Shading
   - [x] Import modé
   - [x] Update modé
-  - [ ] Publish .mb
+  - [x] Publish .mb
 
 #### Shots steps
 
@@ -86,7 +87,7 @@ et possibilité d'en ajouter
 - [ ] Lighting
   - [ ] Import/update Le layout, vire tout ce qui a été baké/publish en abc
   - [ ] Import/update les abc
-  - [ ] Import/update les shaders et les assigne : depuis les items et depuis les charas, etc
+  - [x] Import/update les shaders et les assigne : depuis les items et depuis les charas, etc
   - [ ] Publish Rendu exr
 - [ ] Compositing
   - [ ] Import/update les exr, eventuelle prépare un arbre, etc
