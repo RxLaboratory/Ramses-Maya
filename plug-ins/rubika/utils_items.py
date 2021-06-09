@@ -1,5 +1,9 @@
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds
+from .utils_constants import  *
+import ramses as ram
+
+ramses = ram.Ramses.instance()
 
 def getFileInfo( filePath):
     fileInfo = ram.RamFileManager.decomposeRamsesFilePath( filePath )
@@ -18,3 +22,44 @@ def getPublishFolder( item, step):
         cmds.error( "Can't find publish folder." )
         return ''
     return publishFolder
+
+def getPipes( step, currentSceneFilePath = '' ):
+    pipes = step.outputPipes()
+    if len( pipes ) == 0:
+        # Get defaults
+        if step == MOD_STEP:
+            pipes = MOD_STEP.outputPipes()
+        elif step == SHADE_STEP:
+            pipes = SHADE_STEP.outputPipes()
+    
+    if len( pipes ) == 0: # Let's ask!
+        # TODO UI
+        return pipes
+
+    if currentSceneFilePath == '':
+        return pipes
+
+    scenePipes = []
+
+    # Get the current step if possible
+    currentStepShortName = ''
+    saveFilePath = ram.RamFileManager.getSaveFilePath( currentSceneFilePath )
+
+    if saveFilePath != '':
+        saveFileInfo = ram.RamFileManager.decomposeRamsesFilePath( saveFilePath )
+        if saveFileInfo is not None:
+            currentProject = ramses.project( saveFileInfo['project'] )
+            if currentProject is None:
+                currentProject = ramses.currentProject()
+            else:
+                ramses.setCurrentProject( currentProject )
+            if currentProject is not None:
+                currentStep = currentProject.step( saveFileInfo['step'] )
+                currentStepShortName = currentStep.shortName()
+
+    # Check the pipes
+    for pipe in pipes:
+        if pipe.inputStepShortName() == currentStepShortName or currentStepShortName == '' or pipe.inputStepShortName() == '':
+            scenePipes.append(pipe)
+
+    return scenePipes

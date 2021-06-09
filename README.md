@@ -69,7 +69,8 @@ et possibilité d'en ajouter
 
 - [x] Mode
   - [x] Publish abc
-  - [x] ajouter publish .mb pour les viewport shaders (cf publish setup actuel)
+  - [x] Publish vp shaders .mb
+  - [x] Publish proxy geo .abc
 - [ ] Setup
   - [x] Import modé
   - [x] Update modé
@@ -78,6 +79,7 @@ et possibilité d'en ajouter
   - [x] Import modé
   - [x] Update modé
   - [x] Publish .mb
+  - [x] Publish proxy: .abc, .ass
 
 #### Shots steps
 
