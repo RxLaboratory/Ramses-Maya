@@ -9,13 +9,6 @@ import ramses as ram
 ramses = ram.Ramses.instance()
 
 def importer(item, filePaths, step):
-
-    currentFilePath = cmds.file( q=True, sn=True )
-    # Get the output pipes from the step being imported
-    pipes = getPipes( step, currentFilePath )
-    if len(pipes) == 0:
-        return
-
     geoFiles = []
     vpShaderFiles = []
     rdrShaderFiles = []
@@ -23,6 +16,13 @@ def importer(item, filePaths, step):
     proxyGeoFiles = []
 
     if filePaths[0] == '': # Scan all published files to get the ones corresponding to the pipes
+
+        
+        currentFilePath = cmds.file( q=True, sn=True )
+        # Get the output pipes from the step being imported
+        pipes = getPipes( step, currentFilePath )
+        if len(pipes) == 0:
+            return
 
         geo = False
         vpShaders = False

@@ -34,10 +34,10 @@ SHADE_STEP = ram.RamStep( "Shading", 'SHADE', '', ram.StepType.ASSET_PRODUCTION 
 
 # Setting default Pipes. Don't do that! It is BAD to set a private attribute.
 # Unless you know what you're doing.
-MOD_STEP._outputPipes = ( 
-    ram.RamPipe( '', 'MOD', [ GEO_PIPE_FILE, VPSHADERS_PIPE_FILE, PROXYGEO_PIPE_FILE ] )
-)
+MOD_STEP._outputPipes = [ 
+    ram.RamPipe( '', 'MOD', [ GEO_PIPE_FILE, VPSHADERS_PIPE_FILE, PROXYGEO_PIPE_FILE ] ),
+]
 
-SHADE_STEP._outputPipes = ( 
-    ram.RamPipe( '', 'SHADE', [ RDRSHADERS_PIPE_FILE, PROXYSHADE_PIPE_FILE, PROXYGEO_PIPE_FILE ] )
-)
+SHADE_STEP._outputPipes = [
+    ram.RamPipe( '', 'SHADE', [ RDRSHADERS_PIPE_FILE, PROXYSHADE_PIPE_FILE, PROXYGEO_PIPE_FILE ] ),
+]

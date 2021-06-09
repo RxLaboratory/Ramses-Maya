@@ -8,12 +8,12 @@ def getPublishNodes():
     except ValueError:
         ram.log("Nothing to publish! The asset you need to publish must be listed in a 'Ramses_Publish' set.")
         cmds.inViewMessage( msg='Nothing to publish! The asset you need to publish must be listed in a <hl>Ramses_Publish</hl> set.', pos='midCenter', fade=True )
-        return ()
+        return []
 
     if nodes is None or len(nodes) == 0:
         ram.log("The 'Ramses_Publish' set is empty, there's nothing to publish!")
         cmds.inViewMessage( msg="The <hl>Ramses_Publish</hl> set is empty, there's nothing to publish!", pos='midCenter', fade=True )
-        return ()
+        return []
 
     return nodes
 
@@ -24,13 +24,13 @@ def getProxyNodes( showAlert = False ):
         if showAlert:
             ram.log("Can't find any proxy! The proxy you need to publish must be listed in a 'Ramses_Proxies' set.")
             cmds.inViewMessage( msg="Can't find any proxy! The proxy you need to publish must be listed in a <hl>Ramses_Proxies</hl> set.", pos='midCenter', fade=True )
-        return ()
+        return []
 
     if nodes is None or len(nodes) == 0:
         if showAlert:
             ram.log("The 'Ramses_Proxies' set is empty.")
             cmds.inViewMessage( msg="The <hl>Ramses_Proxies</hl> set is empty.", pos='midCenter', fade=True )
-        return ()
+        return []
 
     for node in nodes:
         setRamsesAttr( node, RamsesAttribute.IS_PROXY, True, 'bool' )

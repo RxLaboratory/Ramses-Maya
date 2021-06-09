@@ -8,6 +8,7 @@ from .utils_nodes import getPublishNodes, getProxyNodes
 from .utils_items import getFileInfo, getPublishFolder
 from .utils_attributes import *
 from .utils_constants import *
+from .utils_general import *
 
 ONLY_PROXY = 0
 ALL = 1
@@ -17,25 +18,34 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
 
     step = ram.RamObject.getObjectShortName(step)
 
-    # Show dialog
-    publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
-    if not publishGeoDialog.exec_():
-        return
+    # Options
+    removeHidden = True
+    removeLocators = True
+    renameShapes = True
+    onlyRootGroups = False
+    noFreeze = ''
+    noFreezeCaseSensitive = False
+
+    if mode != ONLY_PROXY:
+        # Show dialog
+        publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
+        if not publishGeoDialog.exec_():
+            return
+
+        # Options
+        removeHidden = publishGeoDialog.removeHidden()
+        removeLocators = publishGeoDialog.removeLocators()
+        renameShapes = publishGeoDialog.renameShapes()
+        onlyRootGroups = publishGeoDialog.onlyRootGroups()
+        noFreeze = publishGeoDialog.noFreeze()
+        noFreezeCaseSensitive = publishGeoDialog.noFreezeCaseSensitive()
 
     # Progress
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
     progressDialog.setText("Publishing geometry")
 
-    # Options
-    removeHidden = publishGeoDialog.removeHidden()
-    removeLocators = publishGeoDialog.removeLocators()
-    renameShapes = publishGeoDialog.renameShapes()
-    onlyRootGroups = publishGeoDialog.onlyRootGroups()
-    noFreeze = publishGeoDialog.noFreeze()
-    noFreezeCaseSensitive = publishGeoDialog.noFreezeCaseSensitive()
-
-    tempFile = maf.cleanScene()
+    tempData = maf.cleanScene()
 
     # We need to use alembic
     if maf.safeLoadPlugin("AbcExport"):
@@ -46,9 +56,10 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     if mode == ALL or mode == ONLY_GEO:
         nodes = getPublishNodes()
     if mode == ALL or mode == ONLY_PROXY:
-        nodes = nodes + getProxyNodes( mode == ONLY_PROXY )
+        nodes = nodes + getProxyNodes( mode != ONLY_PROXY )
     
     if len(nodes) == 0:
+        endProcess(tempData, progressDialog)
         return
 
     numNodes = len(nodes)
@@ -67,6 +78,7 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     # Item info
     fileInfo = getFileInfo( filePath )
     if fileInfo is None:
+        endProcess(tempData, progressDialog)
         return
     version = item.latestVersion( fileInfo['resource'], '', step )
     versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
@@ -74,6 +86,7 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     # Publish folder
     publishFolder = getPublishFolder(item, step)
     if publishFolder == '':
+        endProcess(tempData, progressDialog)
         return
     ram.log( "I'm publishing geometry in " + publishFolder )
 
@@ -128,7 +141,11 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
                     freeze = False
                     break
 
-            maf.cleanNode( childNode, True, typesToKeep, renameShapes, freeze)     
+            maf.cleanNode( childNode, True, typesToKeep, renameShapes, freeze)
+
+        # the main node may have been removed (if hidden for example)
+        if not cmds.objExists(node):
+            continue
 
         # Last steps
         nodeName = node.split('|')[-1]
@@ -200,11 +217,11 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         ram.RamMetaDataManager.setVersion( abcFilePath, version )
 
         # Export viewport shaders
-        if shaderMode != '':
+        if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             shaderFilePath = exportShaders(node, shaderMode, publishFolder, fileInfo.copy(), abcFilePath)
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( shaderFilePath, version )
+            # Update Ramses Metadata (version)
+            ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
+            ram.RamMetaDataManager.setVersion( shaderFilePath, version )
 
         publishedNodes.append(node)
 
@@ -232,7 +249,10 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
             continue
         if transformNode in maf.nonDeletableObjects:
             continue
-        cmds.delete(transformNode)
+        try:
+            cmds.delete(transformNode)
+        except:
+            pass
 
     # Clean scene:
     # Remove empty groups from the scene
@@ -258,16 +278,10 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )
 
-    # Re-Open initial scene
-    cmds.file(filePath,o=True,f=True)
-
-    # Remove temp file
-    if os.path.isfile(tempFile):
-        os.remove(tempFile)
+    endProcess(tempData, progressDialog)
 
     ram.log("I've published these assets:")
     for publishedNode in publishedNodes:
         ram.log(" > " + publishedNode)
     cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenter', fade=True )
 
-    progressDialog.hide()

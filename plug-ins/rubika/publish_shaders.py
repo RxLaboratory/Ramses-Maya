@@ -4,6 +4,7 @@ from .utils_shaders import exportShaders
 from .utils_nodes import getPublishNodes, getProxyNodes
 from .utils_items import getFileInfo, getPublishFolder
 from .ui_publish_shaders import PublishShaderDialog
+from .utils_general import *
 import dumaf as maf # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
@@ -15,12 +16,12 @@ def publishProxyShaders( item, filePath, step ):
     progressDialog.show()
     progressDialog.setText("Publishing Arnold Scene Source")
 
-    tempFile = maf.cleanScene()
+    tempData = maf.cleanScene()
 
     # For all nodes in the proxy set
-    nodes = getProxyNodes( True )
+    nodes = getProxyNodes( False )
     if len(nodes) == 0:
-        progressDialog.hide()
+        endProcess(tempData, progressDialog)
         return
 
     numNodes = len(nodes)
@@ -31,7 +32,7 @@ def publishProxyShaders( item, filePath, step ):
     # Item info
     fileInfo = getFileInfo( filePath )
     if fileInfo is None:
-        progressDialog.hide()
+        endProcess(tempData, progressDialog)
         return
     version = item.latestVersion( fileInfo['resource'], '', step )
     versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
@@ -39,9 +40,12 @@ def publishProxyShaders( item, filePath, step ):
     # Publish folder
     publishFolder = getPublishFolder(item, step)
     if publishFolder == '':
-        progressDialog.hide()
+        endProcess(tempData, progressDialog)
         return
     ram.log( "I'm publishing the shaders in " + publishFolder )
+
+    # We need Arnold, of course
+    maf.safeLoadPlugin('mtoa')
 
     for node in nodes:
         progressDialog.setText("Publishing proxy: " + node)
@@ -72,14 +76,7 @@ def publishProxyShaders( item, filePath, step ):
     progressDialog.setText( "Cleaning" )
     progressDialog.increment()
 
-    # Re-Open initial scene
-    cmds.file(filePath,o=True,f=True)
-
-    # Remove temp file
-    if os.path.isfile(tempFile):
-        os.remove(tempFile)
-
-    progressDialog.hide()
+    endProcess(tempData, progressDialog)
 
 def publishShaders( item, filePath, step, mode):
     
@@ -96,7 +93,7 @@ def publishShaders( item, filePath, step, mode):
     # Options
     removeHidden = publishShaderDialog.removeHidden()
 
-    tempFile = maf.cleanScene()
+    tempData = maf.cleanScene()
 
     # For all nodes in the publish set
     nodes = getPublishNodes()
@@ -160,13 +157,6 @@ def publishShaders( item, filePath, step, mode):
 
     progressDialog.setText("Cleaning...")
 
-    # Re-Open initial scene
-    cmds.file(filePath,o=True,f=True)
-
-    # Remove temp file
-    if os.path.isfile(tempFile):
-        os.remove(tempFile)
-
-    ram.log("I've published these assets:")
+    endProcess(tempData, progressDialog)
 
     progressDialog.hide()
