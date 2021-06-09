@@ -39,11 +39,14 @@ Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont
 
 Si il ne trouve pas cette info, il se basera sur l'ID des steps :
 
-- MOD - Modelisation (-> publie Geo et vpShader)
-- SHADE - Shading (-> publie rdrShader et proxyShade)
+- MOD - Modelisation (-> publie Geo, proxyGeo et vpShader)
+- SHADE - Shading (-> publie rdrShader et proxyShade et proxyGeo)
 - RIG - Rigging (-> publie Rig)
 
-## TODO
+Ramses sait ce qu'il doit publier grâce à des sets dans la scène :
+
+- "Ramses_Publish" contient les nodes "root" à publier
+- "Ramses_Proxy" contient les nodes "root" des proxies (si shaders, des meshs auxquels les shaders sont appliqués)
 
 ### Ramses
 
