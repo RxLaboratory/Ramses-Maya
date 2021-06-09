@@ -76,7 +76,7 @@ et possibilité d'en ajouter
   - [x] Import modé
   - [x] Update modé
   - [ ] Publish .ma ou .mb
-- [ ] Shading
+- [x] Shading
   - [x] Import modé
   - [x] Update modé
   - [x] Publish .mb
