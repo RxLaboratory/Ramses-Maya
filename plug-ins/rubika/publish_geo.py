@@ -7,6 +7,7 @@ from .utils_shaders import exportShaders
 from .utils_nodes import getPublishNodes, getProxyNodes
 from .utils_items import getFileInfo, getPublishFolder
 from .utils_attributes import *
+from .utils_constants import *
 
 ONLY_PROXY = 0
 ALL = 1
@@ -169,9 +170,9 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         # Type
         pipeType = ''
         if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-            pipeType = '-proxyGeo'
+            pipeType = '-' + PROXYGEO_PIPE_NAME
         else:
-            pipeType = '-Geometry'
+            pipeType = '-' + GEO_PIPE_NAME
         # resource
         if abcFileInfo['resource'] != '':
             abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + pipeType
@@ -242,9 +243,9 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     sceneFileInfo['extension'] = 'mb'
     # resource
     if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-Geometry'
+        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + GEO_PIPE_NAME
     else:
-        sceneFileInfo['resource'] = 'Geometry'
+        sceneFileInfo['resource'] = GEO_PIPE_NAME
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,

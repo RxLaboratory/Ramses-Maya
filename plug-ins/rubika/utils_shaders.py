@@ -4,8 +4,9 @@ import maya.cmds as cmds # pylint: disable=import-error
 import dumaf as maf
 import ramses as ram # pylint: disable=import-error
 from .utils_attributes import * # pylint: disable=import-error
+from .utils_constants import *
 
-# mode is 'vp' for viewport, 'rdr' for rendering
+# mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
 def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFilePath=''): 
     # List all nodes containing shaders
     nodes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
@@ -43,7 +44,7 @@ def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFile
                         surfaceShaderName = surfaceShaderName[i+1:]
                     # And rename
                     if shadingEngine != 'initialShadingGroup':
-                        shadingEngine = cmds.rename( shadingEngine, mode + '_' + surfaceShaderName)
+                        shadingEngine = cmds.rename( shadingEngine, surfaceShaderName)
             
                     # List the objects this engine is shading
                     setRamsesManaged( shadingEngine )
@@ -65,9 +66,9 @@ def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFile
     fileNameBlocks['extension'] = 'mb'
     # resource
     if fileNameBlocks['resource'] != '':
-        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + nodeName + '-' + mode + 'Shaders'
+        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + nodeName + '-' + mode
     else:
-        fileNameBlocks['resource'] = nodeName + '-' + mode + 'Shaders'
+        fileNameBlocks['resource'] = nodeName + '-' + mode
     # path
     filePath = ram.RamFileManager.buildPath((
         folderPath,
@@ -83,7 +84,7 @@ def exportShaders(node, mode, folderPath, fileNameBlocks, associatedGeometryFile
 
     return filePath
 
-# mode is 'vp' for viewport, 'rdr' for rendering
+# mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
 def referenceShaders(nodes, mode, filePath, itemShortName=''):
     
     # If already referenced, get the existing reference and clean it

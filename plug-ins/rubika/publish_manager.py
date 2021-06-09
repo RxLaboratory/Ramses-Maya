@@ -38,18 +38,18 @@ def publisher(item, filePath, step):
 
         ram.log( "I'm publishing the geometry (and maybe some shading and proxies...)." )
         if vpShaders:
-            publishGeo( item, filePath, step, 'vp', geoMode )
+            publishGeo( item, filePath, step, VPSHADERS_PIPE_NAME, geoMode )
         elif rdrShaders:
-            publishGeo( item, filePath, step, 'rdr', geoMode )
+            publishGeo( item, filePath, step, RDRSHADERS_PIPE_NAME, geoMode )
         else:
             publishGeo( item, filePath, step, '', geoMode )
     else: # if we did not publish the geometry, we may have to publish the shaders and proxy geo anyway
         if vpShaders:
             ram.log( "I'm publishing the viewport shaders." )
-            publishShaders( item, filePath, step, 'vp' )
+            publishShaders( item, filePath, step, VPSHADERS_PIPE_NAME )
         if rdrShaders:
             ram.log( "I'm publishing the render shaders." )
-            publishShaders( item, filePath, step, 'rdr' )
+            publishShaders( item, filePath, step, RDRSHADERS_PIPE_NAME )
         if proxyGeo:
             ram.log( "I'm publishing the geo proxies." )
             publishGeo( item, filePath, step, '', ONLY_PROXY )
