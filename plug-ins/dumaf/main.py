@@ -5,6 +5,7 @@ from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-i
 )
 
 def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True ):
+
     # The shape(s) of this node
     shapes = cmds.listRelatives(node,s=True,f=True)
 
@@ -31,17 +32,17 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
         if not hasChildren( node ) and deleteIfEmpty:
             cmds.delete( node )
             return False
+    else:
+        # Delete history
+        cmds.delete(shape, constructionHistory=True)
 
-    # Delete history
-    cmds.delete(shape, constructionHistory=True)
+        # Rename shapes after transform nodes
+        if renameShapes:
+            cmds.rename(shape, node.split('|')[-1] + 'Shape')
 
-    # Rename shapes after transform nodes
-    if renameShapes:
-        cmds.rename(shape, node.split('|')[-1] + 'Shape')
-
-    # Freeze transform & center pivot
-    if freezeTranform and shapeType == 'mesh':
-        freezeTransform(node)
+        # Freeze transform & center pivot
+        if freezeTranform and shapeType == 'mesh':
+            freezeTransform(node)
 
 def snapNodeTo( nodeFrom, nodeTo):
     prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)
@@ -169,6 +170,7 @@ def createTempScene(name=''):
     return tempFile
 
 def cleanScene(removeAnimation=True):
+    prevFile = cmds.file( q=True, sn=True )
     tempFile = createTempScene(name='')
 
     # Import all references
@@ -183,7 +185,7 @@ def cleanScene(removeAnimation=True):
     if removeAnimation:
         removeAllAnimCurves()
     
-    return tempFile
+    return (tempFile, prevFile)
 
 def hasParent(node):
     return cmds.listRelatives(node, p=True, f=True) is not None
