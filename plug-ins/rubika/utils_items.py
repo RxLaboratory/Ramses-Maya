@@ -1,6 +1,8 @@
 import ramses as ram # pylint: disable=import-error
-import maya.cmds as cmds
+import maya.cmds as cmds # pylint: disable=import-error
 from .utils_constants import  *
+from .ui_pipes import PipeDialog
+import dumaf as maf
 import ramses as ram
 
 ramses = ram.Ramses.instance()
@@ -33,7 +35,9 @@ def getPipes( step, currentSceneFilePath = '' ):
             pipes = SHADE_STEP.outputPipes()
     
     if len( pipes ) == 0: # Let's ask!
-        # TODO UI
+        pipeDialog = PipeDialog( maf.getMayaWindow() )
+        if pipeDialog.exec_():
+            pipes = pipeDialog.getPipes()
         return pipes
 
     if currentSceneFilePath == '':

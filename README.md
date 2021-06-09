@@ -46,6 +46,8 @@ Si il ne trouve pas cette info, il se basera sur l'ID des steps :
 - SHADE - Shading (-> publie rdrShader et proxyShade et proxyGeo)
 - RIG - Rigging (-> publie Rig)
 
+Si on n'est pas sur un step connu, il affiche une liste des types pris en charge
+
 Ramses sait ce qu'il doit publier grâce à des sets dans la scène :
 
 - "Ramses_Publish" contient les nodes "root" à publier

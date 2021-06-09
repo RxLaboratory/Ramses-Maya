@@ -1,6 +1,6 @@
 import os
 
-import maya.cmds as cmds
+import maya.cmds as cmds # pylint: disable=import-error
 from .import_geo import *
 from .import_shaders import *
 from .utils_items import *

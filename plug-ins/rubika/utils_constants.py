@@ -6,10 +6,10 @@ import ramses as ram
 
 # FileTypes to be used
 
-ABC_FILE = ram.RamFileType( 'abc', "Alembic", ['.abc'] )
-MB_FILE = ram.RamFileType( 'mb', "Maya Binary", ['.mb'] )
-MA_FILE = ram.RamFileType( 'ma', "Maya ASCII", ['.ma'] )
-ASS_FILE = ram.RamFileType( 'ass', "Arnold Source File", ['.ass'] )
+ABC_FILE = ram.RamFileType( "Alembic", 'abc', ['.abc'] )
+MB_FILE = ram.RamFileType( "Maya Binary", 'mb',  ['.mb'] )
+MA_FILE = ram.RamFileType( "Maya ASCII", 'ma', ['.ma'] )
+ASS_FILE = ram.RamFileType( "Arnold Source File", 'ass', ['.ass'] )
 
 # Pipe Names
 
@@ -26,6 +26,14 @@ VPSHADERS_PIPE_FILE = ram.RamPipeFile( VPSHADERS_PIPE_NAME, MB_FILE, "" )
 RDRSHADERS_PIPE_FILE = ram.RamPipeFile( RDRSHADERS_PIPE_NAME, MB_FILE, "" )
 PROXYSHADE_PIPE_FILE = ram.RamPipeFile( PROXYSHADE_PIPE_NAME, ASS_FILE, "" )
 PROXYGEO_PIPE_FILE = ram.RamPipeFile( PROXYGEO_PIPE_NAME, ABC_FILE, "" )
+
+PIPE_FILES = [
+    GEO_PIPE_FILE,
+    VPSHADERS_PIPE_FILE,
+    RDRSHADERS_PIPE_FILE,
+    PROXYSHADE_PIPE_FILE,
+    PROXYGEO_PIPE_FILE,
+]
 
 # Default Steps
 
