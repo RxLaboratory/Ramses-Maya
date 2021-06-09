@@ -42,7 +42,7 @@ def getSaveFilePath( filePath ):
         # Set file to be renamed
         cmds.file( renameToSave = True )
         cmds.inViewMessage( msg='Malformed Ramses file name! <hl>Please save with a correct name first</hl>.', pos='midCenter', fade=True )
-        return None
+        return ''
 
     return saveFilePath
 
@@ -567,7 +567,7 @@ class RamOpenCmd( om.MPxCommand ):
                     itemShortName = resource
                     groupName = 'RamITEMS'
                     if re.match(regex, itemShortName):
-                        itemShortName = ram.ItemType.GEENERAL + itemShortName
+                        itemShortName = ram.ItemType.GENERAL + itemShortName
 
                 groupName = getCreateGroup(groupName)
                 # Import the file
