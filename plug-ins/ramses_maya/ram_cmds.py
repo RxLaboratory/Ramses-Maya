@@ -37,12 +37,19 @@ def checkDaemon():
 def getSaveFilePath( filePath ):
     # Ramses will check if the current file has to be renamed to respect the Ramses Tree and Naming Scheme
     saveFilePath = ram.RamFileManager.getSaveFilePath( filePath )
-    if not saveFilePath: # Ramses may return None if the current file name does not respeect the Ramses Naming Scheme
+    if saveFilePath == '': # Ramses may return None if the current file name does not respeect the Ramses Naming Scheme
+        cmds.warning( ram.Log.MalformedName )
+        cmds.inViewMessage( msg='Malformed Ramses file name! <hl>Please save with a correct name first</hl>.', pos='topCenter', fade=True )
+        if not cmds.ramSaveAs():
+            return ''
+        newFilePath = cmds.file( q=True, sn=True )
+        saveFilePath = ram.RamFileManager.getSaveFilePath( newFilePath )
+    if saveFilePath == '':
         cmds.warning( ram.Log.MalformedName )
         # Set file to be renamed
         cmds.file( renameToSave = True )
-        cmds.inViewMessage( msg='Malformed Ramses file name! <hl>Please save with a correct name first</hl>.', pos='midCenter', fade=True )
-        return None
+        cmds.inViewMessage( msg='Some Problem occured, <hl>the file name is still invalid for Ramses</hl>, sorry.', pos='midCenter', fade=True )
+        return ''
 
     return saveFilePath
 
@@ -124,17 +131,24 @@ class RamSaveCmd( om.MPxCommand ):
 
         # Get the save path 
         saveFilePath = getSaveFilePath( currentFilePath )
-        if not saveFilePath:
+        if saveFilePath == '':
             return
 
-        # Check if we need to set a comment
+        # Parse arguments
         if not self.parseArgs(args,saveFilePath):
             return
 
-        # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment
-        # to be sure to not lose the previous working file.
         increment = False
         incrementReason = ''
+        # It it's a restored version, we need to increment
+        if ram.RamFileManager.isRestoredFilePath( currentFilePath ):
+            increment = True
+            incrementReason = "an older restored version."
+            cmds.warning( "Incremented and Saved as " + saveFilePath )
+
+        # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment
+        # to be sure to not lose the previous working file.
+        
         if ram.RamFileManager.inReservedFolder( currentFilePath ):
             increment = True
             incrementReason = "misplaced."
@@ -200,10 +214,12 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         if step is not None:
             saveAsDialog.setStep( step )
         if not saveAsDialog.exec_():
+            self.setResult( False )
             return
 
         filePath = saveAsDialog.getFilePath()
         if filePath == '':
+            self.setResult( False )
             return
         # Create folder
         folder = os.path.dirname(filePath)
@@ -212,15 +228,22 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             os.makedirs(folder)
         # Check if file exists
         if os.path.isfile( filePath ):
-            result = cmds.confirmDialog( message="The corresponding file already exits. Do you want to overwrite it?", button=("Overwrite and Save", "Cancel") )
-            if result == 'Cancel':
-                return
+            # Backup
+            backupFilePath = ram.RamFileManager.copyToVersion( filePath, increment=True )
+            # Be kind, set a comment
+            ram.RamMetaDataManager.setComment( backupFilePath, "Overwritten by an external file." )
+            ram.log( 'I\'ve added this comment for you: "Overwritten by an external file."' )
 
         cmds.file(rename = filePath )
         cmds.file( save=True, options="v=1;", f=True )
 
+        # Create the first version ( or increment existing )
+        ram.RamFileManager.copyToVersion( filePath, increment=True )
+
         ram.log( "Scene saved as: " + filePath )
         cmds.inViewMessage( msg='Scene saved as: <hl>' + fileName + '</hl>.', pos='midCenter', fade=True )
+
+        self.setResult( True )
 
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
@@ -567,7 +590,7 @@ class RamOpenCmd( om.MPxCommand ):
                     itemShortName = resource
                     groupName = 'RamITEMS'
                     if re.match(regex, itemShortName):
-                        itemShortName = ram.ItemType.GEENERAL + itemShortName
+                        itemShortName = ram.ItemType.GENERAL + itemShortName
 
                 groupName = getCreateGroup(groupName)
                 # Import the file
