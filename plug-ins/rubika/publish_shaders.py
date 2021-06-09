@@ -1,13 +1,85 @@
 import os
 
 from .utils_shaders import exportShaders
-from .utils_nodes import getPublishNodes
+from .utils_nodes import getPublishNodes, getProxyNodes
 from .utils_items import getFileInfo, getPublishFolder
 from .ui_publish_shaders import PublishShaderDialog
 import dumaf as maf # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 
+
+def publishProxyShaders( item, filePath, step ):
+    # Progress
+    progressDialog = maf.ProgressDialog()
+    progressDialog.show()
+    progressDialog.setText("Publishing Arnold Scene Source")
+
+    tempFile = maf.cleanScene()
+
+    # For all nodes in the proxy set
+    nodes = getProxyNodes( True )
+    if len(nodes) == 0:
+        progressDialog.hide()
+        return
+
+    numNodes = len(nodes)
+    progressDialog.setMaximum(numNodes + 1)
+    progressDialog.setText("Preparing")
+    progressDialog.increment()
+
+    # Item info
+    fileInfo = getFileInfo( filePath )
+    if fileInfo is None:
+        progressDialog.hide()
+        return
+    version = item.latestVersion( fileInfo['resource'], '', step )
+    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+
+    # Publish folder
+    publishFolder = getPublishFolder(item, step)
+    if publishFolder == '':
+        progressDialog.hide()
+        return
+    ram.log( "I'm publishing the shaders in " + publishFolder )
+
+    for node in nodes:
+        progressDialog.setText("Publishing proxy: " + node)
+        progressDialog.increment()
+
+        cmds.select(node,r=True)
+        nodeName = node.split('|')[-1].split(':')[-1]
+        if nodeName.lower().startswith( 'proxy_' ):
+            nodeName = nodeName[6:]
+        # extension
+        fileInfo['extension'] = 'ass'
+        # resource
+        if fileInfo['resource'] != '':
+            fileInfo['resource'] = fileInfo['resource'] + '-' + nodeName + '-proxyShade'
+        else:
+            fileInfo['resource'] = nodeName + '-proxyShade'
+        # path
+        assFilePath = ram.RamFileManager.buildPath((
+            publishFolder,
+            ram.RamFileManager.composeRamsesFileName(fileInfo)
+        ))
+
+        cmds.arnoldExportAss(f=assFilePath, s=True, mask=223, lightLinks=0, shadowLinks=0, cam="perspShape" )
+
+        ram.RamMetaDataManager.setVersionFilePath( assFilePath, versionFilePath )
+        ram.RamMetaDataManager.setVersion( assFilePath, version )
+
+    progressDialog.setText( "Cleaning" )
+    progressDialog.increment()
+
+    # Re-Open initial scene
+    cmds.file(filePath,o=True,f=True)
+
+    # Remove temp file
+    if os.path.isfile(tempFile):
+        os.remove(tempFile)
+
+    progressDialog.hide()
 
 def publishShaders( item, filePath, step, mode):
     
@@ -29,6 +101,7 @@ def publishShaders( item, filePath, step, mode):
     # For all nodes in the publish set
     nodes = getPublishNodes()
     if len(nodes) == 0:
+        progressDialog.hide()
         return
 
     numNodes = len(nodes)
@@ -39,6 +112,7 @@ def publishShaders( item, filePath, step, mode):
     # Item info
     fileInfo = getFileInfo( filePath )
     if fileInfo is None:
+        progressDialog.hide()
         return
     version = item.latestVersion( fileInfo['resource'], '', step )
     versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
@@ -46,6 +120,7 @@ def publishShaders( item, filePath, step, mode):
     # Publish folder
     publishFolder = getPublishFolder(item, step)
     if publishFolder == '':
+        progressDialog.hide()
         return
     ram.log( "I'm publishing the shaders in " + publishFolder )
 

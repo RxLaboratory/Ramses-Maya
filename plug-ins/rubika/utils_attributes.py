@@ -16,6 +16,7 @@ class RamsesAttribute():
     SHADED_OBJECTS = 'ramsesShadedObjects'
     DT_TYPES = ('string')
     AT_TYPES = ('long', 'bool')
+    IS_PROXY = 'ramsesIsProxy'
 
 def setRamsesAttr( node, attr, value, t):
     # Add if not already there

@@ -13,6 +13,7 @@
 
 ## TODO
 
+- Save as when filename does not respect the naming scheme
 - Implement import when pipes are not available
 - Don't use the name of the ramPipe in the filename but store it in the ramses metadata
 
@@ -29,6 +30,8 @@ Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont
 - "Geo"
 - "vpShader"
 - "rdrShader"
+- "proxyShade"
+- "proxyGeo"
 - "Rig"
 - "Anim"
 
@@ -37,7 +40,7 @@ Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont
 Si il ne trouve pas cette info, il se basera sur l'ID des steps :
 
 - MOD - Modelisation (-> publie Geo et vpShader)
-- SHADE - Shading (-> publie rdrShader)
+- SHADE - Shading (-> publie rdrShader et proxyShade)
 - RIG - Rigging (-> publie Rig)
 
 ## TODO

@@ -4,10 +4,15 @@ import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
 from .ui_publish_geo import PublishGeoDialog
 from .utils_shaders import exportShaders
-from .utils_nodes import getPublishNodes
+from .utils_nodes import getPublishNodes, getProxyNodes
 from .utils_items import getFileInfo, getPublishFolder
+from .utils_attributes import *
 
-def publishGeo(item, filePath, step, shaderMode):
+ONLY_PROXY = 0
+ALL = 1
+ONLY_GEO = 2
+
+def publishGeo(item, filePath, step, shaderMode, mode = ALL):
 
     step = ram.RamObject.getObjectShortName(step)
 
@@ -35,8 +40,13 @@ def publishGeo(item, filePath, step, shaderMode):
     if maf.safeLoadPlugin("AbcExport"):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
-    # For all nodes in the publish set
-    nodes = getPublishNodes()
+    # For all nodes in the publish set or proxy set
+    nodes = []
+    if mode == ALL or mode == ONLY_GEO:
+        nodes = getPublishNodes()
+    if mode == ALL or mode == ONLY_PROXY:
+        nodes = nodes + getProxyNodes( mode == ONLY_PROXY )
+    
     if len(nodes) == 0:
         return
 
@@ -121,6 +131,8 @@ def publishGeo(item, filePath, step, shaderMode):
 
         # Last steps
         nodeName = node.split('|')[-1]
+        if nodeName.lower().startswith('proxy_'):
+            nodeName = nodeName[6:]
 
         # Remove remaining empty groups
         maf.removeEmptyGroups(node)
@@ -154,11 +166,17 @@ def publishGeo(item, filePath, step, shaderMode):
         abcFileInfo = fileInfo.copy()
         # extension
         abcFileInfo['extension'] = 'abc'
+        # Type
+        pipeType = ''
+        if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+            pipeType = '-proxyGeo'
+        else:
+            pipeType = '-Geometry'
         # resource
         if abcFileInfo['resource'] != '':
-            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-Geometry'
+            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + pipeType
         else:
-            abcFileInfo['resource'] = nodeName + '-Geometry'
+            abcFileInfo['resource'] = nodeName + pipeType
         # path
         abcFilePath = ram.RamFileManager.buildPath((
             publishFolder,
