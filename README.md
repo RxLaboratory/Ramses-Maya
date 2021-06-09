@@ -13,12 +13,8 @@
 
 ## TODO
 
-- Show a UI when publishing and there's no pipe to know what type of stuff to publish (just a list with an item per default pipe) (in utils_items getPipes)
-
-- Save as when filename does not respect the naming scheme
-- Implement import when pipes are not available
 - Don't use the name of the ramPipe in the filename but store it in the ramses metadata
-- Assign shaders with the transform node name, not the mesh name
+- Assign shaders with the transform node name, not the mesh name (OK ? -> Check)
 
 ## NOTES / DOC
 
