@@ -15,6 +15,17 @@
 ## TODO
 
 - Fix file selection if there's both an ma and mb file
+- Switches for rdr/vp shaders and geoproxies/shaderproxies (in the updater or importer)
+- Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
+- Generate preview (playblast or thumbnail and later render)
+- Generate preview option on new status
+- If there's a selection, update option to filter according to the selection
+- Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
+
+### Default addon
+
+- The default addon checks the pipes to import/export ma or mb, as ref or standard (use the pipeFile shortname)
+- Implement an update button for the default addon, using a group + attributes
 
 ## NOTES / DOC
 
@@ -70,22 +81,29 @@ et possibilité d'en ajouter
   - [x] Publish abc
   - [x] Publish vp shaders .mb
   - [x] Publish proxy geo .abc
-- [ ] Setup
+- [x] Setup
   - [x] Import modé
   - [x] Update modé
-  - [ ] Publish .ma ou .mb
+  - [x] Publish .ma ou .mb
 - [x] Shading
   - [x] Import modé
   - [x] Update modé
   - [x] Publish .mb
   - [x] Publish proxy: .abc, .ass
+- [ ] Set Dressing
+  - [ ] Import modé
+  - [ ] Publish .mb (same way as rig)
+
 #### Shots steps
+
 - [ ] Layout
+  - [ ] Import rig, sets, geo
   - [ ] Publish .mb
   - [ ] Publish .abc (gpu cache)
 - [ ] Animation
+  - [x] Import rig
   - [ ] Import/update abc du layout
-  - [ ] Import/update les chars et props
+  - [x] Import/update les props
   - [ ] Publish .abc (sans oublier la caméra)
   - [ ] Ajouter optionnellement l'anim des crease
 - [x] FX, Rien pour l'instant
@@ -97,6 +115,8 @@ et possibilité d'en ajouter
 - [ ] Compositing
   - [ ] Import/update les exr, eventuelle prépare un arbre, etc
   - [ ] Publish Rendu exr ou png
+
 ### Questions
+
 - Les shaders sont en référence, pas de souci ?
 - Dans pipou, la modé est importée en référence pour le shading, un intérêt ?

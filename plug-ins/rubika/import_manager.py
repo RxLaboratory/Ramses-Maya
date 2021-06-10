@@ -3,6 +3,7 @@ import os
 import maya.cmds as cmds # pylint: disable=import-error
 from .import_geo import *
 from .import_shaders import *
+from .import_rig import *
 from .utils_items import *
 import ramses as ram
 
@@ -14,10 +15,10 @@ def importer(item, filePaths, step):
     rdrShaderFiles = []
     proxyShadeFiles = []
     proxyGeoFiles = []
+    rigFiles = []
 
     if filePaths[0] == '': # Scan all published files to get the ones corresponding to the pipes
 
-        
         currentFilePath = cmds.file( q=True, sn=True )
         # Get the output pipes from the step being imported
         pipes = getPipes( step, currentFilePath )
@@ -29,6 +30,7 @@ def importer(item, filePaths, step):
         rdrShaders = False
         proxyShade = False
         proxyGeo = False
+        rig = False
 
         for pipe in pipes:
             for pipeFile in pipe.pipeFiles():
@@ -42,6 +44,8 @@ def importer(item, filePaths, step):
                     proxyShade = True
                 elif pipeFile == PROXYGEO_PIPE_FILE:
                     proxyGeo = True
+                elif pipeFile == RIG_PIPE_FILE:
+                    rig = True
 
         # List all files, and get correspondance
         publishFolder = item.publishFolderPath( step )
@@ -56,6 +60,8 @@ def importer(item, filePaths, step):
             proxyShadeFiles = PROXYSHADE_PIPE_FILE.getFiles( publishFolder )
         if proxyGeo:
             proxyGeoFiles = PROXYGEO_PIPE_FILE.getFiles( publishFolder )
+        if rig:
+            rigFiles = RIG_PIPE_FILE.getFiles( publishFolder )
  
     else: # Sort the selected files
         for file in filePaths:
@@ -69,6 +75,8 @@ def importer(item, filePaths, step):
                 proxyShadeFiles.append( file )
             if PROXYGEO_PIPE_FILE.check(file):
                 proxyGeoFiles.append( file )
+            if RIG_PIPE_FILE.check( file ):
+                rigFiles.append( file )
 
     # Import
 
@@ -80,6 +88,11 @@ def importer(item, filePaths, step):
         for geoFile in geoFiles:
             geoNodes = geoNodes + importGeo( item, geoFile, step )
 
+    if len(rigFiles) > 0:
+        ram.log( "I'm importing the rig." )
+        for rigFile in rigFiles:
+            geoNodes = geoNodes + importRig( item, rigFile, step)
+
     if len(vpShaderFiles) > 0:
         ram.log( "I'm importing the viewport shaders." )
         for vpShaderFile in vpShaderFiles:
@@ -89,3 +102,5 @@ def importer(item, filePaths, step):
         ram.log( "I'm importing the render shaders." )
         for rdrShaderFile in rdrShaderFiles:
             importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, geoNodes )
+
+    

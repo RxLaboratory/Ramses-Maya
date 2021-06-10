@@ -123,7 +123,6 @@ def publishRig( item, filePath, step, vpShaders = True ):
         for node in nodes:
             shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), VPSHADERS_PIPE_NAME )
             # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setValue( sceneFilePath, 'shaderFilePath', shaderFilePath )
             ram.RamMetaDataManager.setPipeType( shaderFilePath, VPSHADERS_PIPE_NAME )
             ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
             ram.RamMetaDataManager.setVersion( shaderFilePath, version )
@@ -145,7 +144,7 @@ def publishRig( item, filePath, step, vpShaders = True ):
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )
 
     #reopen scene, etc
-    # endProcess(tempData, progressDialog)
+    endProcess(tempData, progressDialog)
 
     ram.log("I've published the rig.")
     cmds.inViewMessage(  msg="Rig published.", pos='midCenter', fade=True )
