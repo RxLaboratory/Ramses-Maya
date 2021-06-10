@@ -18,6 +18,7 @@ VPSHADERS_PIPE_NAME = 'vpShaders'
 RDRSHADERS_PIPE_NAME = 'rdrShaders'
 PROXYSHADE_PIPE_NAME = 'proxyShade'
 PROXYGEO_PIPE_NAME = 'proxyGeo'
+RIG_PIPE_NAME = 'Rig'
 
 # PipeFiles
 
@@ -26,6 +27,7 @@ VPSHADERS_PIPE_FILE = ram.RamPipeFile( VPSHADERS_PIPE_NAME, MB_FILE, "" )
 RDRSHADERS_PIPE_FILE = ram.RamPipeFile( RDRSHADERS_PIPE_NAME, MB_FILE, "" )
 PROXYSHADE_PIPE_FILE = ram.RamPipeFile( PROXYSHADE_PIPE_NAME, ASS_FILE, "" )
 PROXYGEO_PIPE_FILE = ram.RamPipeFile( PROXYGEO_PIPE_NAME, ABC_FILE, "" )
+RIG_PIPE_FILE = ram.RamPipeFile( RIG_PIPE_NAME, MA_FILE, "" )
 
 PIPE_FILES = [
     GEO_PIPE_FILE,
@@ -33,12 +35,14 @@ PIPE_FILES = [
     RDRSHADERS_PIPE_FILE,
     PROXYSHADE_PIPE_FILE,
     PROXYGEO_PIPE_FILE,
+    RIG_PIPE_FILE,
 ]
 
 # Default Steps
 
 MOD_STEP = ram.RamStep( "Modeling", 'MOD', '', ram.StepType.ASSET_PRODUCTION )
 SHADE_STEP = ram.RamStep( "Shading", 'SHADE', '', ram.StepType.ASSET_PRODUCTION )
+RIG_STEP = ram.RamStep("Rigging", 'RIG', '', ram.StepType.ASSET_PRODUCTION )
 
 # Setting default Pipes. Don't do that! It is BAD to set a private attribute.
 # Unless you know what you're doing.
@@ -48,4 +52,8 @@ MOD_STEP._outputPipes = [
 
 SHADE_STEP._outputPipes = [
     ram.RamPipe( '', 'SHADE', [ RDRSHADERS_PIPE_FILE, PROXYSHADE_PIPE_FILE, PROXYGEO_PIPE_FILE ] ),
+]
+
+RIG_STEP._outputPipes = [
+    ram.RamPipe( '', 'RIG', [ RIG_PIPE_FILE, VPSHADERS_PIPE_FILE ] ),
 ]

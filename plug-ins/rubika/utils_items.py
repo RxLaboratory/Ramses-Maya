@@ -7,6 +7,33 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 
+def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension ):
+    # Get the extension from the pipe (ma or mb)
+    pipes = step.outputPipes()
+    if len(pipes) == 0:
+        pipes = defaultStep.outputPipes()
+
+    for pipe in pipes:
+        for pipeFile in pipe.pipeFiles():
+            exts = pipeFile.fileType().extensions()
+            if len(exts) == 0:
+                continue
+            ext = exts[0]
+            if ext.startswith('.'):
+                ext  = ext[1:]
+            if ext.lower() in filters:
+                return ext
+
+    # Get default
+    ext = defaultPipeFile.fileType().extensions()[0]
+
+    if ext.startswith('.'):
+        ext  = ext[1:]
+    if ext in filters:
+        return ext
+
+    return defaultExtension
+
 def getFileInfo( filePath):
     fileInfo = ram.RamFileManager.decomposeRamsesFilePath( filePath )
     if fileInfo is None:
@@ -33,6 +60,8 @@ def getPipes( step, currentSceneFilePath = '' ):
             pipes = MOD_STEP.outputPipes()
         elif step == SHADE_STEP:
             pipes = SHADE_STEP.outputPipes()
+        elif step == RIG_STEP:
+            pipes = RIG_STEP.outputPipes()
     
     if len( pipes ) == 0: # Let's ask!
         pipeDialog = PipeDialog( maf.getMayaWindow() )
