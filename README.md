@@ -14,7 +14,7 @@
 
 ## TODO
 
-- Don't use the name of the ramPipe in the filename but store it in the ramses metadata
+- Fix file selection if there's both an ma and mb file
 
 ## NOTES / DOC
 
@@ -26,12 +26,12 @@ Il s'adaptera en fonction des paramètres et surtout de la config du pipe dans l
 
 Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont reconnus par l'addon :
 
-- "Geo"
-- "vpShader"
-- "rdrShader"
-- "proxyShade"
-- "proxyGeo"
-- "Rig"
+- "Geo" (doit être un .abc -> .ma ou .mb à implémenter)
+- "vpShader" (doit être un .mb -> .ma à implémenter)
+- "rdrShader" (doit être un .mb -> .ma à implémenter)
+- "proxyShade" (doit être un .ass)
+- "proxyGeo" (doit être un .abc -> .ma ou .mb à implémenter)
+- "Rig" (doit être un .ma ou .mb)
 - "Anim"
 
 -> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
@@ -48,6 +48,7 @@ Ramses sait ce qu'il doit publier grâce à des sets dans la scène :
 
 - "Ramses_Publish" contient les nodes "root" à publier
 - "Ramses_Proxy" contient les nodes "root" des proxies (si shaders, des meshs auxquels les shaders sont appliqués)
+- "Ramses_DelOnPublish" contient les nodes à supprimer avant publication
 
 ### Ramses
 
