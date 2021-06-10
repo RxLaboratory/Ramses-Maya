@@ -14,6 +14,8 @@ class RamsesAttribute():
     SHADING_FILE = 'ramsesShadingFilePath'
     SHADING_TIME = 'ramsesShadingTimeStamp'
     SHADED_OBJECTS = 'ramsesShadedObjects'
+    RIG_FILE = 'ramsesRigFilePath'
+    RIG_TIME = 'ramsesRigTimeStamp'
     DT_TYPES = ('string')
     AT_TYPES = ('long', 'bool')
     IS_PROXY = 'ramsesIsProxy'

@@ -1,8 +1,30 @@
 import sys, tempfile, re
 import maya.cmds as cmds # pylint: disable=import-error
+import maya.api.OpenMaya as om # pylint: disable=import-error
 from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-in-module
     QApplication
 )
+
+def getNodesInSet( setName ):
+    # Create a list and add the set
+    selectionList = om.MSelectionList()
+    try:
+        selectionList.add( setName )
+    except:
+        return []
+    # Get the node for the set and create a FnSet
+    node = selectionList.getDependNode( 0 )
+    set = om.MFnSet(node)
+    # Get all members of the set
+    publishNodes = set.getMembers( True )
+    publishPaths = []
+    # An iterator to get all dagPaths
+    iterator = om.MItSelectionList(publishNodes)
+    while not iterator.isDone():
+        dagPath = iterator.getDagPath()
+        publishPaths.append( dagPath.fullPathName() )
+        iterator.next()
+    return publishPaths
 
 def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True ):
 
@@ -67,9 +89,16 @@ def lockTransform( transformNode ):
     for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
         cmds.setAttr(transformNode + a, lock=True )
 
-def getNodeBaseName( node ):
+def getNodeBaseName( node, keepNameSpace = False ):
     nodeName = node.split('|')[-1]
-    nodeName = nodeName.split(':')[-1]
+    if not keepNameSpace:
+        nodeName = nodeName.split(':')[-1]
+    return nodeName
+
+def getNodeAbsolutePath( nodeName ):
+    n = cmds.ls(nodeName, long=True)
+    if n is not None:
+        return n[0]
     return nodeName
 
 def getCreateGroup( groupName, parentNode=None ):
@@ -117,6 +146,11 @@ nonDeletableObjects = [
     '|side',
     '|topShape',
     '|top',
+    'initialShadingGroup',
+    'initialParticleSE',
+    'lambert1',
+    'standardSurface1',
+    'particleCloud1',
 ]
 
 def safeLoadPlugin(pluginName):
@@ -169,7 +203,7 @@ def createTempScene(name=''):
     cmds.file(rename=tempFile)
     return tempFile
 
-def cleanScene(removeAnimation=True):
+def cleanScene(removeAnimation=True, lockVisibility = False):
     prevFile = cmds.file( q=True, sn=True )
     tempFile = createTempScene(name='')
 
@@ -181,11 +215,22 @@ def cleanScene(removeAnimation=True):
     # Clean names
     removeAllNamespaces()
 
-    # No animation in the mod step!
+    # Remove Anim
     if removeAnimation:
         removeAllAnimCurves()
     
+    # Lock visibility if hidden
+    if lockVisibility:
+        lockHiddenVisibility()
+
     return (tempFile, prevFile)
+
+def lockHiddenVisibility():
+    for node in cmds.ls(long=True):
+        if not cmds.attributeQuery( 'visibility', n=node, exists=True ):
+            continue
+        if not cmds.getAttr(node+'.visibility'):
+            cmds.setAttr(node+'.visibility',lock=True)
 
 def hasParent(node):
     return cmds.listRelatives(node, p=True, f=True) is not None

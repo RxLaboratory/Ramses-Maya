@@ -36,3 +36,14 @@ def getProxyNodes( showAlert = False ):
         setRamsesAttr( node, RamsesAttribute.IS_PROXY, True, 'bool' )
 
     return nodes
+
+def getDelOnPubNodes( ):
+    try:
+        nodes = cmds.sets( 'Ramses_DelOnPublish', nodesOnly=True, q=True )
+    except ValueError:
+        return []
+
+    if nodes is None:
+        return []
+    print(nodes)
+    return nodes

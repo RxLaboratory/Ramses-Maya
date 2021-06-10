@@ -1,4 +1,3 @@
-import os
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
@@ -94,6 +93,7 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     publishedNodes = []
 
     for node in nodes:
+        print(node)
         progressDialog.setText("Publishing: " + node)
         progressDialog.increment()
 
@@ -177,7 +177,7 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         cv5 = cv1
         controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=nodeName + '_root')
         # Parent the node
-        cmds.parent(node, controller)
+        node = cmds.parent(node, controller)[0]
 
         # Save and create Abc
         # Generate file path
@@ -187,14 +187,14 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         # Type
         pipeType = ''
         if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-            pipeType = '-' + PROXYGEO_PIPE_NAME
+            pipeType = PROXYGEO_PIPE_NAME
         else:
-            pipeType = '-' + GEO_PIPE_NAME
+            pipeType = GEO_PIPE_NAME
         # resource
         if abcFileInfo['resource'] != '':
-            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + pipeType
+            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pipeType
         else:
-            abcFileInfo['resource'] = nodeName + pipeType
+            abcFileInfo['resource'] = nodeName + '-' + pipeType
         # path
         abcFilePath = ram.RamFileManager.buildPath((
             publishFolder,
@@ -213,13 +213,16 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         ])
         cmds.AbcExport(j=abcOptions)
         # Update Ramses Metadata (version)
+        ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
         ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
         ram.RamMetaDataManager.setVersion( abcFilePath, version )
 
         # Export viewport shaders
         if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-            shaderFilePath = exportShaders(node, shaderMode, publishFolder, fileInfo.copy(), abcFilePath)
+            shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), shaderMode )
             # Update Ramses Metadata (version)
+            ram.RamMetaDataManager.setValue( abcFilePath, 'shaderFilePath', shaderFilePath )
+            ram.RamMetaDataManager.setPipeType( shaderFilePath, shaderMode )
             ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
             ram.RamMetaDataManager.setVersion( shaderFilePath, version )
 
@@ -275,6 +278,10 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
     # Update Ramses Metadata (version)
+    pipeType = GEO_PIPE_NAME
+    if mode == ONLY_PROXY:
+        pipeType = PROXYGEO_PIPE_NAME
+    ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
     ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )
 

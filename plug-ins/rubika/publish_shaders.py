@@ -8,6 +8,7 @@ from .utils_general import *
 import dumaf as maf # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
+from .utils_constants import *
 
 
 def publishProxyShaders( item, filePath, step ):
@@ -69,7 +70,7 @@ def publishProxyShaders( item, filePath, step ):
         ))
 
         cmds.arnoldExportAss(f=assFilePath, s=True, mask=223, lightLinks=0, shadowLinks=0, cam="perspShape" )
-
+        ram.RamMetaDataManager.setPipeType( assFilePath, PROXYSHADE_PIPE_NAME )
         ram.RamMetaDataManager.setVersionFilePath( assFilePath, versionFilePath )
         ram.RamMetaDataManager.setVersion( assFilePath, version )
 
@@ -150,8 +151,9 @@ def publishShaders( item, filePath, step, mode):
         maf.removeEmptyGroups(node)
 
         # Export
-        shaderFilePath = exportShaders(node, mode, publishFolder, fileInfo.copy() )
+        shaderFilePath = exportShaders(node, publishFolder, fileInfo.copy(), mode )
         # Update Ramses Metadata (version)
+        ram.RamMetaDataManager.setPipeType( shaderFilePath, mode )
         ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
         ram.RamMetaDataManager.setVersion( shaderFilePath, version )
 
