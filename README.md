@@ -21,6 +21,7 @@
 - Generate preview option on new status
 - If there's a selection, update option to filter according to the selection
 - Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
+- implement setOffline on ui_saveas
 
 ### Default addon
 
