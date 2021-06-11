@@ -23,6 +23,7 @@
 - Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
 
 - Explications arbo dossier ramses et droits d'accès
+- Lister les trucs à faire en début d'année avant l'arrivée des étudiants
 
 ### Default addon
 
