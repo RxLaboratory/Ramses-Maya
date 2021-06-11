@@ -22,6 +22,8 @@
 - If there's a selection, update option to filter according to the selection
 - Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
 
+- Explications arbo dossier ramses et droits d'accès
+
 ### Default addon
 
 - The default addon checks the pipes to import/export ma or mb, as ref or standard (use the pipeFile shortname)
