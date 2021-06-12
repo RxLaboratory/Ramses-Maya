@@ -15,12 +15,15 @@
 ## TODO
 
 - Fix file selection if there's both an ma and mb file
-- Switches for rdr/vp shaders and geoproxies/shaderproxies (in the updater or importer)
+- Switches for rdr/vp shaders and geoproxies (in the updater)
 - Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
 - Generate preview (playblast or thumbnail and later render)
 - Generate preview option on new status
 - If there's a selection, update option to filter according to the selection
 - Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
+- Publish set
+- Publish anim
+- Publish Layout
 
 - Explications arbo dossier ramses et droits d'accès
 - Lister les trucs à faire en début d'année avant l'arrivée des étudiants
@@ -93,9 +96,9 @@ et possibilité d'en ajouter
   - [x] Update modé
   - [x] Publish .mb
   - [x] Publish proxy: .abc, .ass
-- [ ] Set Dressing
-  - [ ] Import modé
-  - [ ] Publish .mb (same way as rig)
+- [x] Set Dressing
+  - [x] Import modé
+  - [x] Publish .mb
 
 #### Shots steps
 
@@ -112,7 +115,7 @@ et possibilité d'en ajouter
 - [x] FX, Rien pour l'instant
 - [ ] Lighting
   - [ ] Import/update Le layout, vire tout ce qui a été baké/publish en abc
-  - [ ] Import/update les abc
+  - [x] Import/update les abc
   - [x] Import/update les shaders et les assigne : depuis les items et depuis les charas, etc
   - [ ] Publish Rendu exr
 - [ ] Compositing

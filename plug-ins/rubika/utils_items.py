@@ -62,6 +62,8 @@ def getPipes( step, currentSceneFilePath = '' ):
             pipes = SHADE_STEP.outputPipes()
         elif step == RIG_STEP:
             pipes = RIG_STEP.outputPipes()
+        elif step == SET_STEP:
+            pipes = SET_STEP.outputPipes()
     
     if len( pipes ) == 0: # Let's ask!
         pipeDialog = PipeDialog( maf.getMayaWindow() )

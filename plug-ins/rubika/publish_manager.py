@@ -20,9 +20,13 @@ def publisher(item, filePath, step):
     proxyShade = False
     proxyGeo = False
     rig = False
+    sets = False
+
+    pipeFiles = []
 
     for pipe in pipes:
         for pipeFile in pipe.pipeFiles():
+            pipeFiles.append(pipeFile)
             if pipeFile == GEO_PIPE_FILE:
                 geo = True
             elif pipeFile == VPSHADERS_PIPE_FILE:
@@ -35,6 +39,8 @@ def publisher(item, filePath, step):
                 proxyGeo = True
             elif pipeFile == RIG_PIPE_FILE:
                 rig = True
+            elif pipeFile == SET_PIPE_FILE:
+                sets = True
 
     # We're deleting everything which name stats with "delOnPub_"
     cmds.delete( getDelOnPubNodes() )
@@ -43,19 +49,15 @@ def publisher(item, filePath, step):
     rdrShadersPublished = False
 
     if geo: # If we publish the geometry, we may publish shaders and proxy geo with the same function
-        geoMode = ONLY_GEO
-        if proxyGeo:
-            geoMode = ALL
-
         ram.log( "I'm publishing the geometry (and maybe some shading and proxies...)." )
         if vpShaders:
             vpShadersPublished = True
-            publishGeo( item, filePath, step, VPSHADERS_PIPE_NAME, geoMode )
+            publishGeo( item, filePath, step, pipeFiles )
         elif rdrShaders:
             rdrShadersPublished = True
-            publishGeo( item, filePath, step, RDRSHADERS_PIPE_NAME, geoMode )
+            publishGeo( item, filePath, step, pipeFiles )
         else:
-            publishGeo( item, filePath, step, '', geoMode )
+            publishGeo( item, filePath, step, pipeFiles )
 
     if rig: # The rig may also publish the vp shaders
         vpShadersPublished = vpShaders
@@ -64,12 +66,19 @@ def publisher(item, filePath, step):
     if vpShaders and not vpShadersPublished:
         ram.log( "I'm publishing the viewport shaders." )
         publishShaders( item, filePath, step, VPSHADERS_PIPE_NAME )
+    
     if rdrShaders and not rdrShadersPublished:
         ram.log( "I'm publishing the render shaders." )
         publishShaders( item, filePath, step, RDRSHADERS_PIPE_NAME )
+    
     if proxyGeo:
         ram.log( "I'm publishing the geo proxies." )
-        publishGeo( item, filePath, step, '', ONLY_PROXY )
+        publishGeo( item, filePath, step, pipeFiles )
 
     if proxyShade:
+        ram.log( "I'm publishing the shading proxies." )
         publishProxyShaders(item, filePath, step )
+
+    if sets:
+        ram.log( "I'm publishing the set." )
+        publishGeo(item, filePath, step, pipeFiles)
