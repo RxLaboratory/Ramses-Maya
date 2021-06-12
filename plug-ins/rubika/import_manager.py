@@ -4,6 +4,7 @@ import maya.cmds as cmds # pylint: disable=import-error
 from .import_geo import *
 from .import_shaders import *
 from .import_rig import *
+from .import_standard import *
 from .utils_items import *
 import ramses as ram
 
@@ -17,6 +18,7 @@ def importer(item, filePaths, step):
     proxyGeoFiles = []
     rigFiles = []
     setFiles = []
+    standardFiles = []
 
     if filePaths[0] == '': # Scan all published files to get the ones corresponding to the pipes
 
@@ -33,6 +35,7 @@ def importer(item, filePaths, step):
         proxyGeo = False
         rig = False
         sets = False
+        standard = False
 
         for pipe in pipes:
             for pipeFile in pipe.pipeFiles():
@@ -50,6 +53,8 @@ def importer(item, filePaths, step):
                     rig = True
                 elif pipeFile == SET_PIPE_FILE:
                     sets = True
+                elif pipeFile == STANDARDA_PIPE_NAME or pipeFile == STANDARDB_PIPE_FILE:
+                    standard = True
 
         # List all files, and get correspondance
         publishFolder = item.publishFolderPath( step )
@@ -68,6 +73,9 @@ def importer(item, filePaths, step):
             rigFiles = RIG_PIPE_FILE.getFiles( publishFolder )
         if sets:
             setFiles = SET_PIPE_FILE.getFiles( publishFolder )
+        if standard:
+            standardFiles = STANDARDB_PIPE_FILE.getFiles( publishFolder )
+            standardFiles = standardFiles + STANDARDA_PIPE_FILE.getFiles( publishFolder )
  
     else: # Sort the selected files
         for file in filePaths:
@@ -85,6 +93,10 @@ def importer(item, filePaths, step):
                 rigFiles.append( file )
             if SET_PIPE_FILE.check( file ):
                 setFiles.append( file )
+            if STANDARDA_PIPE_FILE.check( file ):
+                standardFiles.append( file )
+            if STANDARDB_PIPE_FILE.check( file ):
+                standardFiles.append( file )
 
     # Import
 
@@ -116,4 +128,7 @@ def importer(item, filePaths, step):
         for rdrShaderFile in rdrShaderFiles:
             importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, geoNodes )
 
-    
+    if len(standardFiles) > 0:
+        ram.log( "I'm importing " + item.shortName() )
+        for standardFile in standardFiles:
+            importStandard( item, standardFile, step )

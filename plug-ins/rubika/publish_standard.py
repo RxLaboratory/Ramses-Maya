@@ -13,7 +13,6 @@ def publishStandard( item, filePath, step, extension ):
     progressDialog.setText("Preparing...")
     progressDialog.increment()
 
-    tempData = maf.cleanScene()
     # Clean scene:
     # Remove empty groups from the scene
     maf.removeEmptyGroups()
@@ -21,7 +20,7 @@ def publishStandard( item, filePath, step, extension ):
     # Item info
     fileInfo = getFileInfo( filePath )
     if fileInfo is None:
-        endProcess(tempData, progressDialog)
+        progressDialog.hide()
         return
     version = item.latestVersion( fileInfo['resource'], '', step )
     versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
@@ -29,7 +28,7 @@ def publishStandard( item, filePath, step, extension ):
     # Publish folder
     publishFolder = getPublishFolder(item, step)
     if publishFolder == '':
-        endProcess(tempData, progressDialog)
+        progressDialog.hide()
         return
     ram.log( "I'm publishing geometry in " + publishFolder )
 
@@ -42,6 +41,7 @@ def publishStandard( item, filePath, step, extension ):
     # resource
     if sceneFileInfo['resource'] != '':
         sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-Published'
+    else:
         sceneFileInfo['resource'] = 'Published'
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
@@ -59,7 +59,7 @@ def publishStandard( item, filePath, step, extension ):
     ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )
 
-    endProcess(tempData, progressDialog)
+    progressDialog.hide()
 
     ram.log("I've published the scene.")
     cmds.inViewMessage(  msg="Scene published!", pos='midCenterBot', fade=True )

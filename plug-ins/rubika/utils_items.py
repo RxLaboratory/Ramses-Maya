@@ -55,15 +55,9 @@ def getPublishFolder( item, step):
 def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
     pipes = step.outputPipes()
     if len( pipes ) == 0:
-        # Get defaults
-        if step == MOD_STEP:
-            pipes = MOD_STEP.outputPipes()
-        elif step == SHADE_STEP:
-            pipes = SHADE_STEP.outputPipes()
-        elif step == RIG_STEP:
-            pipes = RIG_STEP.outputPipes()
-        elif step == SET_STEP:
-            pipes = SET_STEP.outputPipes()
+        for s in STEPS:
+            if s == step:
+                pipes = s.outputPipes()
     
     if len( pipes ) == 0: # Let's ask!
         pipeDialog = PipeDialog( maf.getMayaWindow(), mode )

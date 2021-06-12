@@ -35,7 +35,7 @@ SET_PIPE_FILE = ram.RamPipeFile( SET_PIPE_NAME, MB_FILE, "" )
 STANDARDB_PIPE_FILE = ram.RamPipeFile( STANDARDB_PIPE_NAME, MB_FILE, "" )
 STANDARDA_PIPE_FILE = ram.RamPipeFile( STANDARDA_PIPE_NAME, MA_FILE, "" )
 
-PIPE_FILES = [
+PIPE_FILES = (
     STANDARDB_PIPE_FILE,
     STANDARDA_PIPE_FILE,
     GEO_PIPE_FILE,
@@ -45,7 +45,7 @@ PIPE_FILES = [
     PROXYGEO_PIPE_FILE,
     RIG_PIPE_FILE,
     SET_PIPE_FILE,
-]
+)
 
 # Default Steps
 
@@ -81,3 +81,12 @@ SET_STEP._outputPipes = [
 LIGHT_STEP._outputPipes = [
     ram.RamPipe( '', 'LAY', [ STANDARDB_PIPE_FILE ] ),
 ]
+
+STEPS = (
+    MOD_STEP,
+    SHADE_STEP,
+    RIG_STEP,
+    SET_STEP,
+    LAY_STEP,
+    LIGHT_STEP,
+)

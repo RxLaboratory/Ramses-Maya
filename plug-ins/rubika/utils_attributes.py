@@ -14,6 +14,8 @@ class RamsesAttribute():
     SHADING_FILE = 'ramsesShadingFilePath'
     SHADING_TIME = 'ramsesShadingTimeStamp'
     SHADED_OBJECTS = 'ramsesShadedObjects'
+    SOURCE_FILE = 'ramsesSourceFile'
+    SOURCE_TIME = 'ramsesTimeStamp'
     RIG_FILE = 'ramsesRigFilePath'
     RIG_TIME = 'ramsesRigTimeStamp'
     DT_TYPES = ('string')
