@@ -17,5 +17,6 @@ from .main import (
     getNodeBaseName,
     snapNodeTo,
     cleanNode,
+    getNodeAbsolutePath,
 )
 from .ui_progress import ProgressDialog

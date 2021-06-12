@@ -64,7 +64,8 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
 
         # Rename shapes after transform nodes
         if renameShapes:
-            cmds.rename(shape, node.split('|')[-1] + 'Shape')      
+            cmds.rename(shape, node.split('|')[-1] + 'Shape')    
+    return True  
 
 def snapNodeTo( nodeFrom, nodeTo):
     prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)
