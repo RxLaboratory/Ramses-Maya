@@ -58,13 +58,13 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
         # Delete history
         cmds.delete(shape, constructionHistory=True)
 
-        # Rename shapes after transform nodes
-        if renameShapes:
-            cmds.rename(shape, node.split('|')[-1] + 'Shape')
-
         # Freeze transform & center pivot
         if freezeTranform and shapeType == 'mesh':
             freezeTransform(node)
+
+        # Rename shapes after transform nodes
+        if renameShapes:
+            cmds.rename(shape, node.split('|')[-1] + 'Shape')      
 
 def snapNodeTo( nodeFrom, nodeTo):
     prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)
@@ -83,11 +83,12 @@ def snapNodeTo( nodeFrom, nodeTo):
     # Maya, the absolute path please...
     return '|' + nodeFrom
 
-def lockTransform( transformNode ):
+def lockTransform( transformNode, l=True ):
+    print(cmds.nodeType(transformNode))
     if cmds.nodeType(transformNode) != 'transform':
         return
     for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
-        cmds.setAttr(transformNode + a, lock=True )
+        cmds.setAttr(transformNode + a, lock=l )
 
 def getNodeBaseName( node, keepNameSpace = False ):
     nodeName = node.split('|')[-1]
@@ -268,7 +269,8 @@ def removeEmptyGroups(node=None):
                 cmds.delete(node)
                 remove = True
 
-def freezeTransform(shape):
-        cmds.move(0, 0, 0, shape + ".rotatePivot", absolute=True)
-        cmds.move(0, 0, 0, shape + ".scalePivot", absolute=True)
-        cmds.makeIdentity(shape, apply=True, t=1, r=1, s=1, n=0)
+def freezeTransform(transformNode):
+        lockTransform( transformNode, False )
+        cmds.move(0, 0, 0, transformNode + ".rotatePivot", absolute=True)
+        cmds.move(0, 0, 0, transformNode + ".scalePivot", absolute=True)
+        cmds.makeIdentity(transformNode, apply=True, t=1, r=1, s=1, n=0)
