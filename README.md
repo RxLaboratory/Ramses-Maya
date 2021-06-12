@@ -49,7 +49,7 @@ Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont
 - "proxyShade" (doit être un .ass)
 - "proxyGeo" (doit être un .abc -> .ma ou .mb à implémenter)
 - "Rig" (doit être un .ma ou .mb)
-- "Layout" (doit être un .ma ou .mb)
+- "Layout" (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
 - "Anim"
 
 -> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
@@ -114,16 +114,11 @@ et possibilité d'en ajouter
   - [ ] Publish .abc (sans oublier la caméra)
   - [ ] Ajouter optionnellement l'anim des crease
 - [x] FX, Rien pour l'instant
-- [ ] Lighting
-  - [ ] Import/update Le layout, vire tout ce qui a été baké/publish en abc
+- [x] Lighting
+  - [x] Import/update Le layout, vire tout ce qui a été baké/publish en abc (l'anim)
   - [x] Import/update les abc
   - [x] Import/update les shaders et les assigne : depuis les items et depuis les charas, etc
   - [ ] Publish Rendu exr
 - [ ] Compositing
   - [ ] Import/update les exr, eventuelle prépare un arbre, etc
   - [ ] Publish Rendu exr ou png
-
-### Questions
-
-- Les shaders sont en référence, pas de souci ?
-- Dans pipou, la modé est importée en référence pour le shading, un intérêt ?

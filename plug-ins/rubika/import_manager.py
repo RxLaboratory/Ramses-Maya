@@ -16,7 +16,7 @@ def importer(item, filePaths, step):
     proxyShadeFiles = []
     proxyGeoFiles = []
     rigFiles = []
-    layoutFiles = []
+    setFiles = []
 
     if filePaths[0] == '': # Scan all published files to get the ones corresponding to the pipes
 
@@ -32,7 +32,7 @@ def importer(item, filePaths, step):
         proxyShade = False
         proxyGeo = False
         rig = False
-        layout = False
+        sets = False
 
         for pipe in pipes:
             for pipeFile in pipe.pipeFiles():
@@ -48,8 +48,8 @@ def importer(item, filePaths, step):
                     proxyGeo = True
                 elif pipeFile == RIG_PIPE_FILE:
                     rig = True
-                elif pipeFile == LAYOUT_PIPE_FILE:
-                    layout = True
+                elif pipeFile == SET_PIPE_FILE:
+                    sets = True
 
         # List all files, and get correspondance
         publishFolder = item.publishFolderPath( step )
@@ -66,8 +66,8 @@ def importer(item, filePaths, step):
             proxyGeoFiles = PROXYGEO_PIPE_FILE.getFiles( publishFolder )
         if rig:
             rigFiles = RIG_PIPE_FILE.getFiles( publishFolder )
-        if layout:
-            layoutFiles = LAYOUT_PIPE_FILE.getFiles( publishFolder )
+        if sets:
+            setFiles = SET_PIPE_FILE.getFiles( publishFolder )
  
     else: # Sort the selected files
         for file in filePaths:
@@ -83,8 +83,8 @@ def importer(item, filePaths, step):
                 proxyGeoFiles.append( file )
             if RIG_PIPE_FILE.check( file ):
                 rigFiles.append( file )
-            if LAYOUT_PIPE_FILE.check( file ):
-                layoutFiles.append( file )
+            if SET_PIPE_FILE.check( file ):
+                setFiles.append( file )
 
     # Import
 
@@ -96,10 +96,10 @@ def importer(item, filePaths, step):
         for geoFile in geoFiles:
             geoNodes = geoNodes + importGeo( item, geoFile, step )
     
-    if len(layoutFiles) > 0:
-        ram.log( "I'm importing the layout." )
-        for layoutFile in layoutFiles:
-            geoNodes = geoNodes + importGeo( item, layoutFile, step )
+    if len(setFiles) > 0:
+        ram.log( "I'm importing the set." )
+        for setFile in setFiles:
+            geoNodes = geoNodes + importGeo( item, setFile, step )
 
     if len(rigFiles) > 0:
         ram.log( "I'm importing the rig." )

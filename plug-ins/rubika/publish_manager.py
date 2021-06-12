@@ -1,5 +1,6 @@
 from .publish_geo import *
 from .publish_shaders import *
+from .publish_standard import *
 from .utils_constants import *
 from .utils_items import *
 from .publish_rig import *
@@ -20,7 +21,9 @@ def publisher(item, filePath, step):
     proxyShade = False
     proxyGeo = False
     rig = False
-    layout = False
+    sets = False
+    mb = False
+    ma = False
 
     pipeFiles = []
 
@@ -39,10 +42,14 @@ def publisher(item, filePath, step):
                 proxyGeo = True
             elif pipeFile == RIG_PIPE_FILE:
                 rig = True
-            elif pipeFile == LAYOUT_PIPE_FILE:
-                layout = True
+            elif pipeFile == SET_PIPE_FILE:
+                sets = True
+            elif pipeFile == STANDARDB_PIPE_FILE:
+                mb = True
+            elif pipeFile == STANDARDA_PIPE_FILE:
+                ma = True
 
-    # We're deleting everything which name stats with "delOnPub_"
+    # We're deleting everything which name starts with "delOnPub_"
     cmds.delete( getDelOnPubNodes() )
 
     vpShadersPublished = False
@@ -79,6 +86,14 @@ def publisher(item, filePath, step):
         ram.log( "I'm publishing the shading proxies." )
         publishProxyShaders(item, filePath, step )
 
-    if layout:
-        ram.log( "I'm publishing the layout." )
+    if sets:
+        ram.log( "I'm publishing the set." )
         publishGeo(item, filePath, step, pipeFiles)
+
+    if mb:
+        ram.log( "Publishing Maya Binary." )
+        publishStandard( item, filePath, step, 'mb' )
+    
+    if ma:
+        ram.log( "Publishing Maya ASCII." )
+        publishStandard( item, filePath, step, 'ma' )

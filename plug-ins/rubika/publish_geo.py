@@ -1,4 +1,3 @@
-from os import pipe
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
@@ -24,7 +23,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     noFreeze = ''
     noFreezeCaseSensitive = False
 
-    if GEO_PIPE_FILE in pipeFiles or LAYOUT_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles:
         # Show dialog
         publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
         if not publishGeoDialog.exec_():
@@ -47,7 +46,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     # For all nodes in the publish set or proxy set
     nodes = []
-    if GEO_PIPE_FILE in pipeFiles or LAYOUT_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
         nodes = getPublishNodes()
     if PROXYGEO_PIPE_FILE in pipeFiles:
         showAlert = GEO_PIPE_FILE not in pipeFiles
@@ -87,14 +86,19 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     # Extension
     extension = ''
-    if LAYOUT_PIPE_FILE in pipeFiles:
-        extension = getExtension( step, SET_STEP, LAYOUT_PIPE_FILE, ['ma','mb'], 'mb' )
+    if SET_PIPE_FILE in pipeFiles:
+        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
         extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['abc'], 'abc' )
     if extension == 'abc':
         # We need to use alembic
         if maf.safeLoadPlugin("AbcExport"):
             ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
+
+    # Get Type
+    pipeType = GEO_PIPE_NAME
+    if SET_PIPE_FILE in pipeFiles:
+        pipeType = SET_PIPE_NAME
 
     # Let's count how many objects are published
     publishedNodes = []
@@ -181,7 +185,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         cv3 = ( xmax + margin, 0, zmax + margin)
         cv4 = ( xmin - margin, 0, zmax + margin)
         cv5 = cv1
-        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=nodeName + '_root')
+        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=nodeName + '_' + pipeType)
         # Parent the node
         node = cmds.parent(node, controller)[0]
 
@@ -276,13 +280,8 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     # Copy published scene to publish
     sceneFileInfo = fileInfo.copy()
 
-    # Get Type
-    pipeType = GEO_PIPE_NAME
-    if LAYOUT_PIPE_FILE in pipeFiles:
-        pipeType = LAYOUT_PIPE_NAME
-
-    if LAYOUT_PIPE_FILE in pipeFiles:
-        sceneFileInfo['extension'] = getExtension( step, SET_STEP, LAYOUT_PIPE_FILE, ['ma','mb'], 'mb' )
+    if SET_PIPE_FILE in pipeFiles:
+        sceneFileInfo['extension'] = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
         sceneFileInfo['extension'] = 'mb'
     # resource
