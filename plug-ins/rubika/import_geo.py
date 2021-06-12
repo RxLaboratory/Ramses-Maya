@@ -35,7 +35,7 @@ def importGeo(item, filePath, step):
     # Get the Item Group
     itemGroup = maf.getCreateGroup( itemShortName, assetGroup )
 
-    # We need to use alembic
+    # We may need to use alembic
     if maf.safeLoadPlugin("AbcImport"):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 

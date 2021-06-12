@@ -49,6 +49,7 @@ Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont
 - "proxyShade" (doit être un .ass)
 - "proxyGeo" (doit être un .abc -> .ma ou .mb à implémenter)
 - "Rig" (doit être un .ma ou .mb)
+- "Layout" (doit être un .ma ou .mb)
 - "Anim"
 
 -> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
@@ -102,13 +103,13 @@ et possibilité d'en ajouter
 
 #### Shots steps
 
-- [ ] Layout
-  - [ ] Import rig, sets, geo
-  - [ ] Publish .mb
-  - [ ] Publish .abc (gpu cache)
-- [ ] Animation
+- [x] Layout
+  - [x] Import rig, sets, geo
+  - [x] Publish .mb
+  - [x] Publish .abc (gpu cache)
+- [x] Animation
   - [x] Import rig
-  - [ ] Import/update abc du layout
+  - [x] Import/update abc du layout
   - [x] Import/update les props
   - [ ] Publish .abc (sans oublier la caméra)
   - [ ] Ajouter optionnellement l'anim des crease

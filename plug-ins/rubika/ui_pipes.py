@@ -18,12 +18,12 @@ import ramses as ram
 
 class PipeDialog( QDialog ):
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, mode='Publish'):
         super(PipeDialog, self).__init__(parent)
-        self.__setupUi()
+        self.__setupUi(mode)
         self.__connectEvents()
 
-    def __setupUi(self):
+    def __setupUi(self, mode='Publish' ):
 
         self.setWindowTitle( "Select Publish Types" )
 
@@ -45,7 +45,7 @@ class PipeDialog( QDialog ):
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._publishButton = QPushButton("Publish")
+        self._publishButton = QPushButton(mode)
         self._publishButton.setEnabled(False)
         buttonsLayout.addWidget( self._publishButton )  
         self._cancelButton = QPushButton("Cancel")

@@ -20,7 +20,7 @@ def publisher(item, filePath, step):
     proxyShade = False
     proxyGeo = False
     rig = False
-    sets = False
+    layout = False
 
     pipeFiles = []
 
@@ -39,8 +39,8 @@ def publisher(item, filePath, step):
                 proxyGeo = True
             elif pipeFile == RIG_PIPE_FILE:
                 rig = True
-            elif pipeFile == SET_PIPE_FILE:
-                sets = True
+            elif pipeFile == LAYOUT_PIPE_FILE:
+                layout = True
 
     # We're deleting everything which name stats with "delOnPub_"
     cmds.delete( getDelOnPubNodes() )
@@ -79,6 +79,6 @@ def publisher(item, filePath, step):
         ram.log( "I'm publishing the shading proxies." )
         publishProxyShaders(item, filePath, step )
 
-    if sets:
-        ram.log( "I'm publishing the set." )
+    if layout:
+        ram.log( "I'm publishing the layout." )
         publishGeo(item, filePath, step, pipeFiles)

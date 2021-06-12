@@ -1,3 +1,4 @@
+from os import pipe
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
@@ -23,7 +24,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     noFreeze = ''
     noFreezeCaseSensitive = False
 
-    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or LAYOUT_PIPE_FILE in pipeFiles:
         # Show dialog
         publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
         if not publishGeoDialog.exec_():
@@ -46,7 +47,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     # For all nodes in the publish set or proxy set
     nodes = []
-    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or LAYOUT_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
         nodes = getPublishNodes()
     if PROXYGEO_PIPE_FILE in pipeFiles:
         showAlert = GEO_PIPE_FILE not in pipeFiles
@@ -86,8 +87,8 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     # Extension
     extension = ''
-    if SET_PIPE_FILE in pipeFiles:
-        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+    if LAYOUT_PIPE_FILE in pipeFiles:
+        extension = getExtension( step, SET_STEP, LAYOUT_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
         extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['abc'], 'abc' )
     if extension == 'abc':
@@ -274,15 +275,21 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     # Copy published scene to publish
     sceneFileInfo = fileInfo.copy()
-    if SET_PIPE_FILE in pipeFiles:
-        sceneFileInfo['extension'] = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+
+    # Get Type
+    pipeType = GEO_PIPE_NAME
+    if LAYOUT_PIPE_FILE in pipeFiles:
+        pipeType = LAYOUT_PIPE_NAME
+
+    if LAYOUT_PIPE_FILE in pipeFiles:
+        sceneFileInfo['extension'] = getExtension( step, SET_STEP, LAYOUT_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
         sceneFileInfo['extension'] = 'mb'
     # resource
     if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + GEO_PIPE_NAME
+        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + pipeType
     else:
-        sceneFileInfo['resource'] = GEO_PIPE_NAME
+        sceneFileInfo['resource'] = pipeType
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
@@ -291,11 +298,6 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     # Save
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
-    # Update Ramses Metadata (version)
-    pipeType = GEO_PIPE_NAME
-    if SET_PIPE_FILE in pipeFiles:
-        pipeType = SET_PIPE_NAME
-
     ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
     ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )

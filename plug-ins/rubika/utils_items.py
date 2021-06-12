@@ -52,7 +52,7 @@ def getPublishFolder( item, step):
         return ''
     return publishFolder
 
-def getPipes( step, currentSceneFilePath = '' ):
+def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
     pipes = step.outputPipes()
     if len( pipes ) == 0:
         # Get defaults
@@ -66,7 +66,7 @@ def getPipes( step, currentSceneFilePath = '' ):
             pipes = SET_STEP.outputPipes()
     
     if len( pipes ) == 0: # Let's ask!
-        pipeDialog = PipeDialog( maf.getMayaWindow() )
+        pipeDialog = PipeDialog( maf.getMayaWindow(), mode )
         if pipeDialog.exec_():
             pipes = pipeDialog.getPipes()
         return pipes
