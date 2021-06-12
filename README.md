@@ -20,10 +20,8 @@
 - Generate preview (playblast or thumbnail and later render)
 - Generate preview option on new status
 - If there's a selection, update option to filter according to the selection
-- Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
-- Publish set
-- Publish anim
-- Publish Layout
+- Publish anim: add options: remove hidden, et keep curves
+- Import anim
 
 - Explications arbo dossier ramses et droits d'accès
 - Lister les trucs à faire en début d'année avant l'arrivée des étudiants
@@ -43,11 +41,11 @@ Il s'adaptera en fonction des paramètres et surtout de la config du pipe dans l
 
 Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont reconnus par l'addon :
 
-- "Geo" (doit être un .abc -> .ma ou .mb à implémenter)
+- "Geo" (doit être un .abc, .ma ou .mb)
 - "vpShader" (doit être un .mb -> .ma à implémenter)
 - "rdrShader" (doit être un .mb -> .ma à implémenter)
 - "proxyShade" (doit être un .ass)
-- "proxyGeo" (doit être un .abc -> .ma ou .mb à implémenter)
+- "proxyGeo" (doit être un .abc, .ma ou .mb)
 - "Rig" (doit être un .ma ou .mb)
 - "Layout" (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
 - "Anim"

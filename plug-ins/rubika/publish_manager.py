@@ -1,6 +1,7 @@
 from .publish_geo import *
 from .publish_shaders import *
 from .publish_standard import *
+from .publish_anim import *
 from .utils_constants import *
 from .utils_items import *
 from .publish_rig import *
@@ -9,7 +10,6 @@ import ramses as ram
 
 def publisher(item, filePath, step):
     # Check what needs to be published
-    print(step)
     # Get pipes
     pipes = getPipes( step )
     if len(pipes) == 0:
@@ -24,6 +24,7 @@ def publisher(item, filePath, step):
     sets = False
     mb = False
     ma = False
+    anim = False
 
     pipeFiles = []
 
@@ -48,6 +49,8 @@ def publisher(item, filePath, step):
                 mb = True
             elif pipeFile == STANDARDA_PIPE_FILE:
                 ma = True
+            elif pipeFile == ANIM_PIPE_FILE:
+                anim = True
 
     # We're deleting everything which name starts with "delOnPub_"
     cmds.delete( getDelOnPubNodes() )
@@ -97,3 +100,7 @@ def publisher(item, filePath, step):
     if ma:
         ram.log( "Publishing Maya ASCII." )
         publishStandard( item, filePath, step, 'ma' )
+
+    if anim:
+        ram.log( "Publishing animation." )
+        publishAnim( item, filePath, step )

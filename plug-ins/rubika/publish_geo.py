@@ -87,9 +87,9 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     # Extension
     extension = ''
     if SET_PIPE_FILE in pipeFiles:
-        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb', 'abc'], 'mb' )
     else:
-        extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['abc'], 'abc' )
+        extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['ma','mb', 'abc'], 'abc' )
     if extension == 'abc':
         # We need to use alembic
         if maf.safeLoadPlugin("AbcExport"):
@@ -220,7 +220,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
                 '-writeUVSets',
                 '-dataFormat hdf',
                 '-root |' + controller,
-                '-file ' + abcFilePath
+                '-file "' + abcFilePath + '"'
             ])
             cmds.AbcExport(j=abcOptions)
             # Update Ramses Metadata (version)
