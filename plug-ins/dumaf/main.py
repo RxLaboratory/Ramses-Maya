@@ -5,6 +5,43 @@ from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-i
     QApplication
 )
 
+def deleteNode( node ):
+    """Deletes a node, even if it's in a reference or contains a reference.
+    Warning: This will import the reference!"""
+    children = cmds.listRelatives( node, ad=True, type='transform')
+    if children:
+        for child in children:
+            if cmds.referenceQuery( child, isNodeReferenced=True):
+                refFile = cmds.referenceQuery( child, filename=True)
+                # import
+                cmds.file( refFile, importReference = True)
+    cmds.delete( node )
+
+def createRootCtrl( node, ctrlName ):
+    # Get the bounding box
+    boundingBox = cmds.exactWorldBoundingBox( node )
+    xmax = boundingBox[3]
+    xmin = boundingBox[0]
+    zmax = boundingBox[5]
+    zmin = boundingBox[2]
+    # Get the 2D Projection on the floor (XZ) lengths
+    boundingWidth = xmax - xmin
+    boundingLength = zmax - zmin
+    # Compute a margin relative to mean of these lengths
+    margin = ( boundingWidth + boundingLength ) / 2.0
+    # Make it small
+    margin = margin / 20.0
+    # Create a shape using this margin and coordinates
+    cv1 = ( xmin - margin, 0, zmin - margin)
+    cv2 = ( xmax + margin, 0, zmin - margin)
+    cv3 = ( xmax + margin, 0, zmax + margin)
+    cv4 = ( xmin - margin, 0, zmax + margin)
+    cv5 = cv1
+    controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrlName)
+    # Parent the node
+    node = parentNodeTo(node, controller)
+    return (node, controller)
+
 def checkSaveState():
     """Checks if the current scene needs to be saved,
     and asks for the user to save if needed.
