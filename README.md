@@ -20,7 +20,6 @@
 - Generate preview (playblast or thumbnail and later render)
 - Generate preview option on new status
 - If there's a selection, update option to filter according to the selection
-- Publish anim: add options: remove hidden, et keep curves
 - Import anim
 
 - Explications arbo dossier ramses et droits d'accès
@@ -109,7 +108,7 @@ et possibilité d'en ajouter
   - [x] Import rig
   - [x] Import/update abc du layout
   - [x] Import/update les props
-  - [ ] Publish .abc (sans oublier la caméra)
+  - [x] Publish .abc (sans oublier la caméra)
   - [ ] Ajouter optionnellement l'anim des crease
 - [x] FX, Rien pour l'instant
 - [x] Lighting

@@ -57,8 +57,7 @@ def publishRig( item, filePath, step, vpShaders = True ):
         if p is None:
             nodes.append('|' + node)
             continue
-        n = cmds.parent(node, world = True)
-        n = '|' + n[0]
+        n = maf.parentNodeTo(node, '|')
         nodes.append(n)
 
     # Delete the nodes we're not publishing

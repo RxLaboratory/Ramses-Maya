@@ -22,6 +22,8 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     onlyRootGroups = False
     noFreeze = ''
     noFreezeCaseSensitive = False
+    keepCurves = False
+    keepSurfaces = False
 
     if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles:
         # Show dialog
@@ -36,6 +38,8 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         onlyRootGroups = publishGeoDialog.onlyRootGroups()
         noFreeze = publishGeoDialog.noFreeze()
         noFreezeCaseSensitive = publishGeoDialog.noFreezeCaseSensitive()
+        keepCurves = publishGeoDialog.curves()
+        keepSurfaces = publishGeoDialog.surfaces()
 
     # Progress
     progressDialog = maf.ProgressDialog()
@@ -95,11 +99,6 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         if maf.safeLoadPlugin("AbcExport"):
             ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
-    # Get Type
-    pipeType = GEO_PIPE_NAME
-    if SET_PIPE_FILE in pipeFiles:
-        pipeType = SET_PIPE_NAME
-
     # Let's count how many objects are published
     publishedNodes = []
 
@@ -143,6 +142,11 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
             typesToKeep = ['mesh']
             if not removeLocators:
                 typesToKeep.append('locator')
+            if keepCurves:
+                typesToKeep.append('bezierCurve')
+                typesToKeep.append('nurbsCurve')
+            if keepSurfaces:
+                typesToKeep.append('nurbsSurface')
 
             freeze = True
             childName = childNode.lower()
@@ -158,12 +162,21 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
             continue
 
         # Last steps
-        nodeName = node.split('|')[-1]
+        nodeName = maf.getNodeBaseName(node, True)
         if nodeName.lower().startswith('proxy_'):
             nodeName = nodeName[6:]
 
         # Remove remaining empty groups
         maf.removeEmptyGroups(node)
+
+        # Type
+        pType = ''
+        if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+            pType = PROXYGEO_PIPE_NAME
+        elif SET_PIPE_FILE in pipeFiles:
+            pType = SET_PIPE_NAME
+        else:
+            pType = GEO_PIPE_NAME
 
         # Create a root controller
         # Get the bounding box
@@ -185,9 +198,9 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         cv3 = ( xmax + margin, 0, zmax + margin)
         cv4 = ( xmin - margin, 0, zmax + margin)
         cv5 = cv1
-        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=nodeName + '_' + pipeType)
+        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=nodeName + '_' + pType)
         # Parent the node
-        node = cmds.parent(node, controller)[0]
+        node = maf.parentNodeTo(node, controller)
 
         if extension == 'abc':
             # Save and create Abc
@@ -195,17 +208,11 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
             abcFileInfo = fileInfo.copy()
             # extension
             abcFileInfo['extension'] = 'abc'
-            # Type
-            pipeType = ''
-            if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-                pipeType = PROXYGEO_PIPE_NAME
-            else:
-                pipeType = GEO_PIPE_NAME
             # resource
             if abcFileInfo['resource'] != '':
-                abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pipeType
+                abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pType
             else:
-                abcFileInfo['resource'] = nodeName + '-' + pipeType
+                abcFileInfo['resource'] = nodeName + '-' + pType
             # path
             abcFilePath = ram.RamFileManager.buildPath((
                 publishFolder,
@@ -224,7 +231,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
             ])
             cmds.AbcExport(j=abcOptions)
             # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
+            ram.RamMetaDataManager.setPipeType( abcFilePath, pType )
             ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
             ram.RamMetaDataManager.setVersion( abcFilePath, version )
 
@@ -280,6 +287,14 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     # Copy published scene to publish
     sceneFileInfo = fileInfo.copy()
 
+    # Get Type
+    pipeType = GEO_PIPE_NAME
+    if SET_PIPE_FILE in pipeFiles:
+        pipeType = SET_PIPE_NAME
+
+    if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles and not SET_PIPE_FILE in pipeFiles:
+        pipeType = PROXYGEO_PIPE_NAME
+
     if SET_PIPE_FILE in pipeFiles:
         sceneFileInfo['extension'] = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
@@ -305,6 +320,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     ram.log("I've published these assets:")
     for publishedNode in publishedNodes:
+        publishedNode = maf.getNodeBaseName( publishedNode )
         ram.log(" > " + publishedNode)
     cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
 

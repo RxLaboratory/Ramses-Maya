@@ -18,7 +18,7 @@ def updateGeo( rootCtrl ):
     for node in currentNodes:
         sets = cmds.listSets(object=node, ets= True)
         if sets is not None:
-            nodeName = node.split('|')[-1]
+            nodeName = maf.getNodeBaseName(node, True)
             nodeSets[nodeName] = sets
 
     # Re-Import
@@ -33,6 +33,8 @@ def updateGeo( rootCtrl ):
     item = ram.RamAsset('', itemShortName, '', assetGroup)
     newRootCtrls = importGeo( item, filePath, step )
 
+    rootCtrls = []
+
     for newRootCtrl in newRootCtrls:
         # Move to the locator
         newRootCtrl = maf.snapNodeTo( newRootCtrl, rootLocator )
@@ -41,13 +43,23 @@ def updateGeo( rootCtrl ):
         newNodes = cmds.listRelatives( newRootCtrl, ad = True, f = True)
         if newNodes is not None:
             for newNode in newNodes:
-                newName = newNode.split('|')[-1]
+                newName = maf.getNodeBaseName(newNode, True)
                 if newName in nodeSets:
                     cmds.sets( newNode, include=nodeSets[newName])
+                
+        # Re-parent the root to the previous parent
+        rootParent = cmds.listRelatives( rootCtrl, parent=True, f=True, type='transform')
+        if rootParent is not None:
+            rootParent = rootParent[0]
+        else:
+            rootParent = '|'
+
+        newRootCtrl = maf.parentNodeTo( newRootCtrl, rootParent )
+        rootCtrls.append(newRootCtrl)
 
     # Re-set shader
     if shadingMode and shadingFile:
-        referenceShaders( newRootCtrls, shadingMode, shadingFile, itemShortName)
+        referenceShaders( rootCtrls, shadingMode, shadingFile, itemShortName)
 
     # Delete
     cmds.delete( rootCtrl )

@@ -60,7 +60,7 @@ def exportShaders(node, folderPath, fileNameBlocks, mode = ''):
 
     # Select and export shadingEngines
     cmds.select(allShadingEngines, noExpand=True, r=True)
-    nodeName = node.split('|')[-1].split(':')[-1]
+    nodeName = maf.getNodeBaseName( node )
 
     # extension
     fileNameBlocks['extension'] = 'mb'

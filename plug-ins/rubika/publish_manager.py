@@ -81,7 +81,7 @@ def publisher(item, filePath, step):
         ram.log( "I'm publishing the render shaders." )
         publishShaders( item, filePath, step, RDRSHADERS_PIPE_NAME )
     
-    if proxyGeo:
+    if proxyGeo and not geo:
         ram.log( "I'm publishing the geo proxies." )
         publishGeo( item, filePath, step, pipeFiles )
 

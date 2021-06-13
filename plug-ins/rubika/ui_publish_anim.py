@@ -1,4 +1,4 @@
-import maya.cmds as cmds
+import maya.cmds as cmds # pylint: disable=import-error
 
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
     QDialog,
@@ -79,6 +79,15 @@ class PublishAnimDialog( QDialog ):
         self.filterEulerBox = QCheckBox("Filter Euler Rotations")
         topLayout.addRow("Rotations:", self.filterEulerBox )
 
+        self.removeHiddenBox = QCheckBox("Remove Hidden Nodes")
+        topLayout.addRow("Visibility:", self.removeHiddenBox)
+
+        self.keepCurvesBox = QCheckBox("Keep Curves (Bézier or NURBS)")
+        topLayout.addRow("Curves:", self.keepCurvesBox)
+
+        self.keepSurfacesBox = QCheckBox("Keep NURBS Surfaces")
+        topLayout.addRow("Surfaces:", self.keepSurfacesBox)
+
         mainLayout.addLayout(topLayout)
 
         buttonsLayout = QHBoxLayout()
@@ -111,3 +120,12 @@ class PublishAnimDialog( QDialog ):
 
     def getFrameStep(self):
         return self.frameStepEdit.value()
+
+    def curves(self):
+        return self.keepCurvesBox.isChecked()
+
+    def surfaces(self):
+        return self.keepSurfacesBox.isChecked()
+
+    def removeHidden(self):
+        return self.removeHiddenBox.isChecked()

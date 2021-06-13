@@ -35,6 +35,10 @@ def importGeo(item, filePath, step):
     # Get the Item Group
     itemGroup = maf.getCreateGroup( itemShortName, assetGroup )
 
+    print (assetGroup)
+    print (itemGroup)
+
+
     # We may need to use alembic
     if maf.safeLoadPlugin("AbcImport"):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
@@ -61,9 +65,7 @@ def importGeo(item, filePath, step):
         if not cmds.nodeType(node) == 'transform':
             continue
         # Parent to the item group
-        rootCtrl = cmds.parent(node, itemGroup)[0]
-        # get the full path please... Maya...
-        rootCtrl = itemGroup + '|' + rootCtrl
+        rootCtrl = maf.parentNodeTo(node, itemGroup)
         if '_root' in node:
             # Get the shape
             nodeShapes = cmds.listRelatives(rootCtrl, shapes=True, f=True, type='nurbsCurve')

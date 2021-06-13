@@ -22,6 +22,9 @@ def publishAnim( item, filePath, step ):
         filterEuler = '-eulerFilter'
     else:
         filterEuler = ''
+    keepCurves = dialog.curves()
+    keepSurfaces = dialog.surfaces()
+    removeHidden = dialog.removeHidden()
 
     # Progress
     progressDialog = maf.ProgressDialog()
@@ -70,7 +73,7 @@ def publishAnim( item, filePath, step ):
     for node in nodes:
         # Full path node
         node = maf.getNodeAbsolutePath( node )
-        nodeName = node.split('|')[-1].split(':')[-1]
+        nodeName = maf.getNodeBaseName( node )
         progressDialog.setText("Baking: " + nodeName)
         progressDialog.increment()
 
@@ -89,10 +92,18 @@ def publishAnim( item, filePath, step ):
         for childNode in childNodes:
 
             # Remove hidden
-            # if removeHidden and cmds.getAttr(childNode + '.v') == 0:
-            #     cmds.delete(childNode)
-            #     continue
-            maf.cleanNode(childNode, True, ('mesh'), False, False)
+            if removeHidden and cmds.getAttr(childNode + '.v') == 0:
+                cmds.delete(childNode)
+                continue
+
+            typesToKeep = ['mesh']
+            if keepCurves:
+                typesToKeep.append('bezierCurve')
+                typesToKeep.append('nurbsCurve')
+            if keepSurfaces:
+                typesToKeep.append('nurbsSurface')
+
+            maf.cleanNode(childNode, True, typesToKeep, False, False)
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
