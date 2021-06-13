@@ -1,9 +1,26 @@
-import sys, tempfile, re
+import sys, tempfile, re, os
 import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-in-module
     QApplication
 )
+
+def checkSaveState():
+    """Checks if the current scene needs to be saved,
+    and asks for the user to save if needed.
+    Returns False if the user cancels the operation,
+    True if the scene can be safely closed"""
+    currentFilePath = cmds.file( q=True, sn=True )
+    if cmds.file(q=True, modified=True):
+        sceneName = os.path.basename(currentFilePath)
+        if sceneName == '':
+            sceneName = 'untitled scene'
+        result = cmds.confirmDialog( message="Save changes to " + sceneName + "?", button=("Save", "Don't Save", "Cancel") )
+        if result == 'Cancel':
+            return False
+        if result == 'Save':
+            cmds.file( save=True, options="v=1;" )
+    return True
 
 def getNodesInSet( setName ):
     # Create a list and add the set
@@ -64,25 +81,21 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
 
         # Rename shapes after transform nodes
         if renameShapes:
-            cmds.rename(shape, node.split('|')[-1] + 'Shape')    
+            cmds.rename(shape, getNodeBaseName(node) + 'Shape')    
     return True  
 
 def snapNodeTo( nodeFrom, nodeTo):
     prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)
     if prevParent is not None:
         prevParent = prevParent[0]
-    nodeFrom = cmds.parent( nodeFrom, nodeTo, relative = True )[0] 
-    # Maya, the absolute path please...
-    nodeFrom = nodeTo + '|' + nodeFrom
+    nodeFrom = parentNodeTo( nodeFrom, nodeTo, True )
 
     if prevParent is not None:
-        nodeFrom = cmds.parent( nodeFrom, prevParent )[0]
-        # Maya, the absolute path please...
-        return prevParent + '|' + nodeFrom
+        nodeFrom = parentNodeTo( nodeFrom, prevParent )
+        return nodeFrom
     
-    nodeFrom = cmds.parent( nodeFrom, world=True)[0]
-    # Maya, the absolute path please...
-    return '|' + nodeFrom
+    nodeFrom = parentNodeTo( nodeFrom, '|' )
+    return nodeFrom
 
 def lockTransform( transformNode, l=True ):
     if cmds.nodeType(transformNode) != 'transform':
@@ -105,7 +118,7 @@ def getNodeAbsolutePath( nodeName ):
 def getCreateGroup( groupName, parentNode=None ):
     # Check if exists
     if parentNode is None:
-        if groupName[0] != '|':
+        if not groupName.startswith('|'):
             groupName = '|' + groupName
         if cmds.objExists(groupName) and isGroup(groupName):
             return groupName
@@ -122,10 +135,31 @@ def getCreateGroup( groupName, parentNode=None ):
                     return parentNode + '|' + cn
     # Create the group
     n = cmds.group( name= groupName, em=True )
+    if not n.startswith('|'):
+        n = '|' + n
     if parentNode is not None:
-        n = cmds.parent( n, parentNode )[0]
-        n = parentNode + '|' + n
+        n = parentNodeTo( n, parentNode)
     return n
+
+def parentNodeTo( child, parent, r=False):
+    """Fixed Parenting for Maya: returns a proper path instead of just the node name,
+    and keeps the path absolute if arguments are absolute."""
+    try:
+        if parent != '|':
+            child = cmds.parent( child, parent, relative=r )[0]
+        else:
+            child = cmds.parent(child, world=True)[0]
+            return '|' + child
+    except: # if the child is already parent to this parent
+        return child
+    # If maya returned a (relative?) path, we need to get the node name
+    # (-> sometimes a path is returned, sometimes just the node name, depending on the fact
+    # that the node name is unique in the scene or not)
+    # Note that what Maya returns is never absolute (never starts with '|')
+    child = getNodeBaseName( child, True)
+    # Prepend again the parent path
+    child = parent + '|' + child
+    return child
 
 def getMayaWindow():
     app = QApplication.instance() #get the qApp instance if it exists.
