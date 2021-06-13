@@ -5,6 +5,7 @@ from .import_geo import *
 from .import_shaders import *
 from .import_rig import *
 from .import_standard import *
+from .import_anim import *
 from .utils_items import *
 import ramses as ram
 
@@ -19,6 +20,7 @@ def importer(item, filePaths, step):
     rigFiles = []
     setFiles = []
     standardFiles = []
+    animFiles = []
 
     if filePaths[0] == '': # Scan all published files to get the ones corresponding to the pipes
 
@@ -36,6 +38,7 @@ def importer(item, filePaths, step):
         rig = False
         sets = False
         standard = False
+        anim = False
 
         for pipe in pipes:
             for pipeFile in pipe.pipeFiles():
@@ -53,8 +56,10 @@ def importer(item, filePaths, step):
                     rig = True
                 elif pipeFile == SET_PIPE_FILE:
                     sets = True
-                elif pipeFile == STANDARDA_PIPE_NAME or pipeFile == STANDARDB_PIPE_FILE:
+                elif pipeFile == STANDARDA_PIPE_FILE or pipeFile == STANDARDB_PIPE_FILE:
                     standard = True
+                elif pipeFile == ANIM_PIPE_FILE:
+                    anim = True
 
         # List all files, and get correspondance
         publishFolder = item.publishFolderPath( step )
@@ -76,6 +81,8 @@ def importer(item, filePaths, step):
         if standard:
             standardFiles = STANDARDB_PIPE_FILE.getFiles( publishFolder )
             standardFiles = standardFiles + STANDARDA_PIPE_FILE.getFiles( publishFolder )
+        if anim:
+            animFiles = ANIM_PIPE_FILE.getFiles( publishFolder )
  
     else: # Sort the selected files
         for file in filePaths:
@@ -97,6 +104,8 @@ def importer(item, filePaths, step):
                 standardFiles.append( file )
             if STANDARDB_PIPE_FILE.check( file ):
                 standardFiles.append( file )
+            if ANIM_PIPE_FILE.check( file ):
+                animFiles.append( file )
 
     # Import
 
@@ -117,6 +126,11 @@ def importer(item, filePaths, step):
         ram.log( "I'm importing the rig." )
         for rigFile in rigFiles:
             geoNodes = geoNodes + importRig( item, rigFile, step)
+
+    if len(animFiles) > 0:
+        ram.log( "I'm importing the animation.")
+        for animFile in animFiles:
+            geoNodes = geoNodes + importAnim(item, animFile, step)
 
     if len(vpShaderFiles) > 0:
         ram.log( "I'm importing the viewport shaders." )

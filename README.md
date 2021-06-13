@@ -21,6 +21,7 @@
 - Generate preview option on new status
 - If there's a selection, update option to filter according to the selection
 - Import anim
+- Use threads for copying files
 
 - Explications arbo dossier ramses et droits d'accès
 - Lister les trucs à faire en début d'année avant l'arrivée des étudiants

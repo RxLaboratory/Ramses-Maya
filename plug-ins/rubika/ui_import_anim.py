@@ -10,10 +10,10 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
     Slot,
 )
 
-class PublishShaderDialog( QDialog ):
+class ImportAnimDialog( QDialog ):
 
     def __init__( self, parent=None ):
-        super(PublishShaderDialog, self).__init__(parent)
+        super(ImportAnimDialog, self).__init__(parent)
         self.__setupUi()
         self.__connectEvents()
 
@@ -28,16 +28,16 @@ class PublishShaderDialog( QDialog ):
         topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
-        self.removeHiddenBox = QCheckBox("Remove.")
-        self.removeHiddenBox.setChecked(True)
-        topLayout.addRow("Hidden Nodes:", self.removeHiddenBox)
+        self.removeRigBox = QCheckBox("(Try to) Remove corresponding rigs.")
+        self.removeRigBox.setChecked(True)
+        topLayout.addRow("Rigs:", self.removeRigBox)
 
         mainLayout.addLayout(topLayout)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._publishButton = QPushButton("Publish Shaders")
+        self._publishButton = QPushButton("Import animation")
         buttonsLayout.addWidget( self._publishButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
@@ -50,5 +50,5 @@ class PublishShaderDialog( QDialog ):
         self._publishButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
 
-    def removeHidden(self):
-        return self.removeHiddenBox.isChecked()
+    def removeRig(self):
+        return self.removeRigBox.isChecked()

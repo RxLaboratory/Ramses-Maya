@@ -17,15 +17,22 @@ def importGeo(item, filePath, step):
 
     # Get info
     itemShortName = item.shortName()
-    itemType = ram.ItemType.ASSET
-    assetGroupName = item.group()
+    itemType = item.itemType()
+    itemGroupName = item.group()
     # Get the file timestamp
     timestamp = os.path.getmtime( filePath )
     timestamp = int(timestamp)
 
     # Get the Asset Group
-    assetGroup = 'RamASSETS_' + assetGroupName
-    assetGroup = maf.getCreateGroup( assetGroup )
+    itemsGroup = ''
+    if itemType == ram.ItemType.ASSET:
+        itemsGroup = 'RamASSETS_' + itemGroupName
+    elif itemType == ram.ItemType.SHOT:
+        itemsGroup = 'RamSHOTS'
+    else:
+        itemsGroup = 'RamITEMS'
+
+    itemsGroup = maf.getCreateGroup( itemsGroup )
 
     # Check if the short name is not made only of numbers
     regex = re.compile('^\\d+$')
@@ -33,11 +40,7 @@ def importGeo(item, filePath, step):
         itemShortName = itemType + itemShortName
 
     # Get the Item Group
-    itemGroup = maf.getCreateGroup( itemShortName, assetGroup )
-
-    print (assetGroup)
-    print (itemGroup)
-
+    itemGroup = maf.getCreateGroup( itemShortName + ':' + itemShortName, itemsGroup )
 
     # We may need to use alembic
     if maf.safeLoadPlugin("AbcImport"):

@@ -109,6 +109,11 @@ def publishAnim( item, filePath, step ):
         if not cmds.objExists(node):
             continue
 
+        # Create a root controller
+        r = maf.createRootCtrl( node, nodeName + '_' + ANIM_PIPE_NAME )
+        node = r[0]
+        controller = r[1]
+
         # Generate file path
         abcFileInfo = fileInfo.copy()
         # extension
@@ -131,7 +136,7 @@ def publishAnim( item, filePath, step ):
             '-frameRange ' + str(frameIn) + ' ' + str(frameOut),
             filterEuler,
             '-step ' + str(frameStep),
-            '-root ' + node,
+            '-root ' + controller,
             '-autoSubd', # crease
             '-uvWrite',
             '-writeUVSets',

@@ -59,6 +59,7 @@ SET_STEP = ram.RamStep("Set Dressing", 'SET', '', ram.StepType.ASSET_PRODUCTION 
 LAY_STEP = ram.RamStep("Layout", 'LAY', '', ram.StepType.SHOT_PRODUCTION )
 LIGHT_STEP = ram.RamStep("Lighting", 'LIGHT', '', ram.StepType.SHOT_PRODUCTION )
 ANIM_STEP = ram.RamStep("Animation", 'ANIM', ram.StepType.SHOT_PRODUCTION )
+FX_STEP = ram.RamStep("Visual Effects", 'VFX', ram.StepType.SHOT_PRODUCTION )
 
 # Association between the steps and the pipes
 
@@ -93,6 +94,10 @@ ANIM_STEP._outputPipes = [
     ram.RamPipe( '', 'ANIM', [ ANIM_PIPE_FILE ] ),
 ]
 
+FX_STEP._outputPipes = [
+    ram.RamPipe( '', 'VFX', [ ANIM_PIPE_FILE ] ),
+]
+
 STEPS = ( # All previously configured steps files have to be listed here
     MOD_STEP,
     SHADE_STEP,
@@ -101,4 +106,5 @@ STEPS = ( # All previously configured steps files have to be listed here
     LAY_STEP,
     LIGHT_STEP,
     ANIM_STEP,
+    FX_STEP,
 )
