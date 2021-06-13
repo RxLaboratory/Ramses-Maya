@@ -14,22 +14,12 @@
 
 ## TODO
 
-- Fix file selection if there's both an ma and mb file
-- Switches for rdr/vp shaders and geoproxies (in the updater)
-- Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
-- Generate preview (playblast or thumbnail and later render)
-- Generate preview option on new status
-- If there's a selection, update option to filter according to the selection
-- Publish anim: add options: remove hidden, et keep curves
-- Import anim
-
-- Explications arbo dossier ramses et droits d'accès
-- Lister les trucs à faire en début d'année avant l'arrivée des étudiants
-
 ### Default addon
 
-- The default addon checks the pipes to import/export ma or mb, as ref or standard (use the pipeFile shortname)
-- Implement an update button for the default addon, using a group + attributes
+- save preview
+  - set view options, and
+  - thumbnail using `cmds.refresh(cv=True, fe = "jpg", fn = 'D:/SWAP/TEMP/----test.png')`
+  - playblast using playblast
 
 ## NOTES / DOC
 
