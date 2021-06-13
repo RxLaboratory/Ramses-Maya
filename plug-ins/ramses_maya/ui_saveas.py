@@ -349,6 +349,9 @@ class SaveAsDialog( QDialog ):
                 n = asset.shortName()
             self.itemBox.addItem(n, asset.shortName())
 
+    def setOffline(self): # TODO
+        pass
+
     def setProject(self, project):
         for i in range(self.projectBox.count()):
             if self.projectBox.itemData(i) == project.shortName():

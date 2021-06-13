@@ -53,7 +53,7 @@ def publishProxyShaders( item, filePath, step ):
         progressDialog.increment()
 
         cmds.select(node,r=True)
-        nodeName = node.split('|')[-1].split(':')[-1]
+        nodeName = maf.getNodeBaseName( node )
         if nodeName.lower().startswith( 'proxy_' ):
             nodeName = nodeName[6:]
         # extension

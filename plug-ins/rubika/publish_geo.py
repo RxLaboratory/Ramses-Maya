@@ -4,18 +4,16 @@ import dumaf as maf # pylint: disable=import-error
 from .ui_publish_geo import PublishGeoDialog
 from .utils_shaders import exportShaders
 from .utils_nodes import getPublishNodes, getProxyNodes
-from .utils_items import getFileInfo, getPublishFolder
-from .utils_attributes import *
-from .utils_constants import *
-from .utils_general import *
+from .utils_attributes import * # pylint: disable=import-error
+from .utils_constants import * # pylint: disable=import-error
+from .utils_general import * # pylint: disable=import-error
+from .utils_items import * # pylint: disable=import-error
 
 ONLY_PROXY = 0
 ALL = 1
 ONLY_GEO = 2
 
-def publishGeo(item, filePath, step, shaderMode, mode = ALL):
-
-    step = ram.RamObject.getObjectShortName(step)
+def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
 
     # Options
     removeHidden = True
@@ -24,8 +22,10 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     onlyRootGroups = False
     noFreeze = ''
     noFreezeCaseSensitive = False
+    keepCurves = False
+    keepSurfaces = False
 
-    if mode != ONLY_PROXY:
+    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles:
         # Show dialog
         publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
         if not publishGeoDialog.exec_():
@@ -38,6 +38,8 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         onlyRootGroups = publishGeoDialog.onlyRootGroups()
         noFreeze = publishGeoDialog.noFreeze()
         noFreezeCaseSensitive = publishGeoDialog.noFreezeCaseSensitive()
+        keepCurves = publishGeoDialog.curves()
+        keepSurfaces = publishGeoDialog.surfaces()
 
     # Progress
     progressDialog = maf.ProgressDialog()
@@ -46,16 +48,13 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
 
     tempData = maf.cleanScene()
 
-    # We need to use alembic
-    if maf.safeLoadPlugin("AbcExport"):
-        ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
-
     # For all nodes in the publish set or proxy set
     nodes = []
-    if mode == ALL or mode == ONLY_GEO:
+    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
         nodes = getPublishNodes()
-    if mode == ALL or mode == ONLY_PROXY:
-        nodes = nodes + getProxyNodes( mode != ONLY_PROXY )
+    if PROXYGEO_PIPE_FILE in pipeFiles:
+        showAlert = GEO_PIPE_FILE not in pipeFiles
+        nodes = nodes + getProxyNodes( showAlert )
     
     if len(nodes) == 0:
         endProcess(tempData, progressDialog)
@@ -89,11 +88,21 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
         return
     ram.log( "I'm publishing geometry in " + publishFolder )
 
+    # Extension
+    extension = ''
+    if SET_PIPE_FILE in pipeFiles:
+        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb', 'abc'], 'mb' )
+    else:
+        extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['ma','mb', 'abc'], 'abc' )
+    if extension == 'abc':
+        # We need to use alembic
+        if maf.safeLoadPlugin("AbcExport"):
+            ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
+
     # Let's count how many objects are published
     publishedNodes = []
 
     for node in nodes:
-        print(node)
         progressDialog.setText("Publishing: " + node)
         progressDialog.increment()
 
@@ -133,6 +142,11 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
             typesToKeep = ['mesh']
             if not removeLocators:
                 typesToKeep.append('locator')
+            if keepCurves:
+                typesToKeep.append('bezierCurve')
+                typesToKeep.append('nurbsCurve')
+            if keepSurfaces:
+                typesToKeep.append('nurbsSurface')
 
             freeze = True
             childName = childNode.lower()
@@ -148,76 +162,66 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
             continue
 
         # Last steps
-        nodeName = node.split('|')[-1]
+        nodeName = maf.getNodeBaseName(node, True)
         if nodeName.lower().startswith('proxy_'):
             nodeName = nodeName[6:]
 
         # Remove remaining empty groups
         maf.removeEmptyGroups(node)
 
-        # Create a root controller
-        # Get the bounding box
-        boundingBox = cmds.exactWorldBoundingBox( node )
-        xmax = boundingBox[3]
-        xmin = boundingBox[0]
-        zmax = boundingBox[5]
-        zmin = boundingBox[2]
-        # Get the 2D Projection on the floor (XZ) lengths
-        boundingWidth = xmax - xmin
-        boundingLength = zmax - zmin
-        # Compute a margin relative to mean of these lengths
-        margin = ( boundingWidth + boundingLength ) / 2.0
-        # Make it small
-        margin = margin / 20.0
-        # Create a shape using this margin and coordinates
-        cv1 = ( xmin - margin, 0, zmin - margin)
-        cv2 = ( xmax + margin, 0, zmin - margin)
-        cv3 = ( xmax + margin, 0, zmax + margin)
-        cv4 = ( xmin - margin, 0, zmax + margin)
-        cv5 = cv1
-        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=nodeName + '_root')
-        # Parent the node
-        node = cmds.parent(node, controller)[0]
-
-        # Save and create Abc
-        # Generate file path
-        abcFileInfo = fileInfo.copy()
-        # extension
-        abcFileInfo['extension'] = 'abc'
         # Type
-        pipeType = ''
+        pType = ''
         if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-            pipeType = PROXYGEO_PIPE_NAME
+            pType = PROXYGEO_PIPE_NAME
+        elif SET_PIPE_FILE in pipeFiles:
+            pType = SET_PIPE_NAME
         else:
-            pipeType = GEO_PIPE_NAME
-        # resource
-        if abcFileInfo['resource'] != '':
-            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pipeType
-        else:
-            abcFileInfo['resource'] = nodeName + '-' + pipeType
-        # path
-        abcFilePath = ram.RamFileManager.buildPath((
-            publishFolder,
-            ram.RamFileManager.composeRamsesFileName( abcFileInfo )
-        ))
-        # Save
-        abcOptions = ' '.join([
-            '-frameRange 1 1',
-            '-autoSubd', # Crease info
-            '-uvWrite',
-            '-worldSpace',
-            '-writeUVSets',
-            '-dataFormat hdf',
-            '-root |' + controller,
-            '-file ' + abcFilePath
-        ])
-        cmds.AbcExport(j=abcOptions)
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
-        ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( abcFilePath, version )
+            pType = GEO_PIPE_NAME
+
+        # Create a root controller
+        r = maf.createRootCtrl( node, nodeName + '_' + pType )
+        node = r[0]
+        controller = r[1]
+
+        if extension == 'abc':
+            # Save and create Abc
+            # Generate file path
+            abcFileInfo = fileInfo.copy()
+            # extension
+            abcFileInfo['extension'] = 'abc'
+            # resource
+            if abcFileInfo['resource'] != '':
+                abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pType
+            else:
+                abcFileInfo['resource'] = nodeName + '-' + pType
+            # path
+            abcFilePath = ram.RamFileManager.buildPath((
+                publishFolder,
+                ram.RamFileManager.composeRamsesFileName( abcFileInfo )
+            ))
+            # Save
+            abcOptions = ' '.join([
+                '-frameRange 1 1',
+                '-autoSubd', # Crease info
+                '-uvWrite',
+                '-worldSpace',
+                '-writeUVSets',
+                '-dataFormat hdf',
+                '-root |' + controller,
+                '-file "' + abcFilePath + '"'
+            ])
+            cmds.AbcExport(j=abcOptions)
+            # Update Ramses Metadata (version)
+            ram.RamMetaDataManager.setPipeType( abcFilePath, pType )
+            ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
+            ram.RamMetaDataManager.setVersion( abcFilePath, version )
 
         # Export viewport shaders
+        shaderMode = ''
+        if VPSHADERS_PIPE_FILE in pipeFiles:
+            shaderMode = VPSHADERS_PIPE_NAME
+        elif RDRSHADERS_PIPE_FILE in pipeFiles:
+            shaderMode = RDRSHADERS_PIPE_NAME
         if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), shaderMode )
             # Update Ramses Metadata (version)
@@ -263,12 +267,24 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
 
     # Copy published scene to publish
     sceneFileInfo = fileInfo.copy()
-    sceneFileInfo['extension'] = 'mb'
+
+    # Get Type
+    pipeType = GEO_PIPE_NAME
+    if SET_PIPE_FILE in pipeFiles:
+        pipeType = SET_PIPE_NAME
+
+    if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles and not SET_PIPE_FILE in pipeFiles:
+        pipeType = PROXYGEO_PIPE_NAME
+
+    if SET_PIPE_FILE in pipeFiles:
+        sceneFileInfo['extension'] = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+    else:
+        sceneFileInfo['extension'] = 'mb'
     # resource
     if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + GEO_PIPE_NAME
+        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + pipeType
     else:
-        sceneFileInfo['resource'] = GEO_PIPE_NAME
+        sceneFileInfo['resource'] = pipeType
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
@@ -277,10 +293,6 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
     # Save
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
-    # Update Ramses Metadata (version)
-    pipeType = GEO_PIPE_NAME
-    if mode == ONLY_PROXY:
-        pipeType = PROXYGEO_PIPE_NAME
     ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
     ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )
@@ -289,6 +301,7 @@ def publishGeo(item, filePath, step, shaderMode, mode = ALL):
 
     ram.log("I've published these assets:")
     for publishedNode in publishedNodes:
+        publishedNode = maf.getNodeBaseName( publishedNode )
         ram.log(" > " + publishedNode)
-    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenter', fade=True )
+    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
 

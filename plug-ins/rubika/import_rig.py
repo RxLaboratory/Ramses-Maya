@@ -86,8 +86,7 @@ def importRig( item, rigFile, step):
         maf.lockTransform( rootGroup )
 
         # move it to its category
-        rootGroup = cmds.parent(rootGroup, itemGroup)[0]
-        print (rootGroup)
+        rootGroup = maf.parentNodeTo(rootGroup, itemGroup)
         rootNodes.append(rootGroup) 
 
     progressDialog.hide()

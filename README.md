@@ -14,16 +14,24 @@
 
 ## TODO
 
-- Fix file selection if there's both an ma and mb file
-- Switches for rdr/vp shaders and geoproxies/shaderproxies (in the updater or importer)
-- Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
-- Generate preview (playblast or thumbnail and later render)
-- Generate preview option on new status
-- If there's a selection, update option to filter according to the selection
-- Implement  a 'Ramses_IgnoreUpdate' Set (which move the asset to the item folder before updating, and removes same asset if any from the updated nodes)
-- implement setOffline on ui_saveas
+- Importer
+    - Fix file selection (open) if there's both an ma and mb file
+    - autoselect same shot/asset in import dialog
+    - Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
+- Updater
+    - Switches for rdr  /vp shaders and geoproxies (in the updater)
+    - If there's a sel  ection, update option to filter according to the selection
+
+- Explications arbo dossier ramses et droits d'accès
+- Lister les trucs à faire en début d'année avant l'arrivée des étudiants
 
 ### Default addon
+
+- Other
+    - Generate preview (playblast or thumbnail and later render)
+    - Generate preview option on new status
+- Perf
+    - Use threads for copying files
 
 - The default addon checks the pipes to import/export ma or mb, as ref or standard (use the pipeFile shortname)
 - Implement an update button for the default addon, using a group + attributes
@@ -38,13 +46,14 @@ Il s'adaptera en fonction des paramètres et surtout de la config du pipe dans l
 
 Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont reconnus par l'addon :
 
-- "Geo" (doit être un .abc -> .ma ou .mb à implémenter)
-- "vpShader" (doit être un .mb -> .ma à implémenter)
-- "rdrShader" (doit être un .mb -> .ma à implémenter)
-- "proxyShade" (doit être un .ass)
-- "proxyGeo" (doit être un .abc -> .ma ou .mb à implémenter)
-- "Rig" (doit être un .ma ou .mb)
-- "Anim"
+- "GeoPipe" (doit être un .abc, .ma ou .mb)
+- "vpShaPipe" (doit être un .mb -> .ma à implémenter)
+- "rdrShaPipe" (doit être un .mb -> .ma à implémenter)
+- "pShaPipe" (doit être un .ass)
+- "pGeoPipe" (doit être un .abc, .ma ou .mb)
+- "RigPipe" (doit être un .ma ou .mb)
+- "SetPipe" (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
+- "AnimPipe"
 
 -> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
 
@@ -53,6 +62,11 @@ Si il ne trouve pas cette info, il se basera sur l'ID des steps :
 - MOD - Modelisation (-> publie Geo, proxyGeo et vpShader)
 - SHADE - Shading (-> publie rdrShader et proxyShade et proxyGeo)
 - RIG - Rigging (-> publie Rig)
+- SET
+- LAY
+- LIGHT
+- ANIM
+- VFX
 
 Si on n'est pas sur un step connu, il affiche une liste des types pris en charge
 
@@ -64,7 +78,7 @@ Ramses sait ce qu'il doit publier grâce à des sets dans la scène :
 
 ### Ramses
 
-- [ ] *WIP* à chaque step, il y a un fichier de travail template vide, ramses le renomme et le place à la création de l'asset/shot
+- [x] *WIP* à chaque step, il y a un fichier de travail template vide, ramses le renomme et le place à la création de l'asset/shot
 
 ### Grouper les assets
 - [x] CHARACTERS (chars)
@@ -91,33 +105,28 @@ et possibilité d'en ajouter
   - [x] Update modé
   - [x] Publish .mb
   - [x] Publish proxy: .abc, .ass
-- [ ] Set Dressing
-  - [ ] Import modé
-  - [ ] Publish .mb (same way as rig)
+- [x] Set Dressing
+  - [x] Import modé
+  - [x] Publish .mb
 
 #### Shots steps
 
-- [ ] Layout
-  - [ ] Import rig, sets, geo
-  - [ ] Publish .mb
-  - [ ] Publish .abc (gpu cache)
-- [ ] Animation
+- [x] Layout
+  - [x] Import rig, sets, geo
+  - [x] Publish .mb
+  - [x] Publish .abc (gpu cache)
+- [x] Animation
   - [x] Import rig
-  - [ ] Import/update abc du layout
+  - [x] Import/update abc du layout
   - [x] Import/update les props
-  - [ ] Publish .abc (sans oublier la caméra)
+  - [x] Publish .abc (sans oublier la caméra)
   - [ ] Ajouter optionnellement l'anim des crease
 - [x] FX, Rien pour l'instant
-- [ ] Lighting
-  - [ ] Import/update Le layout, vire tout ce qui a été baké/publish en abc
-  - [ ] Import/update les abc
+- [x] Lighting
+  - [x] Import/update Le layout, vire tout ce qui a été baké/publish en abc (l'anim)
+  - [x] Import/update les abc
   - [x] Import/update les shaders et les assigne : depuis les items et depuis les charas, etc
   - [ ] Publish Rendu exr
 - [ ] Compositing
   - [ ] Import/update les exr, eventuelle prépare un arbre, etc
   - [ ] Publish Rendu exr ou png
-
-### Questions
-
-- Les shaders sont en référence, pas de souci ?
-- Dans pipou, la modé est importée en référence pour le shading, un intérêt ?

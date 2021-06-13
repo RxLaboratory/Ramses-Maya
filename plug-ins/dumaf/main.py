@@ -1,9 +1,63 @@
-import sys, tempfile, re
+import sys, tempfile, re, os
 import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 from PySide2.QtWidgets import ( # pylint: disable=import-error disable=no-name-in-module
     QApplication
 )
+
+def deleteNode( node ):
+    """Deletes a node, even if it's in a reference or contains a reference.
+    Warning: This will import the reference!"""
+    children = cmds.listRelatives( node, ad=True, type='transform')
+    if children:
+        for child in children:
+            if cmds.referenceQuery( child, isNodeReferenced=True):
+                refFile = cmds.referenceQuery( child, filename=True)
+                # import
+                cmds.file( refFile, importReference = True)
+    cmds.delete( node )
+
+def createRootCtrl( node, ctrlName ):
+    # Get the bounding box
+    boundingBox = cmds.exactWorldBoundingBox( node )
+    xmax = boundingBox[3]
+    xmin = boundingBox[0]
+    zmax = boundingBox[5]
+    zmin = boundingBox[2]
+    # Get the 2D Projection on the floor (XZ) lengths
+    boundingWidth = xmax - xmin
+    boundingLength = zmax - zmin
+    # Compute a margin relative to mean of these lengths
+    margin = ( boundingWidth + boundingLength ) / 2.0
+    # Make it small
+    margin = margin / 20.0
+    # Create a shape using this margin and coordinates
+    cv1 = ( xmin - margin, 0, zmin - margin)
+    cv2 = ( xmax + margin, 0, zmin - margin)
+    cv3 = ( xmax + margin, 0, zmax + margin)
+    cv4 = ( xmin - margin, 0, zmax + margin)
+    cv5 = cv1
+    controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrlName)
+    # Parent the node
+    node = parentNodeTo(node, controller)
+    return (node, controller)
+
+def checkSaveState():
+    """Checks if the current scene needs to be saved,
+    and asks for the user to save if needed.
+    Returns False if the user cancels the operation,
+    True if the scene can be safely closed"""
+    currentFilePath = cmds.file( q=True, sn=True )
+    if cmds.file(q=True, modified=True):
+        sceneName = os.path.basename(currentFilePath)
+        if sceneName == '':
+            sceneName = 'untitled scene'
+        result = cmds.confirmDialog( message="Save changes to " + sceneName + "?", button=("Save", "Don't Save", "Cancel") )
+        if result == 'Cancel':
+            return False
+        if result == 'Save':
+            cmds.file( save=True, options="v=1;" )
+    return True
 
 def getNodesInSet( setName ):
     # Create a list and add the set
@@ -58,36 +112,33 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
         # Delete history
         cmds.delete(shape, constructionHistory=True)
 
-        # Rename shapes after transform nodes
-        if renameShapes:
-            cmds.rename(shape, node.split('|')[-1] + 'Shape')
-
         # Freeze transform & center pivot
         if freezeTranform and shapeType == 'mesh':
             freezeTransform(node)
+
+        # Rename shapes after transform nodes
+        if renameShapes:
+            cmds.rename(shape, getNodeBaseName(node) + 'Shape')    
+    return True  
 
 def snapNodeTo( nodeFrom, nodeTo):
     prevParent = cmds.listRelatives(nodeFrom, p = True, f = True)
     if prevParent is not None:
         prevParent = prevParent[0]
-    nodeFrom = cmds.parent( nodeFrom, nodeTo, relative = True )[0] 
-    # Maya, the absolute path please...
-    nodeFrom = nodeTo + '|' + nodeFrom
+    nodeFrom = parentNodeTo( nodeFrom, nodeTo, True )
 
     if prevParent is not None:
-        nodeFrom = cmds.parent( nodeFrom, prevParent )[0]
-        # Maya, the absolute path please...
-        return prevParent + '|' + nodeFrom
+        nodeFrom = parentNodeTo( nodeFrom, prevParent )
+        return nodeFrom
     
-    nodeFrom = cmds.parent( nodeFrom, world=True)[0]
-    # Maya, the absolute path please...
-    return '|' + nodeFrom
+    nodeFrom = parentNodeTo( nodeFrom, '|' )
+    return nodeFrom
 
-def lockTransform( transformNode ):
+def lockTransform( transformNode, l=True ):
     if cmds.nodeType(transformNode) != 'transform':
         return
     for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
-        cmds.setAttr(transformNode + a, lock=True )
+        cmds.setAttr(transformNode + a, lock=l )
 
 def getNodeBaseName( node, keepNameSpace = False ):
     nodeName = node.split('|')[-1]
@@ -104,7 +155,7 @@ def getNodeAbsolutePath( nodeName ):
 def getCreateGroup( groupName, parentNode=None ):
     # Check if exists
     if parentNode is None:
-        if groupName[0] != '|':
+        if not groupName.startswith('|'):
             groupName = '|' + groupName
         if cmds.objExists(groupName) and isGroup(groupName):
             return groupName
@@ -121,10 +172,31 @@ def getCreateGroup( groupName, parentNode=None ):
                     return parentNode + '|' + cn
     # Create the group
     n = cmds.group( name= groupName, em=True )
+    if not n.startswith('|'):
+        n = '|' + n
     if parentNode is not None:
-        n = cmds.parent( n, parentNode )[0]
-        n = parentNode + '|' + n
+        n = parentNodeTo( n, parentNode)
     return n
+
+def parentNodeTo( child, parent, r=False):
+    """Fixed Parenting for Maya: returns a proper path instead of just the node name,
+    and keeps the path absolute if arguments are absolute."""
+    try:
+        if parent != '|':
+            child = cmds.parent( child, parent, relative=r )[0]
+        else:
+            child = cmds.parent(child, world=True)[0]
+            return '|' + child
+    except: # if the child is already parent to this parent
+        return child
+    # If maya returned a (relative?) path, we need to get the node name
+    # (-> sometimes a path is returned, sometimes just the node name, depending on the fact
+    # that the node name is unique in the scene or not)
+    # Note that what Maya returns is never absolute (never starts with '|')
+    child = getNodeBaseName( child, True)
+    # Prepend again the parent path
+    child = parent + '|' + child
+    return child
 
 def getMayaWindow():
     app = QApplication.instance() #get the qApp instance if it exists.
@@ -268,7 +340,8 @@ def removeEmptyGroups(node=None):
                 cmds.delete(node)
                 remove = True
 
-def freezeTransform(shape):
-        cmds.move(0, 0, 0, shape + ".rotatePivot", absolute=True)
-        cmds.move(0, 0, 0, shape + ".scalePivot", absolute=True)
-        cmds.makeIdentity(shape, apply=True, t=1, r=1, s=1, n=0)
+def freezeTransform(transformNode):
+        lockTransform( transformNode, False )
+        cmds.move(0, 0, 0, transformNode + ".rotatePivot", absolute=True)
+        cmds.move(0, 0, 0, transformNode + ".scalePivot", absolute=True)
+        cmds.makeIdentity(transformNode, apply=True, t=1, r=1, s=1, n=0)

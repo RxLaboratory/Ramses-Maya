@@ -4,6 +4,8 @@ import maya.cmds as cmds # pylint: disable=import-error
 from .import_geo import *
 from .import_shaders import *
 from .import_rig import *
+from .import_standard import *
+from .import_anim import *
 from .utils_items import *
 import ramses as ram
 
@@ -16,12 +18,15 @@ def importer(item, filePaths, step):
     proxyShadeFiles = []
     proxyGeoFiles = []
     rigFiles = []
+    setFiles = []
+    standardFiles = []
+    animFiles = []
 
     if filePaths[0] == '': # Scan all published files to get the ones corresponding to the pipes
 
         currentFilePath = cmds.file( q=True, sn=True )
         # Get the output pipes from the step being imported
-        pipes = getPipes( step, currentFilePath )
+        pipes = getPipes( step, currentFilePath, 'Import' )
         if len(pipes) == 0:
             return
 
@@ -31,6 +36,9 @@ def importer(item, filePaths, step):
         proxyShade = False
         proxyGeo = False
         rig = False
+        sets = False
+        standard = False
+        anim = False
 
         for pipe in pipes:
             for pipeFile in pipe.pipeFiles():
@@ -46,6 +54,12 @@ def importer(item, filePaths, step):
                     proxyGeo = True
                 elif pipeFile == RIG_PIPE_FILE:
                     rig = True
+                elif pipeFile == SET_PIPE_FILE:
+                    sets = True
+                elif pipeFile == STANDARDA_PIPE_FILE or pipeFile == STANDARDB_PIPE_FILE:
+                    standard = True
+                elif pipeFile == ANIM_PIPE_FILE:
+                    anim = True
 
         # List all files, and get correspondance
         publishFolder = item.publishFolderPath( step )
@@ -62,6 +76,13 @@ def importer(item, filePaths, step):
             proxyGeoFiles = PROXYGEO_PIPE_FILE.getFiles( publishFolder )
         if rig:
             rigFiles = RIG_PIPE_FILE.getFiles( publishFolder )
+        if sets:
+            setFiles = SET_PIPE_FILE.getFiles( publishFolder )
+        if standard:
+            standardFiles = STANDARDB_PIPE_FILE.getFiles( publishFolder )
+            standardFiles = standardFiles + STANDARDA_PIPE_FILE.getFiles( publishFolder )
+        if anim:
+            animFiles = ANIM_PIPE_FILE.getFiles( publishFolder )
  
     else: # Sort the selected files
         for file in filePaths:
@@ -77,6 +98,14 @@ def importer(item, filePaths, step):
                 proxyGeoFiles.append( file )
             if RIG_PIPE_FILE.check( file ):
                 rigFiles.append( file )
+            if SET_PIPE_FILE.check( file ):
+                setFiles.append( file )
+            if STANDARDA_PIPE_FILE.check( file ):
+                standardFiles.append( file )
+            if STANDARDB_PIPE_FILE.check( file ):
+                standardFiles.append( file )
+            if ANIM_PIPE_FILE.check( file ):
+                animFiles.append( file )
 
     # Import
 
@@ -87,11 +116,21 @@ def importer(item, filePaths, step):
         ram.log( "I'm importing the geometry." )
         for geoFile in geoFiles:
             geoNodes = geoNodes + importGeo( item, geoFile, step )
+    
+    if len(setFiles) > 0:
+        ram.log( "I'm importing the set." )
+        for setFile in setFiles:
+            geoNodes = geoNodes + importGeo( item, setFile, step )
 
     if len(rigFiles) > 0:
         ram.log( "I'm importing the rig." )
         for rigFile in rigFiles:
             geoNodes = geoNodes + importRig( item, rigFile, step)
+
+    if len(animFiles) > 0:
+        ram.log( "I'm importing the animation.")
+        for animFile in animFiles:
+            geoNodes = geoNodes + importAnim(item, animFile, step)
 
     if len(vpShaderFiles) > 0:
         ram.log( "I'm importing the viewport shaders." )
@@ -103,4 +142,7 @@ def importer(item, filePaths, step):
         for rdrShaderFile in rdrShaderFiles:
             importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, geoNodes )
 
-    
+    if len(standardFiles) > 0:
+        ram.log( "I'm importing " + item.shortName() )
+        for standardFile in standardFiles:
+            importStandard( item, standardFile, step )

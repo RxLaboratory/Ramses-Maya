@@ -56,6 +56,12 @@ class PublishGeoDialog( QDialog ):
         noFreezeWidget.setLayout(noFreezeLayout)
         topLayout.addRow("Don't freeze transformations for:", noFreezeWidget)
 
+        self.keepCurvesBox = QCheckBox("Keep Curves (Bézier or NURBS)")
+        topLayout.addRow("Curves:", self.keepCurvesBox)
+
+        self.keepSurfacesBox = QCheckBox("Keep NURBS Surfaces")
+        topLayout.addRow("Surfaces:", self.keepSurfacesBox)
+
         mainLayout.addLayout(topLayout)
 
         buttonsLayout = QHBoxLayout()
@@ -92,3 +98,8 @@ class PublishGeoDialog( QDialog ):
     def noFreezeCaseSensitive(self):
         return self.noFreezeCaseBox.isChecked()
 
+    def curves(self):
+        return self.keepCurvesBox.isChecked()
+
+    def surfaces(self):
+        return self.keepSurfacesBox.isChecked()
