@@ -14,20 +14,24 @@
 
 ## TODO
 
-- Fix file selection (open) if there's both an ma and mb file
-- Switches for rdr/vp shaders and geoproxies (in the updater)
-- Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
-- Generate preview (playblast or thumbnail and later render)
-- Generate preview option on new status
-- If there's a selection, update option to filter according to the selection
-- update anim and other update options
-- autoselect same shot/asset in import dialog
-- Use threads for copying files
+- Importer
+    - Fix file selection (open) if there's both an ma and mb file
+    - autoselect same shot/asset in import dialog
+    - Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
+- Updater
+    - Switches for rdr  /vp shaders and geoproxies (in the updater)
+    - If there's a sel  ection, update option to filter according to the selection
 
 - Explications arbo dossier ramses et droits d'accès
 - Lister les trucs à faire en début d'année avant l'arrivée des étudiants
 
 ### Default addon
+
+- Other
+    - Generate preview (playblast or thumbnail and later render)
+    - Generate preview option on new status
+- Perf
+    - Use threads for copying files
 
 - The default addon checks the pipes to import/export ma or mb, as ref or standard (use the pipeFile shortname)
 - Implement an update button for the default addon, using a group + attributes
@@ -42,14 +46,14 @@ Il s'adaptera en fonction des paramètres et surtout de la config du pipe dans l
 
 Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont reconnus par l'addon :
 
-- "Geo" (doit être un .abc, .ma ou .mb)
-- "vpShader" (doit être un .mb -> .ma à implémenter)
-- "rdrShader" (doit être un .mb -> .ma à implémenter)
-- "proxyShade" (doit être un .ass)
-- "proxyGeo" (doit être un .abc, .ma ou .mb)
-- "Rig" (doit être un .ma ou .mb)
-- "Layout" (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
-- "Anim"
+- "GeoPipe" (doit être un .abc, .ma ou .mb)
+- "vpShaPipe" (doit être un .mb -> .ma à implémenter)
+- "rdrShaPipe" (doit être un .mb -> .ma à implémenter)
+- "pShaPipe" (doit être un .ass)
+- "pGeoPipe" (doit être un .abc, .ma ou .mb)
+- "RigPipe" (doit être un .ma ou .mb)
+- "SetPipe" (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
+- "AnimPipe"
 
 -> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
 
@@ -58,6 +62,11 @@ Si il ne trouve pas cette info, il se basera sur l'ID des steps :
 - MOD - Modelisation (-> publie Geo, proxyGeo et vpShader)
 - SHADE - Shading (-> publie rdrShader et proxyShade et proxyGeo)
 - RIG - Rigging (-> publie Rig)
+- SET
+- LAY
+- LIGHT
+- ANIM
+- VFX
 
 Si on n'est pas sur un step connu, il affiche une liste des types pris en charge
 
@@ -69,7 +78,7 @@ Ramses sait ce qu'il doit publier grâce à des sets dans la scène :
 
 ### Ramses
 
-- [ ] *WIP* à chaque step, il y a un fichier de travail template vide, ramses le renomme et le place à la création de l'asset/shot
+- [x] *WIP* à chaque step, il y a un fichier de travail template vide, ramses le renomme et le place à la création de l'asset/shot
 
 ### Grouper les assets
 - [x] CHARACTERS (chars)

@@ -15,14 +15,14 @@ ASS_FILE = ram.RamFileType( "Arnold Source File", 'ass', ['.ass'] )
 
 STANDARDB_PIPE_NAME = 'Standard' # used for layout, lighting, etc non-managed pipes
 STANDARDA_PIPE_NAME = 'StandardA' # used for layout, lighting, etc non-managed pipes
-GEO_PIPE_NAME = 'Geometry'
-VPSHADERS_PIPE_NAME = 'vpShaders'
-RDRSHADERS_PIPE_NAME = 'rdrShaders'
-PROXYSHADE_PIPE_NAME = 'proxyShade'
-PROXYGEO_PIPE_NAME = 'proxyGeo'
-RIG_PIPE_NAME = 'Rig'
-SET_PIPE_NAME = 'Set'
-ANIM_PIPE_NAME = 'Anim'
+GEO_PIPE_NAME = 'GeoPipe'
+VPSHADERS_PIPE_NAME = 'vpShaPipe'
+RDRSHADERS_PIPE_NAME = 'rdrShaPipe'
+PROXYSHADE_PIPE_NAME = 'pShaPipe'
+PROXYGEO_PIPE_NAME = 'pGeoPipe'
+RIG_PIPE_NAME = 'RigPipe'
+SET_PIPE_NAME = 'SetPipe'
+ANIM_PIPE_NAME = 'AnimPipe'
 
 # PipeFiles - These associate the name with a file type (and a color space, ignored for now)
 
