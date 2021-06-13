@@ -14,13 +14,14 @@
 
 ## TODO
 
-- Fix file selection if there's both an ma and mb file
+- Fix file selection (open) if there's both an ma and mb file
 - Switches for rdr/vp shaders and geoproxies (in the updater)
 - Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
 - Generate preview (playblast or thumbnail and later render)
 - Generate preview option on new status
 - If there's a selection, update option to filter according to the selection
-- Import anim
+- update anim and other update options
+- autoselect same shot/asset in import dialog
 - Use threads for copying files
 
 - Explications arbo dossier ramses et droits d'accès
