@@ -10,14 +10,3 @@
     e.g. `C:\Users\User\Documents\Maya\modules`.  
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
-
-## TODO
-
-### Default addon
-
-- save preview
-  - set view options, and
-  - thumbnail using `cmds.refresh(cv=True, fe = "jpg", fn = 'D:/SWAP/TEMP/----test.png')`
-  - options to add:
-  - Add HUD
-  - Restore to previous settings
