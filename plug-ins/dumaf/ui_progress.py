@@ -1,5 +1,3 @@
-import maya.cmds as cmds # pylint: disable=import-error
-
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
     QMainWindow,
     QVBoxLayout,
@@ -54,7 +52,6 @@ class ProgressDialog( QMainWindow ):
 
     def increment(self):
         self.progressBar.setValue( self.progressBar.value() + 1 )
-        cmds.refresh()
 
     def setMaximum(self, max):
         self.progressBar.setMaximum(max)

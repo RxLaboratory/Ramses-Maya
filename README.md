@@ -1,6 +1,5 @@
-# Ramses-Maya SR - The Ramses-Maya Plugin, Supinfocom-Rubika Flavor
-
- The Rx Asset Management System (Ramses) Maya Plugin, extended for the Supinfocom-Rubika production pipeline.
+# Ramses-Maya
+ The Rx Asset Management System (Ramses) Maya Plugin
 
 ## Install
 
