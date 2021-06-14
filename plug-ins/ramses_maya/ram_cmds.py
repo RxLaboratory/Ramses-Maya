@@ -1,10 +1,11 @@
-import os, re
+import os, re, platform, subprocess, tempfile, shutil
 from datetime import datetime, timedelta
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
+import maya.mel as mel # pylint: disable=import-error
 
-from dumaf import getMayaWindow, getCreateGroup, hasParent
+import dumaf as maf
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
@@ -12,6 +13,7 @@ from .ui_publishtemplate import PublishTemplateDialog # pylint: disable=import-e
 from .ui_comment import CommentDialog # pylint: disable=import-error,no-name-in-module
 from .ui_import import ImportDialog # pylint: disable=import-error,no-name-in-module
 from .ui_saveas import SaveAsDialog # pylint: disable=import-error,no-name-in-module
+from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
 # Keep the ramses and the settings instances at hand
@@ -72,6 +74,133 @@ def getStep( filePath ):
     if fileInfo is not None and project is not None:
         return project.step( fileInfo['step'] )
 
+def getFileInfo( filePath ):
+    fileInfo = ram.RamFileManager.decomposeRamsesFilePath( filePath )
+    if fileInfo is None:
+        ram.log(ram.Log.MalformedName, ram.LogLevel.Fatal)
+        cmds.inViewMessage( msg=ram.Log.MalformedName, pos='midCenter', fade=True )
+        cmds.error( ram.Log.MalformedName )
+        return None
+    return fileInfo
+
+def getPublishFolder( item, step):
+    publishFolder = item.publishFolderPath( step )
+    if publishFolder == '':
+        ram.log("I can't find the publish folder for this item, maybe it does not respect the ramses naming scheme or it is out of place.", ram.LogLevel.Fatal)
+        cmds.inViewMessage( msg="Can't find the publish folder for this scene, sorry. Check its name and location.", pos='midCenter', fade=True )
+        cmds.error( "Can't find publish folder." )
+        return ''
+    return publishFolder
+
+def getPreviewFolder( item, step):
+    previewFolder = item.previewFolderPath( step )
+    if previewFolder == '':
+        ram.log("I can't find the publish folder for this item, maybe it does not respect the ramses naming scheme or it is out of place.", ram.LogLevel.Fatal)
+        cmds.inViewMessage( msg="Can't find the publish folder for this scene, sorry. Check its name and location.", pos='midCenter', fade=True )
+        cmds.error( "Can't find publish folder." )
+        return ''
+    return previewFolder
+
+def createPlayblast(filePath, size):
+
+    # Warning, That's for win only ! Needs work on MAC/Linux
+    # TODO MAC: open playblast at the end
+    # TODO MAC/LINUX: video (audio) playblast format must not be avi
+    # TODO MAC/LINUX: call to ffmpeg without .exe
+    if platform.system() != 'Windows':
+        return
+
+    # Get bin dir
+    ramsesFoler = cmds.getModulePath(moduleName='Ramses')
+    ffmpegFile = ramsesFoler + '/bin/ffmpeg.exe'
+    ffplayFile = ramsesFoler + '/bin/ffplay.exe'
+
+    # Get a temp dir for rendering the playblast
+    tempDir = tempfile.mkdtemp()
+    print(tempDir)
+    imageFile = tempDir + '/' + 'blast'
+    
+    # Create jpg frame sequence
+    w = cmds.getAttr("defaultResolution.width") * size
+    h = cmds.getAttr("defaultResolution.height") * size
+    w = w - w % 4
+    h = h - h % 4
+    imageFile = cmds.playblast( filename=imageFile,
+        format='image',
+        clearCache=True,
+        framePadding= 5,
+        viewer=False,
+        showOrnaments=True,
+        percent=100,
+        compression="jpg",
+        quality=50, 
+        width = w,
+        height = h )
+
+    # if there's sound, create a sound file
+    soundFile = ''
+    sounds = cmds.ls(type='audio')
+    # If there are sounds in the scene
+    if sounds:
+        timeCtrl = mel.eval('$tmpVar=$gPlayBackSlider')
+        # And sounds are used by the timeline
+        if cmds.timeControl(timeCtrl, displaySound=True, query=True):
+            soundFile = tempDir + '/' + 'blast.avi'
+            soundFile = cmds.playblast(filename=soundFile, format='avi', clearCache=True, useTraxSounds=True, framePadding= 5, viewer=False, showOrnaments=False, percent=10,compression="none", quality=10)
+
+    # Get framerate
+    framerate = mel.eval('float $fps = `currentTimeUnitToFPS`') # It's not in cmds!!
+
+    # Transcode using ffmpeg
+    ffmpegArgs = [
+        ffmpegFile,
+        '-loglevel', 'error', # limit output to errors
+        '-y', # overwrite
+        '-start_number', '1',
+        '-framerate', str(framerate),
+        '-i', imageFile.replace('####', "%5d"), # Image file
+    ]
+    if soundFile != '':
+        ffmpegArgs = ffmpegArgs + [
+            '-i', soundFile,
+            '-map', '0:0', # map video to video
+            '-map', '1:1', # map audio to audio
+            '-b:a', '131072', # "Bad" quality
+        ]
+    ffmpegArgs = ffmpegArgs + [
+        '-f', 'mp4', # Codec
+        '-c:v', 'h264', # Codec
+        '-level', '3.0', # Compatibility
+        '-crf', '25', # "Bad" quality
+        '-preset', 'ultrafast', # We're in a hurry to playblast!
+        '-tune', 'fastdecode', # It needs to be easy to play
+        '-profile:v', 'baseline', # Compatibility
+        '-x264opts', 'b_pyramid=0', # Needed to decoded in Adobe Apps
+        '-pix_fmt', 'yuv420p', # Because ffmpeg does 422 by default, which causes compatibility issues
+        '-intra', # Intra frame for frame by frame playback
+        filePath # Output file
+    ]
+
+    ram.log('FFmpeg args: ' + ' | '.join(ffmpegArgs), ram.LogLevel.Debug)
+
+    ffmpegProcess = subprocess.Popen(ffmpegArgs,shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) # Launch!
+
+    output = ffmpegProcess.communicate()
+    ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
+
+    # Remove temp files
+    shutil.rmtree(tempDir)
+    subprocess.Popen([ffplayFile, '-seek_interval', '0.1', filePath])
+    return
+    # Open playblast
+    if platform.system() == "Windows":
+        os.startfile(filePath)
+    elif platform.system() == "Linux":
+        subprocess.call(["xdg-open", filePath])
+
+def createThumbnail(filePath):
+    cmds.refresh(cv=True, fn = filePath)
+
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
     syntax = om.MSyntax()
@@ -110,7 +239,7 @@ class RamSaveCmd( om.MPxCommand ):
             latestVersionFile = ram.RamFileManager.getLatestVersionFilePath( saveFilePath )
             currentComment = ram.RamMetaDataManager.getComment( latestVersionFile )
             # Ask for comment
-            commentDialog = CommentDialog(getMayaWindow())
+            commentDialog = CommentDialog(maf.getMayaWindow())
             commentDialog.setComment( currentComment )
             if not commentDialog.exec_():
                 return False
@@ -206,7 +335,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         step = getStep( currentFilePath )
         item = ram.RamItem.fromPath( currentFilePath )
 
-        saveAsDialog = SaveAsDialog(getMayaWindow())
+        saveAsDialog = SaveAsDialog(maf.getMayaWindow())
         if project is not None:
             saveAsDialog.setProject( project )
         if item is not None:
@@ -308,7 +437,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         if self.updateSatus:
             # Show status dialog
-            statusDialog = StatusDialog(getMayaWindow())
+            statusDialog = StatusDialog(maf.getMayaWindow())
             statusDialog.setOffline(not settings.online)
             statusDialog.setPublish( self.publish )
             if currentStatus is not None:
@@ -406,14 +535,18 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='No other version found.', pos='midBottom', fade=True )
             return
 
-        versionDialog = VersionDialog(getMayaWindow())
+        versionDialog = VersionDialog(maf.getMayaWindow())
         versionDialog.setVersions( versionFiles )
         if not versionDialog.exec_():
+            return
+
+         # If the current file needs to be saved
+        if not maf.checkSaveState():
             return
         
         versionFile = ram.RamFileManager.restoreVersionFile( versionDialog.getVersion() )
         # open
-        cmds.file(versionFile, open=True)
+        cmds.file(versionFile, open=True, force=True)
 
 class RamPublishTemplateCmd( om.MPxCommand ):
     name = "ramPublishTemplate"
@@ -441,7 +574,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Prepare the dialog
-        publishDialog = PublishTemplateDialog(getMayaWindow())
+        publishDialog = PublishTemplateDialog(maf.getMayaWindow())
         if not settings.online:
             publishDialog.setOffline()
 
@@ -494,7 +627,7 @@ class RamOpenCmd( om.MPxCommand ):
             return
 
         # Let's show the dialog
-        importDialog = ImportDialog(getMayaWindow())
+        importDialog = ImportDialog(maf.getMayaWindow())
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
         if currentFilePath != '':
@@ -512,15 +645,8 @@ class RamOpenCmd( om.MPxCommand ):
 
         if result == 1: # open
             # If the current file needs to be saved
-            if cmds.file(q=True, modified=True):
-                sceneName = os.path.basename(currentFilePath)
-                if sceneName == '':
-                    sceneName = 'untitled scene'
-                result = cmds.confirmDialog( message="Save changes to " + sceneName + "?", button=("Save", "Don't Save", "Cancel") )
-                if result == 'Cancel':
-                    return
-                if result == 'Save':
-                    cmds.file( save=True, options="v=1;" )
+            if not maf.checkSaveState():
+                return
             # Get the file, check if it's a version
             file = importDialog.getFile()
             if ram.RamFileManager.inVersionsFolder( file ):
@@ -592,23 +718,159 @@ class RamOpenCmd( om.MPxCommand ):
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                groupName = getCreateGroup(groupName)
+                groupName = maf.getCreateGroup(groupName)
                 # Import the file
                 newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
                 # Add a group for the imported asset
-                itemGroupName = getCreateGroup( itemShortName, groupName)
+                itemGroupName = maf.getCreateGroup( itemShortName, groupName)
                 for node in newNodes:
                     # When parenting the root, children won't exist anymore
                     if not cmds.objExists(node):
                         continue
                     # only the root transform nodes
-                    if cmds.nodeType(node) == 'transform' and not hasParent(node):
-                        cmds.parent(node, itemGroupName)
+                    if cmds.nodeType(node) == 'transform' and not maf.hasParent(node):
+                        maf.parentNodeTo(node, itemGroupName)
+
+class RamPreviewCmd( om.MPxCommand ):
+    name = "ramPreview"
+    syntax = om.MSyntax()
+
+    def __init__(self):
+        om.MPxCommand.__init__(self)
+
+    @staticmethod
+    def createCommand():
+        return RamPreviewCmd()
+
+    @staticmethod
+    def createSyntax():
+        return RamPreviewCmd.syntax
+
+    def doIt(self, args):
+        currentFilePath = cmds.file( q=True, sn=True )
+
+        # Get the save path 
+        saveFilePath = getSaveFilePath( currentFilePath )
+        if saveFilePath == '':
+            return
+
+        currentItem = ram.RamItem.fromPath( saveFilePath )
+        if currentItem is None:
+            cmds.warning( ram.Log.NotAnItem )
+            cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
+
+        saveFileDict = ram.RamFileManager.decomposeRamsesFilePath( saveFilePath )
+        currentStep = saveFileDict['step']
+        
+        # Item info
+        fileInfo = getFileInfo( saveFilePath )
+        if fileInfo is None:
+            return
+        version = currentItem.latestVersion( fileInfo['resource'], '', currentStep )
+        versionFilePath = currentItem.latestVersionFilePath( fileInfo['resource'], '', currentStep )
+
+        # Preview folder
+        previewFolder = getPreviewFolder(currentItem, currentStep)
+        if previewFolder == '':
+            return
+        ram.log( "I'm previewing in " + previewFolder )
+
+        # Keep current settings
+        currentAA = cmds.getAttr('hardwareRenderingGlobals.multiSampleEnable')
+        currentAO = cmds.getAttr('hardwareRenderingGlobals.ssaoEnable')
+
+        # show UI
+        dialog = PreviewDialog( maf.getMayaWindow() )
+        result = dialog.exec_()
+        if not result:
+            return
+
+        # Options
+        comment = dialog.comment()
+        cam = dialog.camera()
+        size = dialog.getSize()
+
+        # Remove all current HUD
+        currentHuds = cmds.headsUpDisplay(listHeadsUpDisplays=True)
+        if currentHuds:
+            for hud in currentHuds:
+                cmds.headsUpDisplay(hud, remove=True)
+        # Add ours
+        # Collect info
+        itemName = currentItem.name()
+        if itemName == '':
+            itemName = currentItem.shortName()
+        if currentItem.itemType() == ram.ItemType.SHOT:
+            itemName = 'Shot: ' + itemName 
+        elif currentItem.itemType() == ram.ItemType.ASSET:
+            itemName = 'Asset: ' + itemName
+        else:
+            itemName = 'Item: ' + itemName
+        camName = maf.getNodeBaseName(cam)
+        focalLength = str(round(cmds.getAttr(cam + '.focalLength'))) + ' mm'
+        if cmds.keyframe(cam, at='focalLength', query=True, keyframeCount=True):
+            focalLength = 'Animated'
+
+        cmds.headsUpDisplay('RamItem',section=2, block=0,ba='center', blockSize='large', label=itemName, labelFontSize='large')
+        cmds.headsUpDisplay('RamStep',section=2, block=1,ba='center',blockSize='small', label='Step: ' + currentStep, labelFontSize='small')
+        if comment != '':
+            cmds.headsUpDisplay('RamComment',section=5, block=0, blockSize='small', ba='left', label='Comment : ' + comment, labelFontSize='small')
+        cmds.headsUpDisplay('RamCurrentFrame',section=0, block=0, blockSize='large', label='Frame ',pre='currentFrame', labelFontSize='large',dfs='large')
+        cmds.headsUpDisplay('RamCam',section=7, block=0, blockSize='large', label='Camera: ' + camName, labelFontSize='large')
+        cmds.headsUpDisplay('RamFocalLength',section=9, block=0, blockSize='large', label='Focal Length: ' + focalLength,labelFontSize='large')
+
+        # Save path
+        pbFileInfo = fileInfo.copy()
+        # resource
+        if pbFileInfo['resource'] != '':
+            pbFileInfo['resource'] = pbFileInfo['resource'] + '-' + comment
+        else:
+            pbFileInfo['resource'] = comment
+
+        pbFilePath = ''
+
+        if result == 1:
+            # Extension
+            pbFileInfo['extension'] = 'mp4'
+            # path
+            pbFilePath = ram.RamFileManager.buildPath((
+                previewFolder,
+                ram.RamFileManager.composeRamsesFileName( pbFileInfo )
+            ))
+            createPlayblast(pbFilePath, size)
+        else:
+            pbFileInfo['extension'] = 'png'
+            # path
+            pbFilePath = ram.RamFileManager.buildPath((
+                previewFolder,
+                ram.RamFileManager.composeRamsesFileName( pbFileInfo )
+            ))
+            # Attempt to set window size
+            dialog.setWindowSize()
+            createThumbnail(pbFilePath)
+
+        # Hide window
+        dialog.hideRenderer()
+        
+        # Set back render settings
+        cmds.setAttr('hardwareRenderingGlobals.multiSampleEnable',currentAA)
+        cmds.setAttr('hardwareRenderingGlobals.ssaoEnable',currentAO)
+
+        # Remove all current HUD
+        currentHuds = cmds.headsUpDisplay(listHeadsUpDisplays=True)
+        if currentHuds:
+            for hud in currentHuds:
+                cmds.headsUpDisplay(hud, remove=True)
+
+        # Set Metadata
+        ram.RamMetaDataManager.setVersion(pbFilePath, version)
+        ram.RamMetaDataManager.setVersionFilePath(pbFilePath, versionFilePath)
+        ram.RamMetaDataManager.setComment(pbFilePath, comment)
 
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
 
-    settingsDialog = SettingsDialog( getMayaWindow() )
+    settingsDialog = SettingsDialog( maf.getMayaWindow() )
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -652,6 +914,7 @@ cmds_classes = (
     RamRetrieveVersionCmd,
     RamPublishTemplateCmd,
     RamOpenCmd,
+    RamPreviewCmd,
     RamSettingsCmd,
     RamOpenRamsesCmd,
 )
