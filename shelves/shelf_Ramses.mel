@@ -197,7 +197,7 @@ global proc shelf_Ramses () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "import maya.cmds as cmds\nok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:\n    cmds.loadPlugin('Ramses')\ncmds.ramPreview()" 
+        -annotation "Create Preview (Thumbnail or Playblast)" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
