@@ -85,6 +85,7 @@ def snapNodeTo( nodeFrom, nodeTo):
     return '|' + nodeFrom
 
 def lockTransform( transformNode, l=True ):
+
     if cmds.nodeType(transformNode) != 'transform':
         return
     for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
