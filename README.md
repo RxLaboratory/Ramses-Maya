@@ -18,4 +18,6 @@
 - save preview
   - set view options, and
   - thumbnail using `cmds.refresh(cv=True, fe = "jpg", fn = 'D:/SWAP/TEMP/----test.png')`
-  - playblast using playblast
+  - options to add:
+  - Add HUD
+  - Restore to previous settings
