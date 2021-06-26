@@ -20,6 +20,7 @@
 - Updater
     - Switches for rdr  /vp shaders and geoproxies (in the updater)
     - If there's a sel  ection, update option to filter according to the selection
+- status get/set with daemon
 
 - Explications arbo dossier ramses et droits d'accès
 - Lister les trucs à faire en début d'année avant l'arrivée des étudiants
