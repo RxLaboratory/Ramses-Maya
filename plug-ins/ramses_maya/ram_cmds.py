@@ -451,6 +451,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                     statusDialog.getComment(),
                     statusDialog.getCompletionRatio()
                 )
+                status.published = statusDialog.isPublished()
                 self.publish = statusDialog.isPublished()
 
         # Set the save name and save
@@ -474,6 +475,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         if status is not None:
+            status.version = newVersion
             # We need the RamStep, get it from the project
             project = currentItem.project()
             step = None
