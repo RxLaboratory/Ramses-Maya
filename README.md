@@ -13,13 +13,22 @@
 
 ## TODO
 
+- Ramses py module
+    - Implement a RamNameManager
+
+- publish
+    - should be a save as and not a copy -> don't break links in the file!
 - Importer
     - Fix file selection (open) if there's both an ma and mb file
     - autoselect same shot/asset in import dialog
     - Add Auto mode / filters on the import dialog (filter according to the input pipes of the current step)
 - Updater
     - Switches for rdr  /vp shaders and geoproxies (in the updater)
-    - If there's a sel  ection, update option to filter according to the selection
+    - If there's a selection, update option to filter according to the selection
+- Save Status
+    - checkbox for preview
+- Copy to version
+    - use thread
 - status get/set with daemon
 
 - Explications arbo dossier ramses et droits d'accès
