@@ -11,13 +11,27 @@
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
 
+## URGENT
+
+
+SERVER PIPES:
+
+ /!\ Warning: Database Interface says: <br />
+<b>Fatal error</b>:  Uncaught PDOException: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'pipeFileId' cannot be null in C:\xampp\htdocs\ramses\pipes.php:201
+Stack trace:
+#0 C:\xampp\htdocs\ramses\pipes.php(201): PDOStatement-&gt;execute(Array)
+#1 C:\xampp\htdocs\ramses\index.php(78): include('C:\\xampp\\htdocs...')
+#2 {main}
+  thrown in <b>C:\xampp\htdocs\ramses\pipes.php</b> on line <b>201</b><br />
+
+
+Pipe list incorrectly retrieved from daemon?
+
+
 ## TODO
 
 - Ramses py module
     - Implement a RamNameManager
-
-- publish
-    - should be a save as and not a copy -> don't break links in the file!
 - Importer
     - Fix file selection (open) if there's both an ma and mb file
     - autoselect same shot/asset in import dialog
@@ -25,20 +39,14 @@
 - Updater
     - Switches for rdr  /vp shaders and geoproxies (in the updater)
     - If there's a selection, update option to filter according to the selection
-- Save Status
-    - checkbox for preview
 - Copy to version
     - use thread
-- status get/set with daemon
 
 - Explications arbo dossier ramses et droits d'accès
 - Lister les trucs à faire en début d'année avant l'arrivée des étudiants
 
 ### Default addon
 
-- Other
-    - Generate preview (playblast or thumbnail and later render)
-    - Generate preview option on new status
 - Perf
     - Use threads for copying files
 
@@ -55,14 +63,14 @@ Il s'adaptera en fonction des paramètres et surtout de la config du pipe dans l
 
 Chaque pipe contient des types de fichiers auxquels on donne un ID. Ces IDs sont reconnus par l'addon :
 
-- "GeoPipe" (doit être un .abc, .ma ou .mb)
-- "vpShaPipe" (doit être un .mb -> .ma à implémenter)
-- "rdrShaPipe" (doit être un .mb -> .ma à implémenter)
-- "pShaPipe" (doit être un .ass)
-- "pGeoPipe" (doit être un .abc, .ma ou .mb)
-- "RigPipe" (doit être un .ma ou .mb)
-- "SetPipe" (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
-- "AnimPipe"
+- "GeoPipe": Geométrie (doit être un .abc, .ma ou .mb)
+- "vpShaPipe": viewport shaders (doit être un .mb -> .ma à implémenter)
+- "rdrShaPipe": render shaders (doit être un .mb -> .ma à implémenter)
+- "pShaPipe": proxy shaders (doit être un .ass)
+- "pGeoPipe": proxy geometrie (doit être un .abc, .ma ou .mb)
+- "RigPipe": rig (doit être un .ma ou .mb)
+- "SetPipe": set (doit être un .ma ou .mb) peut contenir des geos updatable. pour éviter l'update des changements de placement de certaiuns objts lors de l'update du layout, les sortir de la hiérarchie du layout
+- "AnimPipe": anim (doit être un abc)
 
 -> lors de la publication/importation, l'addon fait ce qu'il faut en fonction de cette info (.abc, .mb, etc)
 
