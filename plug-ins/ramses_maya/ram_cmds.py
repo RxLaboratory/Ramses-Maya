@@ -494,7 +494,10 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Publish
         if self.publish:
-            publishedFilePath = ram.RamFileManager.copyToPublish( saveFilePath )
+            publishedFilePath = ram.RamFileManager.getPublishPath( saveFilePath )
+            # Save
+            cmds.file( rename = publishedFilePath )
+            cmds.file( save=True, options="v=1;" )  
             ram.RamMetaDataManager.setVersion( publishedFilePath, newVersion )
             ram.RamMetaDataManager.setVersionFilePath( publishedFilePath, backupFilePath )
             # We need the RamStep, get it from the project
