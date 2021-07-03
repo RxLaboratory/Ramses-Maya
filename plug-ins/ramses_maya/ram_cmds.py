@@ -379,6 +379,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
     syntax = om.MSyntax()
     syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
     syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
+    syntax.addFlag('-pv', "-preview", om.MSyntax.kBoolean )
 
     # Defaults
     updateSatus = True
@@ -407,6 +408,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
             self.publish = parser.flagArgumentBool('-p', 0)
         except:
             self.publish = False
+
+        try:
+            self.preview = parser.flagArgumentBool('-pv', 0)
+        except:
+            self.preview = False
 
     def doIt(self, args):
         # The current maya file
@@ -453,6 +459,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 )
                 status.published = statusDialog.isPublished()
                 self.publish = statusDialog.isPublished()
+                self.preview = statusDialog.preview()
 
         # Set the save name and save
         cmds.file( rename = saveFilePath )
@@ -511,6 +518,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 ramses.setCurrentProject(project)
             if step is not None:
                 ramses.publish( currentItem, saveFilePath, step)
+
+        if self.preview:
+            cmds.ramPreview()
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetrieveVersion"
