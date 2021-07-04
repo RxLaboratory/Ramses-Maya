@@ -22,5 +22,9 @@ from .main import (
     checkSaveState,
     createRootCtrl,
     deleteNode,
+    createNameCommand,
+    restoreSaveSceneHotkey,
+    restoreOpenSceneHotkey,
+    restoreSaveSceneAsHotkey,
 )
 from .ui_progress import ProgressDialog

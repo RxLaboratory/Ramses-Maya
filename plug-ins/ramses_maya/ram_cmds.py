@@ -327,6 +327,11 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         return RamSaveAsCmd.syntax
 
     def doIt(self, args):
+
+        # We need the daemon
+        if not checkDaemon():
+            return
+
         # Get current info
         currentFilePath = cmds.file( q=True, sn=True )
 
@@ -379,6 +384,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
     syntax = om.MSyntax()
     syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
     syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
+    syntax.addFlag('-pv', "-preview", om.MSyntax.kBoolean )
 
     # Defaults
     updateSatus = True
@@ -407,6 +413,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
             self.publish = parser.flagArgumentBool('-p', 0)
         except:
             self.publish = False
+
+        try:
+            self.preview = parser.flagArgumentBool('-pv', 0)
+        except:
+            self.preview = False
 
     def doIt(self, args):
         # The current maya file
@@ -451,7 +462,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
                     statusDialog.getComment(),
                     statusDialog.getCompletionRatio()
                 )
+                status.published = statusDialog.isPublished()
                 self.publish = statusDialog.isPublished()
+                self.preview = statusDialog.preview()
 
         # Set the save name and save
         cmds.file( rename = saveFilePath )
@@ -474,6 +487,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         if status is not None:
+            status.version = newVersion
             # We need the RamStep, get it from the project
             project = currentItem.project()
             step = None
@@ -492,7 +506,13 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Publish
         if self.publish:
-            publishedFilePath = ram.RamFileManager.copyToPublish( saveFilePath )
+            publishedFilePath = ram.RamFileManager.getPublishPath( saveFilePath )
+            # Save
+            cmds.file( rename = publishedFilePath )
+            cmds.file( save=True, options="v=1;" )
+            ram.RamMetaDataManager.appendHistoryDate( publishedFilePath )
+            # Reopen initial file
+            cmds.file(saveFilePath,o=True,f=True)
             ram.RamMetaDataManager.setVersion( publishedFilePath, newVersion )
             ram.RamMetaDataManager.setVersionFilePath( publishedFilePath, backupFilePath )
             # We need the RamStep, get it from the project
@@ -503,6 +523,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 ramses.setCurrentProject(project)
             if step is not None:
                 ramses.publish( currentItem, saveFilePath, step)
+
+        if self.preview:
+            cmds.ramPreview()
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
     name = "ramRetrieveVersion"

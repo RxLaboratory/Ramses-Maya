@@ -1,7 +1,9 @@
 import sys
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
+    QLabel,
     QDialog,
+    QFormLayout,
     QHBoxLayout,
     QVBoxLayout,
     QComboBox,
@@ -83,20 +85,30 @@ class StatusDialog( QDialog ):
         self.completionBox.setSuffix( "%" )
         topLayout.addWidget( self.completionBox )
 
-        self.publishBox = QCheckBox("Publish the current scene.")
-        topLayout.addWidget( self.publishBox )
-
         mainLayout.addLayout( topLayout )
 
+        optionsLayout = QFormLayout()
+        optionsLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        optionsLayout.setSpacing(3)
+
+        self.publishBox = QCheckBox("Publish the current scene.")
+        optionsLayout.addRow( "Publication:", self.publishBox )
+
+        self.previewBox = QCheckBox("Create preview files (thumbnail or playblast).")
+        optionsLayout.addRow( "Preview:", self.previewBox )
+
+        self.commentLabel = QLabel("Comment:")
         self.commentEdit = QTextEdit()
-        mainLayout.addWidget( self.commentEdit )
+        optionsLayout.addRow( self.commentLabel, self.commentEdit )
+
+        mainLayout.addLayout( optionsLayout )
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
         self._saveButton = QPushButton("Update Status and Save")
         buttonsLayout.addWidget( self._saveButton )
-        self._skipButton = QPushButton("Skip and Save")
+        self._skipButton = QPushButton("Skip and just Save")
         buttonsLayout.addWidget( self._skipButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
@@ -142,9 +154,13 @@ class StatusDialog( QDialog ):
         self.completionSlider.setVisible(online)
         self.completionBox.setVisible(online)
         self.commentEdit.setVisible(online)
+        self.commentLabel.setVisible(online)
 
     def setPublish(self, pub=True):
         self.publishBox.setChecked(pub)
+
+    def preview(self):
+        return self.previewBox.isChecked()
 
 if __name__ == '__main__':
     statusDialog = StatusDialog()

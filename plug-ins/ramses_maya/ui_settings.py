@@ -26,6 +26,8 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 )
 
 import ramses as ram
+import dumaf as maf
+import maya.cmds as cmds
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 
@@ -68,12 +70,20 @@ class SettingsDialog( QMainWindow ):
         vL.addLayout(versionningLayout)
         vL.addStretch()
 
-        incrementLabel = QLabel("Auto-increment version every:")
         self._autoIncrementBox = QSpinBox()
         self._autoIncrementBox.setMinimum(1)
         self._autoIncrementBox.setMaximum(1440) #24h
         self._autoIncrementBox.setSuffix(" minutes.")
-        versionningLayout.addRow( incrementLabel, self._autoIncrementBox )
+        versionningLayout.addRow( "Auto-increment version every:", self._autoIncrementBox )
+
+        self._saveHotkeyBox = QCheckBox("Replace with the \"ramSave\" command.")
+        versionningLayout.addRow( "\"Save\" hotkey (Ctrl+S):", self._saveHotkeyBox )
+
+        self._saveAsHotkeyBox = QCheckBox("Replace with the \"ramSaveAs\" command.")
+        versionningLayout.addRow( "\"Save As\" hotkey (Ctrl+Shift+S):", self._saveAsHotkeyBox )
+
+        self._openHotkeyBox = QCheckBox("Replace with the \"ramOpen\" command.")
+        versionningLayout.addRow( "\"Open\" hotkey (Ctrl+O):", self._openHotkeyBox )
 
         foldersWidget = QWidget()
         fL = QVBoxLayout()
@@ -193,7 +203,53 @@ class SettingsDialog( QMainWindow ):
         settings.logLevel = self._logLevelBox.currentData()
         settings.autoIncrementTimeout = self._autoIncrementBox.value()
         settings.ramsesFolderPath = self._ramsesPathEdit.text()
+        settings.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
+        settings.userSettings['useRamOpenceneHotkey'] = self._openHotkeyBox.isChecked()
+        settings.userSettings['useRamSaveAsHotkey'] = self._saveAsHotkeyBox.isChecked()
         settings.save()
+
+        # Update the hotkeys
+        if self._saveHotkeyBox.isChecked():
+            pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSave()
+"""
+            cm = maf.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
+            cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
+            cmds.savePrefs(hotkeys=True)
+        else:
+            maf.restoreSaveSceneHotkey()
+
+        if self._openHotkeyBox.isChecked():
+            pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramOpen()
+"""
+            cm = maf.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
+            cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
+            cmds.savePrefs(hotkeys=True)
+        else:
+            maf.restoreOpenSceneHotkey()
+
+        if self._saveAsHotkeyBox.isChecked():
+            pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSaveAs()
+"""
+            cm = maf.createNameCommand('RamSaveSceneAsma', "Ramses Save Scene As", pyCommand)
+            cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
+            cmds.savePrefs(hotkeys=True)
+        else:
+            maf.restoreSaveSceneAsHotkey()
+
         self.close()
 
     @Slot()
@@ -203,6 +259,18 @@ class SettingsDialog( QMainWindow ):
         self._onlineBox.setChecked( settings.online )
         self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
         self._ramsesPathEdit.setText( settings.ramsesFolderPath )
+        save = True
+        saveas = True
+        open = True
+        if 'useRamSaveSceneHotkey' in settings.userSettings:
+            save = settings.userSettings['useRamSaveSceneHotkey']
+        if 'useRamSaveAsHotkey' in settings.userSettings:
+            saveas = settings.userSettings['useRamSaveAsHotkey']
+        if 'useRamOpenceneHotkey' in settings.userSettings:
+            open = settings.userSettings['useRamOpenceneHotkey']
+        self._saveHotkeyBox.setChecked(save)
+        self._saveAsHotkeyBox.setChecked(saveas)
+        self._openHotkeyBox.setChecked(open)
         i = 0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.logLevel:
