@@ -26,6 +26,18 @@ def createNameCommand( name, annotation, pyCommand):
 
     return nc
 
+def restoreOpenSceneHotkey():
+    # We need to re-create a nameCommand, because Maya...
+    command = cmds.nameCommand( annotation="OpenSceneNameCommand", command='OpenScene' )
+    cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=command)
+    cmds.savePrefs(hotkeys=True)
+
+def restoreSaveSceneAsHotkey():
+    # We need to re-create a nameCommand, because Maya...
+    command = cmds.nameCommand( annotation="SaveSceneAsNameCommand", command='SaveSceneAs' )
+    cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=command)
+    cmds.savePrefs(hotkeys=True)
+
 def restoreSaveSceneHotkey():
     # We need to re-create a nameCommand, because Maya...
     command = cmds.nameCommand( annotation="SaveSceneNameCommand", command='SaveScene' )
