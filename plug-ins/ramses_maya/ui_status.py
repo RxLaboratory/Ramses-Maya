@@ -1,6 +1,7 @@
 import sys
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
+    QLabel,
     QDialog,
     QFormLayout,
     QHBoxLayout,
@@ -96,8 +97,9 @@ class StatusDialog( QDialog ):
         self.previewBox = QCheckBox("Create preview files (thumbnail or playblast).")
         optionsLayout.addRow( "Preview:", self.previewBox )
 
+        self.commentLabel = QLabel("Comment:")
         self.commentEdit = QTextEdit()
-        optionsLayout.addRow( "Comment:", self.commentEdit )
+        optionsLayout.addRow( self.commentLabel, self.commentEdit )
 
         mainLayout.addLayout( optionsLayout )
 
@@ -152,6 +154,7 @@ class StatusDialog( QDialog ):
         self.completionSlider.setVisible(online)
         self.completionBox.setVisible(online)
         self.commentEdit.setVisible(online)
+        self.commentLabel.setVisible(online)
 
     def setPublish(self, pub=True):
         self.publishBox.setChecked(pub)
