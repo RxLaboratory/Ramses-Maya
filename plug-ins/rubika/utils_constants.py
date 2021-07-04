@@ -83,11 +83,11 @@ LAY_STEP._outputPipes = [
 ]
 
 SET_STEP._outputPipes = [
-    ram.RamPipe( '', 'LAY', [ SET_PIPE_FILE ] ),
+    ram.RamPipe( '', 'SET', [ SET_PIPE_FILE ] ),
 ]
 
 LIGHT_STEP._outputPipes = [
-    ram.RamPipe( '', 'LAY', [ STANDARDB_PIPE_FILE ] ),
+    ram.RamPipe( '', 'LIGHT', [ STANDARDB_PIPE_FILE ] ),
 ]
 
 ANIM_STEP._outputPipes = [

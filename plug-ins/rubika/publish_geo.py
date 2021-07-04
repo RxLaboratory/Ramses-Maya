@@ -225,7 +225,8 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), shaderMode )
             # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setValue( abcFilePath, 'shaderFilePath', shaderFilePath )
+            if extension == 'abc':
+                ram.RamMetaDataManager.setValue( abcFilePath, 'shaderFilePath', shaderFilePath )
             ram.RamMetaDataManager.setPipeType( shaderFilePath, shaderMode )
             ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
             ram.RamMetaDataManager.setVersion( shaderFilePath, version )
@@ -239,18 +240,25 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     allTransformNodes = cmds.ls(transforms=True, long=True)
     allPublishedNodes = []
     for publishedNode in publishedNodes:
-        # Children
-        published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
-        if published is not None:
-            allPublishedNodes = allPublishedNodes + published
-        # Parents
-        published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
-        if published is not None:
-            allPublishedNodes = allPublishedNodes + published
-        # And Self
-        published = cmds.ls(publishedNode, transforms=True, long=True)
-        if published is not None:
-            allPublishedNodes = allPublishedNodes + published
+        try:
+            # Children
+            published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
+            if published is not None:
+                allPublishedNodes = allPublishedNodes + published
+        except: pass
+        try:
+            # Parents
+            published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
+            if published is not None:
+                allPublishedNodes = allPublishedNodes + published
+        except: pass
+        try:
+            # And Self
+            published = cmds.ls(publishedNode, transforms=True, long=True)
+            if published is not None:
+                allPublishedNodes = allPublishedNodes + published
+        except: pass
+
     for transformNode in reversed(allTransformNodes):
         if transformNode in allPublishedNodes:
             continue
