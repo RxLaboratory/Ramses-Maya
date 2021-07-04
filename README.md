@@ -23,10 +23,6 @@ Stack trace:
 #2 {main}
   thrown in <b>C:\xampp\htdocs\ramses\pipes.php</b> on line <b>201</b><br />
 
-
-Pipe list incorrectly retrieved from daemon?
-
-
 ## TODO
 
 - Ramses py module
