@@ -26,6 +26,8 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 )
 
 import ramses as ram
+import dumaf as maf
+import maya.cmds as cmds
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 
@@ -68,12 +70,14 @@ class SettingsDialog( QMainWindow ):
         vL.addLayout(versionningLayout)
         vL.addStretch()
 
-        incrementLabel = QLabel("Auto-increment version every:")
         self._autoIncrementBox = QSpinBox()
         self._autoIncrementBox.setMinimum(1)
         self._autoIncrementBox.setMaximum(1440) #24h
         self._autoIncrementBox.setSuffix(" minutes.")
-        versionningLayout.addRow( incrementLabel, self._autoIncrementBox )
+        versionningLayout.addRow( "Auto-increment version every:", self._autoIncrementBox )
+
+        self._saveHotkeyBox = QCheckBox("Replace with the \"RamSaveScene\" command.")
+        versionningLayout.addRow( "\"Save\" hotkey (Ctrl+S):", self._saveHotkeyBox )
 
         foldersWidget = QWidget()
         fL = QVBoxLayout()
@@ -193,7 +197,23 @@ class SettingsDialog( QMainWindow ):
         settings.logLevel = self._logLevelBox.currentData()
         settings.autoIncrementTimeout = self._autoIncrementBox.value()
         settings.ramsesFolderPath = self._ramsesPathEdit.text()
+        settings.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
         settings.save()
+
+        # Update the hotkey
+        if self._saveHotkeyBox.isChecked():
+            pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSave()
+"""
+            cm = maf.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
+            cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
+            cmds.savePrefs(hotkeys=True)
+        else:
+            maf.restoreSaveSceneHotkey()
+
         self.close()
 
     @Slot()
@@ -203,6 +223,10 @@ class SettingsDialog( QMainWindow ):
         self._onlineBox.setChecked( settings.online )
         self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
         self._ramsesPathEdit.setText( settings.ramsesFolderPath )
+        hotkey = True
+        if 'useRamSaveSceneHotkey' in settings.userSettings:
+            hotkey = settings.userSettings['useRamSaveSceneHotkey']
+        self._saveHotkeyBox.setChecked(hotkey)
         i = 0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.logLevel:

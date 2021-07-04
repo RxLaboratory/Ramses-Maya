@@ -327,6 +327,11 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         return RamSaveAsCmd.syntax
 
     def doIt(self, args):
+
+        # We need the daemon
+        if not checkDaemon():
+            return
+
         # Get current info
         currentFilePath = cmds.file( q=True, sn=True )
 

@@ -1,4 +1,5 @@
 import ramses_maya as ram
+import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
 vendor = "RxLaboratory"
@@ -21,10 +22,30 @@ def initializePlugin( obj ):
             print(e)
             ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
 
+    # Register hotkeys
+    settings = ram.RamSettings.instance()
+    ok = True
+    if 'useRamSaveSceneHotkey' in settings.userSettings:
+        ok = settings.userSettings['useRamSaveSceneHotkey']
+        
+    if ok:
+        pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSave()
+"""
+        cm = ram.maf.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
+        cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
+        cmds.savePrefs(hotkeys=True)
+
     ram.log( "I'm ready!" )
 
 def uninitializePlugin( obj ):
     plugin = om.MFnPlugin(obj, vendor, version)
+
+    # Rstore hotkeys
+    ram.maf.restoreSaveSceneHotkey()
 
     for c in reversed( ram.cmds_classes ):
         try:
