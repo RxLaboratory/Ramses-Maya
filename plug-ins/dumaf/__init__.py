@@ -24,5 +24,7 @@ from .main import (
     deleteNode,
     createNameCommand,
     restoreSaveSceneHotkey,
+    restoreOpenSceneHotkey,
+    restoreSaveSceneAsHotkey,
 )
 from .ui_progress import ProgressDialog

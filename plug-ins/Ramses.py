@@ -24,19 +24,50 @@ def initializePlugin( obj ):
 
     # Register hotkeys
     settings = ram.RamSettings.instance()
-    ok = True
+    save = True
     if 'useRamSaveSceneHotkey' in settings.userSettings:
-        ok = settings.userSettings['useRamSaveSceneHotkey']
+        save = settings.userSettings['useRamSaveSceneHotkey']
+    open = True
+    if 'useRamOpenceneHotkey' in settings.userSettings:
+        open = settings.userSettings['useRamOpenceneHotkey']
+    saveas = True
+    if 'useRamSaveAsHotkey' in settings.userSettings:
+        saveas = settings.userSettings['useRamSaveAsHotkey']
         
-    if ok:
+    if save:
         pyCommand="""
 import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramSave()
 """
         cm = ram.maf.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
         cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
+        cmds.savePrefs(hotkeys=True)
+
+    if open:
+        pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramOpen()
+"""
+        cm = ram.maf.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
+        cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
+        cmds.savePrefs(hotkeys=True)
+
+    if saveas:
+        pyCommand="""
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSaveAs()
+"""
+        cm = ram.maf.createNameCommand('RamSaveSceneAs', "Ramses Save Scene As", pyCommand)
+        cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
         cmds.savePrefs(hotkeys=True)
 
     ram.log( "I'm ready!" )
@@ -46,6 +77,8 @@ def uninitializePlugin( obj ):
 
     # Rstore hotkeys
     ram.maf.restoreSaveSceneHotkey()
+    ram.maf.restoreOpenSceneHotkey()
+    ram.maf.restoreSaveSceneAsHotkey()
 
     for c in reversed( ram.cmds_classes ):
         try:
