@@ -406,19 +406,19 @@ class RamSaveVersionCmd( om.MPxCommand ):
     def parseArgs(self, args):
         parser = om.MArgParser( self.syntax(), args)
 
-        try:
+        if parser.isFlagSet( '-us' ):
             self.updateSatus = parser.flagArgumentBool('-us', 0)
-        except:
+        else:
             self.updateSatus = True
 
-        try:
+        if parser.isFlagSet( '-p' ):
             self.publish = parser.flagArgumentBool('-p', 0)
-        except:
+        else:
             self.publish = False
 
-        try:
+        if parser.isFlagSet( '-pv' ):
             self.preview = parser.flagArgumentBool('-pv', 0)
-        except:
+        else:
             self.preview = False
 
     def doIt(self, args):
