@@ -205,10 +205,7 @@ def createThumbnail(filePath):
 
 class RamSaveCmd( om.MPxCommand ):
     name = "ramSave"
-    syntax = om.MSyntax()
-    syntax.addFlag('-c', "-comment", om.MSyntax.kString )
-    syntax.addFlag('-sc', "-setComment", om.MSyntax.kBoolean )
-
+    
     def __init__(self):
         om.MPxCommand.__init__(self)
         self.newComment = ''
@@ -220,19 +217,22 @@ class RamSaveCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        return RamSaveCmd.syntax
+        syntax = om.MSyntax()
+        syntax.addFlag('-c', "-comment", om.MSyntax.kString )
+        syntax.addFlag('-sc', "-setComment", om.MSyntax.kBoolean )
+        return syntax
 
     def parseArgs(self, args, saveFilePath):
-        parser = om.MArgParser( RamSaveCmd.syntax, args)
+        parser = om.MArgParser( self.syntax(), args)
         useDialog = False
-        try:
+        if parser.isFlagSet( '-sc' ):
             self.setComment = parser.flagArgumentBool('-sc', 0)
-        except:
+        else:
             self.setComment = False
 
-        try:
+        if parser.isFlagSet( '-c' ):
             self.newComment = parser.flagArgumentString('-c', 0)
-        except:
+        else:
             useDialog = True
 
         # Get comment
@@ -315,7 +315,6 @@ class RamSaveCmd( om.MPxCommand ):
 
 class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement browse button
     name = "ramSaveAs"
-    syntax = om.MSyntax()
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -326,7 +325,8 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
 
     @staticmethod
     def createSyntax():
-        return RamSaveAsCmd.syntax
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
 
@@ -383,10 +383,6 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
 
 class RamSaveVersionCmd( om.MPxCommand ):
     name = "ramSaveVersion"
-    syntax = om.MSyntax()
-    syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
-    syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
-    syntax.addFlag('-pv', "-preview", om.MSyntax.kBoolean )
 
     # Defaults
     updateSatus = True
@@ -401,10 +397,14 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        return RamSaveVersionCmd.syntax
+        syntax = om.MSyntax()
+        syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
+        syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
+        syntax.addFlag('-pv', "-preview", om.MSyntax.kBoolean )
+        return syntax
 
     def parseArgs(self, args):
-        parser = om.MArgParser( RamSaveVersionCmd.syntax, args)
+        parser = om.MArgParser( self.syntax(), args)
 
         try:
             self.updateSatus = parser.flagArgumentBool('-us', 0)
@@ -541,8 +541,8 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
         # The current maya file
@@ -575,7 +575,6 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
 
 class RamPublishTemplateCmd( om.MPxCommand ):
     name = "ramPublishTemplate"
-    syntax = om.MSyntax()
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -586,7 +585,8 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        return RamPublishTemplateCmd.syntax
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
         ram.log("Publishing template...")
@@ -633,7 +633,6 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
 class RamOpenCmd( om.MPxCommand ):
     name = "ramOpen"
-    syntax = om.MSyntax()
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -644,7 +643,8 @@ class RamOpenCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        return RamOpenCmd.syntax
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
         # Check if the Daemon is available if Ramses is set to be used "online"
@@ -758,7 +758,6 @@ class RamOpenCmd( om.MPxCommand ):
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
-    syntax = om.MSyntax()
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -769,7 +768,8 @@ class RamPreviewCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        return RamPreviewCmd.syntax
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
         currentFilePath = cmds.file( q=True, sn=True )
@@ -906,8 +906,8 @@ class RamSettingsCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
         ram.log("Opening settings...")  
@@ -925,8 +925,8 @@ class RamOpenRamsesCmd( om.MPxCommand ):
 
     @staticmethod
     def createSyntax():
-        syntaxCreator = om.MSyntax()
-        return syntaxCreator
+        syntax = om.MSyntax()
+        return syntax
 
     def doIt(self, args):
         ram.log("Opening the Ramses client...")
