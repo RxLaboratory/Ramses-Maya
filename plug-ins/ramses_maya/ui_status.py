@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
@@ -13,7 +15,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QPushButton,
     QCheckBox,
 )
-from PySide2.QtGui import (
+from PySide2.QtGui import (  # pylint: disable=no-name-in-module
     QColor,
     QPalette,
     )

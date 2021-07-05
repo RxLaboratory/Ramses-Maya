@@ -1,4 +1,6 @@
-import maya.cmds as cmds
+# -*- coding: utf-8 -*-
+
+import maya.cmds as cmds # pylint: disable=no-name-in-module disable=import-error
 
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
     QDialog,

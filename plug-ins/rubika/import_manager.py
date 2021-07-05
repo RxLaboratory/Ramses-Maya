@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 
 import maya.cmds as cmds # pylint: disable=import-error

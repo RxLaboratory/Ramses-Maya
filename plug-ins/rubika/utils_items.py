@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 from .utils_constants import  *

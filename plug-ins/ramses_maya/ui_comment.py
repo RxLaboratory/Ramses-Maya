@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # PySide
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QDialog,

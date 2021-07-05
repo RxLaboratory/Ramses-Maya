@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import ramses as ram
 
 # This file contains the default configuration of the Supinfocom-Rubika pipeline

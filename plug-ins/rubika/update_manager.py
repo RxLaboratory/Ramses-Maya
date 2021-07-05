@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .ui_update import UpdateDialog
 from .utils_attributes import * # pylint: disable=import-error
 import dumaf as maf

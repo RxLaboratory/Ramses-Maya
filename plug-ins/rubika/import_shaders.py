@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .utils_shaders import referenceShaders
 
 def importShaders( item, filePath, mode, nodes=[] ):
