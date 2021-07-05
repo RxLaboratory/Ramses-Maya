@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .publish_geo import *
 from .publish_shaders import *
 from .publish_standard import *

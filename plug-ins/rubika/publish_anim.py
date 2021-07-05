@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .ui_publish_anim import PublishAnimDialog
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error

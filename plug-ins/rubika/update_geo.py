@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .utils_attributes import * # pylint: disable=import-error
 from .import_geo import importGeo
 from .utils_shaders import referenceShaders

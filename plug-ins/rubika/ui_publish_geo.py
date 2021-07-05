@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
     QDialog,
     QHBoxLayout,
