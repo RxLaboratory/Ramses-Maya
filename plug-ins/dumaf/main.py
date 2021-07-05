@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys, tempfile, re, os
 import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
