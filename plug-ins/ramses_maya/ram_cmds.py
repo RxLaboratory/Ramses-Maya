@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os, re, platform, subprocess, tempfile, shutil
 from datetime import datetime, timedelta
 
