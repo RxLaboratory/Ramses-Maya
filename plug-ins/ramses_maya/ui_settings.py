@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys, platform
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
@@ -27,7 +29,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 
 import ramses as ram
 import dumaf as maf
-import maya.cmds as cmds
+import maya.cmds as cmds # pylint: disable=import-error
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 

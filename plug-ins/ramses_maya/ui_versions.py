@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os, sys
 
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
