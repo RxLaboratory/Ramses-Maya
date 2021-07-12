@@ -507,7 +507,7 @@ class ImportDialog( QDialog ):
                 return ""
             else:
                 resourceRow = self.resourceList.currentRow()
-                if resourceRow > 0:
+                if resourceRow >= 0:
                     return self._resourceFiles[ resourceRow ]
 
         return self._currentFiles[versionIndex-1]
