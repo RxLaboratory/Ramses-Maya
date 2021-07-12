@@ -30,7 +30,7 @@ class PublishTemplateDialog( QDialog ):
         self.__connectEvents()
 
     def __setupUi(self):
-        self.setWindowTitle( "Publish Template" )
+        self.setWindowTitle( "Save as Template" )
 
         self.setMinimumWidth(400)
 
@@ -84,7 +84,7 @@ class PublishTemplateDialog( QDialog ):
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._publishButton = QPushButton("Publish Template")
+        self._publishButton = QPushButton("Save Template")
         buttonsLayout.addWidget( self._publishButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
