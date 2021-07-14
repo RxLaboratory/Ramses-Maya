@@ -14,14 +14,3 @@ The Rx Asset Management System (Ramses) Maya Plugin
     e.g. `C:\Users\User\Documents\Maya\modules`.  
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
-
-### TODO
-
-- Ramses py module
-    - Implement a RamNameManager
-
-- Perf
-    - Use threads for copying files
-
-- The default addon checks the pipes to import/export ma or mb, as ref or standard (use the pipeFile shortname)
-- Implement an update button for the default addon, using a group + attributes
