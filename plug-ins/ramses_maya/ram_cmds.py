@@ -272,17 +272,18 @@ class RamSaveCmd( om.MPxCommand ):
         increment = False
         incrementReason = ''
         # It it's a restored version, we need to increment
-        if ram.RamFileManager.isRestoredFilePath( currentFilePath ):
+        restoredVersion = ram.RamFileManager.isRestoredFilePath( currentFilePath )
+        if restoredVersion:
             increment = True
-            incrementReason = "an older restored version."
+            incrementReason = "we're restoring the older version " + str(restoredVersion) + "."
             cmds.warning( "Incremented and Saved as " + saveFilePath )
 
         # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment
         # to be sure to not lose the previous working file.
         
-        if ram.RamFileManager.inReservedFolder( currentFilePath ):
+        if ram.RamFileManager.inReservedFolder( currentFilePath ) and not increment:
             increment = True
-            incrementReason = "misplaced."
+            incrementReason = "the file was misplaced."
             cmds.warning( "Incremented and Saved as " + saveFilePath )
 
         # If the timeout has expired, we're also incrementing
@@ -290,8 +291,8 @@ class RamSaveCmd( om.MPxCommand ):
         modified = prevVersion[2]
         now = datetime.today()
         timeout = timedelta(seconds = settings.autoIncrementTimeout * 60 )
-        if  timeout < now - modified:
-            incrementReason = "too old."
+        if  timeout < now - modified and not increment:
+            incrementReason = "the file was too old."
             increment = True
 
         # Set the save name and save
@@ -310,7 +311,7 @@ class RamSaveCmd( om.MPxCommand ):
             ram.RamMetaDataManager.setComment( backupFilePath, self.newComment )
             ram.log( "I've added this comment for you: " + self.newComment )
         elif increment:
-            ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because the previous version was ' + incrementReason )
+            ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because ' + incrementReason )
             ram.log("I've incremented the version for you because it was " + incrementReason)
 
 class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement browse button
