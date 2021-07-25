@@ -41,13 +41,15 @@ def updateGeo( rootCtrl ):
         # Move to the locator
         newRootCtrl = maf.snapNodeTo( newRootCtrl, rootLocator )
 
-        # Re-set deformers
+        # Re-set deformers and rendering sets
         newNodes = cmds.listRelatives( newRootCtrl, ad = True, f = True)
         if newNodes is not None:
             for newNode in newNodes:
                 newName = maf.getNodeBaseName(newNode, True)
                 if newName in nodeSets:
-                    cmds.sets( newNode, include=nodeSets[newName])
+                    newSets = nodeSets[newName]
+                    for newSet in newSets:
+                        cmds.sets( newNode, include=newSet)
                 
         # Re-parent the root to the previous parent
         rootParent = cmds.listRelatives( rootCtrl, parent=True, f=True, type='transform')
