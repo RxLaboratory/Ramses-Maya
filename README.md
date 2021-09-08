@@ -17,7 +17,4 @@ The Rx Asset Management System (Ramses) Maya Plugin
 
 ## TODO
 
-- Fix restore naming: remove version and state
-- Fix STEPS folders (when saving template)
-- publish: problem with version folders
 - Rebuild import: update to use new versionning in published files
