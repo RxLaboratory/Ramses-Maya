@@ -599,7 +599,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
-        ram.log("Publishing template...")
+        ram.log("Saving as template...")
 
         # Check if the Daemon is available if Ramses is set to be used "online"
         if not checkDaemon():

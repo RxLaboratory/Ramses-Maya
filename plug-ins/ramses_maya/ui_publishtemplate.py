@@ -226,7 +226,6 @@ class PublishTemplateDialog( QDialog ):
         self.stepBox.setCurrentIndex( self.stepBox.count() - 1)
         
     def setOffline(self, offline=True):
-        online = not offline
         self.locationEdit.setEnabled(offline)
         self.browseButton.setVisible(offline)
 
