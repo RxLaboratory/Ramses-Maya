@@ -163,20 +163,17 @@ class PublishTemplateDialog( QDialog ):
 
     @Slot()
     def __buildFileName(self):
-        pShortName = self.__getCurrentShortName( self.projectBox )
-        sShortName = self.__getCurrentShortName( self.stepBox )
-        resource = self.nameEdit.text()
-        if resource == "":
-            resource = "Template"
-        fileName = ram.RamFileManager.buildRamsesFileName(
-            pShortName,
-            sShortName,
-            self.extensionBox.currentData(),
-            ram.ItemType.GENERAL,
-            '',
-            resource
-        )
-        self.fileNameLabel.setText( fileName )
+        nm = ram.RamNameManager()
+
+        nm.project = self.__getCurrentShortName( self.projectBox )
+        nm.step = self.__getCurrentShortName( self.stepBox )
+        nm.extension = self.extensionBox.currentData()
+        nm.ramType = ram.ItemType.GENERAL
+        nm.resource = self.nameEdit.text()
+        if nm.resource == "":
+            nm.resource = "Template"
+        
+        self.fileNameLabel.setText( nm.fileName() )
 
     @Slot()
     def browse(self):
@@ -189,9 +186,10 @@ class PublishTemplateDialog( QDialog ):
         self.locationEdit.setText("")
         # Try to extract info from the path
         if path != "":
-            pathInfo = ram.RamFileManager.decomposeRamsesFilePath( path )
-            project = pathInfo['project']
-            step = pathInfo['step']
+            nm = ram.RamNameManager()
+            nm.setFilePath( path )
+            project = nm.project
+            step = nm.step
             if step == "" or project == "":
                 cmds.confirmDialog(
                 title="Invalid Ramses project or step",

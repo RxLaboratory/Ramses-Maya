@@ -286,10 +286,10 @@ class ImportDialog( QDialog ):
                 # List resources
                 for resource in self._currentItem.stepFilePaths( self._currentStep ):
                     fileName = os.path.basename(resource)
-                    fileInfo = ram.RamFileManager.decomposeRamsesFileName(fileName)
-                    if fileInfo is None:
+                    nm = ram.RamNameManager()
+                    if not nm.setFileName( fileName ):
                         continue
-                    res = fileInfo['resource']
+                    res = nm.resource
                     self._resourceFiles.append( resource )
                     if res != "":
                         self.resourceList.addItem(res)
@@ -302,14 +302,14 @@ class ImportDialog( QDialog ):
                 if folder == '':
                     return
                 for f in os.listdir( folder ):
-                    fileInfo = ram.RamFileManager.decomposeRamsesFileName(f)
-                    if fileInfo is None:
+                    nm = ram.RamNameManager()
+                    if not nm.setFileName( f ):
                         continue
-                    if fileInfo['project'] != self._currentStep.projectShortName():
+                    if nm.project != self._currentStep.projectShortName():
                         continue
-                    if fileInfo['step'] != self._currentStep.shortName():
+                    if nm.step != self._currentStep.shortName():
                         continue 
-                    res = fileInfo['object'] + ' | ' + fileInfo['resource']
+                    res = nm.shortName + ' | ' + nm.resource
                     self._resourceFiles.append( ram.RamFileManager.buildPath((
                         folder,
                         f
@@ -327,14 +327,14 @@ class ImportDialog( QDialog ):
                 files = self._currentItem.publishFilePaths( )
             for f in files:
                 fileName = os.path.basename( f )
-                fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
-                if fileInfo is None:
+                nm = ram.RamNameManager()
+                if not nm.setFileName( fileName ):
                     continue
                 self._currentFiles.append( f )
-                n = fileInfo['resource']
+                n = nm.resource
                 if n == '':
                     n = "Main"
-                n = n + ' (' + fileInfo['extension'] + ')'
+                n = n + ' (' + nm.extension + ')'
                 i = QListWidgetItem( self.versionList )
                 i.setText(n)
                 i.setToolTip(f)
@@ -378,11 +378,11 @@ class ImportDialog( QDialog ):
         # Add other versions
         for f in self._currentFiles:
             fileName = os.path.basename( f )
-            fileInfo = ram.RamFileManager.decomposeRamsesFileName( fileName )
-            if fileInfo is None:
+            nm = ram.RamNameManager()
+            if not nm.setFileName( fileName ):
                 continue
             comment = ram.RamMetaDataManager.getComment( f )
-            itemText = fileInfo['state'] + ' | ' + str(fileInfo['version'])
+            itemText = nm.state + ' | ' + str( nm.version )
             if comment != "":
                 itemText = itemText + ' | ' + comment
             self.versionList.addItem(itemText)

@@ -205,20 +205,19 @@ class SaveAsDialog( QDialog ):
 
             assetsPath = self.__currentProject.assetsPath( assetGroup )
 
-            assetFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                '',
-                '',
-                ram.ItemType.ASSET,
-                assetShortName
-            )
-            assetStepFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                '',
-                ram.ItemType.ASSET,
-                assetShortName
-            )
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.ramType = ram.ItemType.ASSET
+            nm.shortName = assetShortName
+            assetFolderName = nm.fileName()
+
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.step = self.__currentStep.shortName()
+            nm.ramType = ram.ItemType.ASSET
+            nm.shortName = assetShortName
+            assetStepFolderName = nm.fileName()
+
             # The folder
             assetFolder = ram.RamFileManager.buildPath((
                 assetsPath,
@@ -229,14 +228,14 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(assetFolder)
 
             # The filename
-            assetFileName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                self.extensionBox.currentData(),
-                ram.ItemType.ASSET,
-                assetShortName,
-                self.resourceEdit.text()
-            )
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.step = self.__currentStep.shortName()
+            nm.extension = self.extensionBox.currentData()
+            nm.ramType = ram.ItemType.ASSET
+            nm.shortName = assetShortName
+            nm.resource = self.resourceEdit.text()
+            assetFileName = nm.fileName()
 
             self.fileNameLabel.setText(assetFileName)
                 
@@ -246,22 +245,20 @@ class SaveAsDialog( QDialog ):
                 self.locationEdit.setPlaceholderText("Sorry, invalid shot...")
                 return
 
-            shotsPath = self.__currentProject.shotsPath()
-            shotFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                '',
-                '',
-                ram.ItemType.SHOT,
-                shotShortName
-            )
+            shotsPath = self.___currentProject.shotsPath()
 
-            shotStepFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                '',
-                ram.ItemType.SHOT,
-                shotShortName
-            )
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.ramType = ram.ItemType.SHOT
+            nm.shortName = shotShortName
+            shotFolderName = nm.fileName()
+
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.step = self.__currentStep.shortName()
+            nm.ramType = ram.ItemType.SHOT
+            nm.shortName = shotShortName
+            shotStepFolderName = nm.fileName()
 
             shotFolder = ram.RamFileManager.buildPath((
                 shotsPath,
@@ -272,14 +269,14 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(shotFolder)
 
             # The filename
-            shotFileName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                self.extensionBox.currentData(),
-                ram.ItemType.SHOT,
-                shotShortName,
-                self.resourceEdit.text()
-            )
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.step = self.__currentStep.shortName()
+            nm.extension = self.extensionBox.currentData()
+            nm.ramType = ram.ItemType.SHOT
+            nm.shortName = shotShortName
+            nm.resource = self.resourceEdit.text()
+            shotFileName = nm.fileName()
 
             self.fileNameLabel.setText(shotFileName)
         
@@ -291,14 +288,14 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(stepPath)
 
             # The filename
-            itemFileName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                self.extensionBox.currentData(),
-                ram.ItemType.GENERAL,
-                itemShortName,
-                self.resourceEdit.text()
-            )
+            nm = ram.RamNameManager()
+            nm.project = self.__currentProject.shortName()
+            nm.step = self.__currentStep.shortName()
+            nm.extension = self.extensionBox.currentData()
+            nm.ramType = ram.ItemType.GENERAL
+            nm.shortName = itemShortName
+            nm.resource = self.resourceEdit.text()
+            itemFileName = nm.fileName()
 
             self.fileNameLabel.setText( itemFileName )
 
@@ -418,11 +415,12 @@ class SaveAsDialog( QDialog ):
         ))
 
 def getCurrentProject( filePath ):
-    fileInfo = ram.RamFileManager.decomposeRamsesFilePath(filePath)
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
     # Set the project and step
     project = None
-    if fileInfo is not None:
-        project = ramses.project( fileInfo['project'] )
+    if nm.project != '':
+        project = ramses.project( nm.project )
         ramses.setCurrentProject( project )
     # Try to get the current project
     if project is None:
@@ -432,9 +430,11 @@ def getCurrentProject( filePath ):
 
 def getStep( filePath ):
     project = getCurrentProject( filePath )
-    fileInfo = ram.RamFileManager.decomposeRamsesFilePath(filePath)
-    if fileInfo is not None and project is not None:
-        return project.step( fileInfo['step'] )
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.step != '':
+        return project.step( nm.step )
+    return None
 
 def saveAs():
     # Get current info

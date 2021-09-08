@@ -80,9 +80,10 @@ class VersionDialog( QDialog ):
         self._versionsBox.clear()
         for f in fileList:
             fileName = os.path.basename( f )
-            decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( fileName )
+            nm = ram.RamNameManager()
+            nm.setFileName( fileName )
             self._versionsBox.addItem( 
-                decomposedFileName['state'] + ' | ' + str(decomposedFileName['version']),
+                nm.state + ' | ' + str( nm.version ),
                 f
             )
 
@@ -351,20 +352,17 @@ class PublishTemplateDialog( QDialog ):
 
     @Slot()
     def __buildFileName(self):
-        pShortName = self.__getCurrentShortName( self.projectBox )
-        sShortName = self.__getCurrentShortName( self.stepBox )
-        resource = self.nameEdit.text()
-        if resource == "":
-            resource = "Template"
-        fileName = ram.RamFileManager.buildRamsesFileName(
-            pShortName,
-            sShortName,
-            self.extensionBox.currentData(),
-            ram.ItemType.GENERAL,
-            '',
-            resource
-        )
-        self.fileNameLabel.setText( fileName )
+        nm = ram.RamNameManager()
+
+        nm.project = self.__getCurrentShortName( self.projectBox )
+        nm.step = self.__getCurrentShortName( self.stepBox )
+        nm.extension = self.extensionBox.currentData()
+        nm.ramType = ram.ItemType.GENERAL
+        nm.resource = self.nameEdit.text()
+        if  nm.resource == "":
+             nm.resource = "Template"
+        
+        self.fileNameLabel.setText( nm.fileName() )
 
     @Slot()
     def browse(self):
@@ -377,15 +375,16 @@ class PublishTemplateDialog( QDialog ):
         self.locationEdit.setText("")
         # Try to extract info from the path
         if path != "":
-            pathInfo = ram.RamFileManager.decomposeRamsesFilePath( path )
-            project = pathInfo['project']
-            step = pathInfo['step']
+            nm = ram.RamNameManager()
+            nm.setFilePath( path )
+            project = nm.project
+            step = nm.step
             if step == "" or project == "":
                 cmds.confirmDialog(
-                title="Invalid Ramses project or step",
-                message="Sorry, this folder does not belong to a valid step in this project, I can't export the template there.",
-                button=["OK"],
-                icon="warning"
+                    title="Invalid Ramses project or step",
+                    message="Sorry, this folder does not belong to a valid step in this project, I can't export the template there.",
+                    button=["OK"],
+                    icon="warning"
                 )
             if project != "":
                 self.projectBox.setEditText( project )
@@ -503,7 +502,8 @@ def publishTemplate():
 
     # Get info from the current file
     currentFilePath = cmds.file( q=True, sn=True )
-    fileInfo = ram.RamFileManager.decomposeRamsesFilePath( currentFilePath )
+    nm = ram.RamNameManager()
+    nm.setFilePath( currentFilePath )
 
     # Prepare the dialog
     publishDialog = PublishTemplateDialog()
@@ -512,10 +512,10 @@ def publishTemplate():
     step = None
     if project is None:
         # Try to get from current file
-        project = ramses.project( fileInfo['project'] )
+        project = ramses.project( nm.project )
     if project is not None:
         publishDialog.setProject( project )
-        step = project.step(fileInfo['step'])
+        step = project.step( nm.step )
         if step is not None:
             publishDialog.setStep( step )
     
@@ -575,8 +575,9 @@ def save():
     # Backup / Increment
     backupFilePath = ram.RamFileManager.copyToVersion( saveFilePath, increment=increment )
     backupFileName = os.path.basename( backupFilePath )
-    decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( backupFileName )
-    newVersion = str( decomposedFileName['version'] )
+    nm = ram.RamNameManager()
+    nm.setFileName( backupFileName )
+    newVersion = str( nm.version )
     ram.log( "Scene saved! Current version is: " + newVersion )
     cmds.inViewMessage( msg='Scene saved! <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
 
@@ -613,14 +614,15 @@ def saveVersion():
 
     # Get the save path 
     saveFilePath = getSaveFilePath( currentFilePath )
-    print(saveFilePath)
+    ram.log( saveFilePath, ram.LogLevel.DEBUG )
     if not saveFilePath:
         return
 
     # Update status
     saveFileName = os.path.basename( saveFilePath )
-    saveFileDict = ram.RamFileManager.decomposeRamsesFileName( saveFileName )
-    currentStep = saveFileDict['step']
+    nm = ram.RamNameManager()
+    nm.setFileName( saveFileName )
+    currentStep = nm.step
     currentItem = ram.RamItem.fromPath( saveFilePath )
     currentStatus = currentItem.currentStatus( currentStep )
     # Show status dialog
@@ -657,9 +659,10 @@ def saveVersion():
         state.shortName()
         )
     backupFileName = os.path.basename( backupFilePath )
-    decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( backupFileName )
-    newVersion = decomposedFileName['version']
-    newState = decomposedFileName['state']
+    nm = ram.RamNameManager()
+    nm.setFileName( backupFileName )
+    newVersion = nm.version
+    newState = nm.state
 
     # Update status
     if status is not None:

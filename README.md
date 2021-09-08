@@ -14,3 +14,8 @@ The Rx Asset Management System (Ramses) Maya Plugin
     e.g. `C:\Users\User\Documents\Maya\modules`.  
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
+
+## TODO
+
+- check save command: if it's a retrieved file, not incremented?
+- publish: problem with folders
