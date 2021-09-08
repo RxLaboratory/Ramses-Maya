@@ -276,10 +276,11 @@ class RamSaveCmd( om.MPxCommand ):
         increment = False
         incrementReason = ''
         # It it's a restored version, we need to increment
-        restoredVersion = ram.RamFileManager.isRestoredFilePath( currentFilePath )
-        if restoredVersion:
+        nm = ram.RamNameManager()
+        nm.setFilePath( currentFilePath )
+        if nm.isRestoredVersion:
             increment = True
-            incrementReason = "we're restoring the older version " + str(restoredVersion) + "."
+            incrementReason = "we're restoring the older version " + str(nm.restoredVersion) + "."
             cmds.warning( "Incremented and Saved as " + saveFilePath )
 
         # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment

@@ -17,5 +17,7 @@ The Rx Asset Management System (Ramses) Maya Plugin
 
 ## TODO
 
-- check save command: if it's a retrieved file, not incremented?
-- publish: problem with folders
+- Fix restore naming: remove version and state
+- Fix STEPS folders (when saving template)
+- publish: problem with version folders
+- Rebuild import: update to use new versionning in published files
