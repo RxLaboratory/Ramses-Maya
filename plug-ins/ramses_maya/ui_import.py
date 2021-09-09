@@ -119,6 +119,9 @@ class ImportDialog( QDialog ):
         versionsLayout.setSpacing(3)
         self.versionsLabel = QLabel("Version:")
         versionsLayout.addWidget(self.versionsLabel)
+        self.publishVersionBox = QComboBox()
+        versionsLayout.addWidget(self.publishVersionBox)
+        self.publishVersionBox.setVisible(False)
         self.versionSearchField = QLineEdit()
         self.versionSearchField.setPlaceholderText('Search...')
         self.versionSearchField.setClearButtonEnabled(True)
@@ -163,6 +166,7 @@ class ImportDialog( QDialog ):
         self.groupBox.currentIndexChanged.connect( self.__updateItems )
         self.itemSearchField.textChanged.connect( self.__searchItem )
         self.versionSearchField.textChanged.connect( self.__searchVersion )
+        self.publishVersionBox.currentIndexChanged.connect( self.__updatePublishedFiles )
 
     def __loadProjects(self):
         # Load projects
@@ -296,6 +300,7 @@ class ImportDialog( QDialog ):
             self.resourceList.show()
             self.resourcesLabel.show()
             self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
+            self.publishVersionBox.setVisible(False)
         else: # Import
             self._importButton.show()
             self._openButton.hide()
@@ -303,24 +308,26 @@ class ImportDialog( QDialog ):
             self.resourceList.hide()
             self.resourcesLabel.hide()
             self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+            self.publishVersionBox.setVisible(True)
         self.__resourceChanged( self.resourceList.currentRow() )
     
     @Slot()
     def __updateResources(self):
         self.resourceList.clear()
         self.versionList.clear()
+        self.publishVersionBox.clear()
         
         stepItem = self.stepList.currentItem()
         if not stepItem: return
         step = stepItem.data(Qt.UserRole)
 
+        currentItem = self.getItem()
+
         # If open, list resources in wip folder
         if self.openButton.isChecked():
             # Shots and Assets
             if self.assetButton.isChecked() or self.shotButton.isChecked():
-                currentItemItem = self.itemList.currentItem()
-                if not currentItemItem: return
-                currentItem = currentItemItem.data(Qt.UserRole)
+                if not currentItem: return
                 # List resources
                 resources = currentItem.stepFilePaths( step )
 
@@ -362,53 +369,68 @@ class ImportDialog( QDialog ):
 
                     res = nm.shortName + ' | ' + nm.resource
 
+                    if res == "":
+                        res = "Main (" + nm.extension + ")"
+                        self._openButton.setEnabled(True)
+
                     resource = ram.RamFileManager.buildPath((
                         folder,
                         f
                     ))
 
-                    if res == "":
-                        res = "Main (" + nm.extension + ")"
-                        self._openButton.setEnabled(True)
-
                     item = QListWidgetItem( res )
                     item.setData( Qt.UserRole, resource )
+                    item.setToolTip(f)
                     self.resourceList.addItem( item )
 
-        # If import, list all files in the publish folder
-        #TODO Update with new publish versionning
+        # If import, list all subfolders
         else:
-            files = []
+            folders = []
             if self.assetButton.isChecked() or self.shotButton.isChecked():
-                files = self._currentItem.publishFilePaths( None, self._currentStep )
+                if not currentItem: return
+                folders = currentItem.publishedVersionFolderPaths( step )
             else:
-                files = self._currentStep.templatesPublishFilePaths( )
+                folders = step.templatesPublishedVersionFolderPaths( )
 
-            # Add an "Auto" field
-            if len(files) > 0:
-                i = QListWidgetItem( self.versionList )
-                i.setText("Auto")
-                i.setToolTip( "Automatically selects the files according to the current step." )
-                self._importButton.setEnabled(True)
+            for f in reversed(folders): # list more recent first
+                folderName = os.path.basename( f )
+                folderName = folderName.split("_")
+                title = ""
 
-            for f in files:
-                fileName = os.path.basename( f )
-                nm = ram.RamNameManager()
-                if not nm.setFileName( fileName ):
-                    continue
-                self._currentFiles.append( f )
-                n = nm.resource
-                if n == '':
-                    n = "Main"
-                n = n + ' (' + nm.extension + ')'
-                i = QListWidgetItem( self.versionList )
-                i.setText(n)
-                i.setToolTip(f)
+                # Test length to know what we've got
+                if len(folderName) == 3: # resource, version, state
+                    title = folderName[0] + " | v" + folderName[1] + " | " + folderName[2]
+                elif len(folderName) < 3: # version (state)
+                    if int(folderName[0]) != 0:
+                        title = "v" + " | ".join(folderName)
+                else:
+                    title = " | ".join(folderName)
+
+                self.publishVersionBox.addItem(title, f)
+                self.__updatePublishedFiles()
+
+    @Slot()
+    def __updatePublishedFiles(self):
+        self.versionList.clear()
+        # List available files
+        folder = self.publishVersionBox.currentData()
+        files = ram.RamFileManager.getRamsesFiles( folder )
+        for f in files:
+            nm = ram.RamNameManager()
+            fileName = os.path.basename(f)
+            if not nm.setFileName(fileName): continue
+            resource = nm.resource
+            if resource == "": resource = "Main"
+            title = resource + " (" + nm.extension + ")"
+            item = QListWidgetItem( title )
+            item.setData(Qt.UserRole, f)
+            item.setToolTip(fileName)
+            self.versionList.addItem(item)
 
     @Slot()
     def __resourceChanged(self, row):
 
-        if self._importButton.isChecked():
+        if self.importButton.isChecked():
             return
 
         if row < 0:
@@ -426,7 +448,7 @@ class ImportDialog( QDialog ):
         if self.assetButton.isChecked() or self.shotButton.isChecked():
             versionFiles = currentItem.versionFilePaths( self.getResource(), self.getStep() )
         else:
-            versionFiles = currentItem.versionFilePaths()
+            versionFiles = currentItem.versionFilePaths( )
 
         if len(versionFiles) == 0: return
 
@@ -485,7 +507,12 @@ class ImportDialog( QDialog ):
             if not item: return None
             return item.data(Qt.UserRole)
 
-        # if it's a template, get the item from the path of the selected resource
+        # if it's a template, get the item from the path of the selected resource (or version if import)
+        if self.importButton.isChecked():
+            item = self.versionList.currentItem()
+            if not item: return None
+            return ram.RamItem.fromPath( item.data(Qt.UserRole ) )
+        
         item = self.resourceList.currentItem()
         if not item: return None
         return ram.RamItem.fromPath( item.data(Qt.UserRole) )
@@ -507,7 +534,9 @@ class ImportDialog( QDialog ):
     def getFile(self):
 
         # return the selected version if it's not  the current
-        if self.versionList.currentRow() > 0:
+        rowForCurrent = -1
+        if self.openButton.isChecked(): rowForCurrent = 0
+        if self.versionList.currentRow() > rowForCurrent:
             return self.versionList.currentItem().data(Qt.UserRole)
 
         # no version selected, return the resource file
@@ -535,7 +564,7 @@ class ImportDialog( QDialog ):
         if self.versionList.count() == 0: return ( self.getFiles )
 
         # De-select the item 0, which is basically "no version"
-        self.versionList.item(0).setSelected(False)
+        if self.openButton.isChecked(): self.versionList.item(0).setSelected(False)
         items = self.versionList.selectedItems()
         if len(items) == 0:
             return ( self.getFile() )
