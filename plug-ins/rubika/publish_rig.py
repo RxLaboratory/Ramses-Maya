@@ -35,12 +35,13 @@ def publishRig( item, filePath, step, vpShaders = True ):
     tempData = maf.cleanScene( removeAnim, lockHiddenVisibility )
 
     # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.project == '':
         endProcess(tempData, progressDialog)
         return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    version = item.latestVersion( nm.resource, '', step )
+    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
 
     # Publish folder
     publishFolder = getPublishFolder(item, step)
@@ -106,23 +107,23 @@ def publishRig( item, filePath, step, vpShaders = True ):
     progressDialog.increment()
 
     # We need to build the future file path where we'll save the scene
-    sceneFileInfo = fileInfo.copy()
-    sceneFileInfo['extension'] = getExtension( step, RIG_STEP, RIG_PIPE_FILE, ['ma','mb'], 'ma' )
+    sceneNM = nm.copy()
+    sceneNM.extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, ['ma','mb'], 'ma' )
     # resource
-    if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + RIG_PIPE_NAME
+    if sceneNM.resource != '':
+        sceneNM.resource = sceneNM.resource + '-' + RIG_PIPE_NAME
     else:
-        sceneFileInfo['resource'] = RIG_PIPE_NAME
+        sceneNM.resource = RIG_PIPE_NAME
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
-        ram.RamFileManager.composeRamsesFileName( sceneFileInfo )
+        sceneNM.fileName()
     ))
 
     # export viewport shaders
     if vpShaders:
         for node in nodes:
-            shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), VPSHADERS_PIPE_NAME )
+            shaderFilePath = exportShaders( node, publishFolder, nm.copy(), VPSHADERS_PIPE_NAME )
             # Update Ramses Metadata (version)
             ram.RamMetaDataManager.setPipeType( shaderFilePath, VPSHADERS_PIPE_NAME )
             ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
@@ -144,7 +145,7 @@ def publishRig( item, filePath, step, vpShaders = True ):
     ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
     ram.RamMetaDataManager.setVersion( sceneFilePath, version )
 
-    #reopen scene, etc
+    # reopen scene, etc
     endProcess(tempData, progressDialog)
 
     ram.log("I've published the rig.")

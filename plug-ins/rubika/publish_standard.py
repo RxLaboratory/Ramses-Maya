@@ -20,12 +20,13 @@ def publishStandard( item, filePath, step, extension ):
     maf.removeEmptyGroups()
 
     # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.project == '':
         progressDialog.hide()
         return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    version = item.latestVersion( nm.resource, '', step )
+    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
 
     # Publish folder
     publishFolder = getPublishFolder(item, step)
@@ -38,17 +39,17 @@ def publishStandard( item, filePath, step, extension ):
     progressDialog.increment()
 
     # Copy published scene to publish
-    sceneFileInfo = fileInfo.copy()
-    sceneFileInfo['extension'] = extension
+    sceneNM = nm.copy()
+    sceneNM.extension = extension
     # resource
-    if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-Published'
+    if sceneNM.resource != '':
+        sceneNM.resource = sceneNM.resource + '-Published'
     else:
-        sceneFileInfo['resource'] = 'Published'
+        sceneNM.resource = 'Published'
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
-        ram.RamFileManager.composeRamsesFileName( sceneFileInfo )
+        sceneNM.fileName()
     ))
 
     # Save

@@ -8,7 +8,7 @@ from .utils_attributes import * # pylint: disable=import-error
 from .utils_constants import *
 
 # mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
-def exportShaders(node, folderPath, fileNameBlocks, mode = ''): 
+def exportShaders(node, folderPath, nm, mode = ''): 
     # List all nodes containing shaders
     nodes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
     # If there are Yeti nodes
@@ -64,18 +64,18 @@ def exportShaders(node, folderPath, fileNameBlocks, mode = ''):
     nodeName = maf.getNodeBaseName( node )
 
     # extension
-    fileNameBlocks['extension'] = 'mb'
+    nm.extension = 'mb'
     # resource
-    if fileNameBlocks['resource'] != '':
-        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + nodeName
+    if nm.resource != '':
+        nm.resource = nm.resource + '-' + nodeName
     else:
-        fileNameBlocks['resource'] = nodeName
+        nm.resource = nodeName
     if mode != '':
-        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + mode
+        nm.resource = nm.resource + '-' + mode
     # path
     filePath = ram.RamFileManager.buildPath((
         folderPath,
-        ram.RamFileManager.composeRamsesFileName(fileNameBlocks)
+        nm.fileName()
     ))
     cmds.file( filePath, exportSelected=True, type='mayaBinary', force=True )
     cmds.select(cl=True)

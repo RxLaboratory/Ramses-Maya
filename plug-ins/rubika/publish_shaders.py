@@ -4,7 +4,7 @@ import os
 
 from .utils_shaders import exportShaders
 from .utils_nodes import getPublishNodes, getProxyNodes
-from .utils_items import getFileInfo, getPublishFolder
+from .utils_items import getPublishFolder
 from .ui_publish_shaders import PublishShaderDialog
 from .utils_general import *
 import dumaf as maf # pylint: disable=import-error
@@ -33,12 +33,13 @@ def publishProxyShaders( item, filePath, step ):
     progressDialog.increment()
 
     # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.project == '':
         endProcess(tempData, progressDialog)
         return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    version = item.latestVersion( nm.resource, '', step )
+    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
 
     # Publish folder
     publishFolder = getPublishFolder(item, step)
@@ -59,16 +60,16 @@ def publishProxyShaders( item, filePath, step ):
         if nodeName.lower().startswith( 'proxy_' ):
             nodeName = nodeName[6:]
         # extension
-        fileInfo['extension'] = 'ass'
+        nm.extension = 'ass'
         # resource
-        if fileInfo['resource'] != '':
-            fileInfo['resource'] = fileInfo['resource'] + '-' + nodeName + '-proxyShade'
+        if nm.resource != '':
+            nm.resource = nm.resource + '-' + nodeName + '-proxyShade'
         else:
-            fileInfo['resource'] = nodeName + '-proxyShade'
+            nm.resource = nodeName + '-proxyShade'
         # path
         assFilePath = ram.RamFileManager.buildPath((
             publishFolder,
-            ram.RamFileManager.composeRamsesFileName(fileInfo)
+            nm.fileName()
         ))
 
         cmds.arnoldExportAss(f=assFilePath, s=True, mask=223, lightLinks=0, shadowLinks=0, cam="perspShape" )
@@ -110,12 +111,13 @@ def publishShaders( item, filePath, step, mode):
     progressDialog.increment()
 
     # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.project == '':
         progressDialog.hide()
         return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    version = item.latestVersion( nm.resource, '', step )
+    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
 
     # Publish folder
     publishFolder = getPublishFolder(item, step)
@@ -153,7 +155,7 @@ def publishShaders( item, filePath, step, mode):
         maf.removeEmptyGroups(node)
 
         # Export
-        shaderFilePath = exportShaders(node, publishFolder, fileInfo.copy(), mode )
+        shaderFilePath = exportShaders(node, publishFolder, nm.copy(), mode )
         # Update Ramses Metadata (version)
         ram.RamMetaDataManager.setPipeType( shaderFilePath, mode )
         ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )

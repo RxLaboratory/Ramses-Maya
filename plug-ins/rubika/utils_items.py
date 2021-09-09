@@ -36,15 +36,6 @@ def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension 
 
     return defaultExtension
 
-def getFileInfo( filePath):
-    fileInfo = ram.RamFileManager.decomposeRamsesFilePath( filePath )
-    if fileInfo is None:
-        ram.log(ram.Log.MalformedName, ram.LogLevel.Fatal)
-        cmds.inViewMessage( msg=ram.Log.MalformedName, pos='midCenter', fade=True )
-        cmds.error( ram.Log.MalformedName )
-        return None
-    return fileInfo
-
 def getPublishFolder( item, step):
     publishFolder = item.publishFolderPath( step )
     if publishFolder == '':
@@ -77,15 +68,16 @@ def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
     saveFilePath = ram.RamFileManager.getSaveFilePath( currentSceneFilePath )
 
     if saveFilePath != '':
-        saveFileInfo = ram.RamFileManager.decomposeRamsesFilePath( saveFilePath )
-        if saveFileInfo is not None:
-            currentProject = ramses.project( saveFileInfo['project'] )
+        nm = ram.RamNameManager()
+        nm.setFilePath( saveFilePath )
+        if nm.project != '':
+            currentProject = ramses.project( nm.project )
             if currentProject is None:
                 currentProject = ramses.currentProject()
             else:
                 ramses.setCurrentProject( currentProject )
             if currentProject is not None:
-                currentStep = currentProject.step( saveFileInfo['step'] )
+                currentStep = currentProject.step( nm.step )
                 currentStepShortName = currentStep.shortName()
 
     # Check the pipes

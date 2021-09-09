@@ -50,12 +50,13 @@ def publishAnim( item, filePath, step ):
     progressDialog.increment()
 
     # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.project == '':
         endProcess(tempData, progressDialog)
         return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    version = item.latestVersion( nm.resource, '', step )
+    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
 
     # Publish folder
     publishFolder = getPublishFolder(item, step)
@@ -117,20 +118,20 @@ def publishAnim( item, filePath, step ):
         controller = r[1]
 
         # Generate file path
-        abcFileInfo = fileInfo.copy()
+        abcNM = nm.copy()
         # extension
-        abcFileInfo['extension'] = 'abc'
+        abcNM.extension = 'abc'
         # Type
         pipeType = ANIM_PIPE_NAME
         # resource
-        if abcFileInfo['resource'] != '':
-            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pipeType
+        if abcNM.resource != '':
+            abcNM.resource = abcNM.resource + '-' + nodeName + '-' + pipeType
         else:
-            abcFileInfo['resource'] = nodeName + '-' + pipeType
+            abcNM.resource = nodeName + '-' + pipeType
         # path
         abcFilePath = ram.RamFileManager.buildPath((
             publishFolder,
-            ram.RamFileManager.composeRamsesFileName( abcFileInfo )
+            abcNM.fileName()
         ))
 
         # Build the ABC command
@@ -148,7 +149,6 @@ def publishAnim( item, filePath, step ):
             '-renderableOnly',
             '-file "' + abcFilePath + '"',
         ])
-        print(abcFilePath)
         # Export
         cmds.AbcExport(j=abcOptions)
         # Update Ramses Metadata (version)
@@ -162,18 +162,18 @@ def publishAnim( item, filePath, step ):
     progressDialog.increment()
 
     # Copy published scene to publish
-    sceneFileInfo = fileInfo.copy()
+    sceneNM = nm.copy()
 
-    sceneFileInfo['extension'] = 'mb'
+    sceneNM.extension = 'mb'
     # resource
-    if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + pipeType
+    if sceneNM.resource != '':
+        sceneNM.resource = sceneNM.resource + '-' + pipeType
     else:
-        sceneFileInfo['resource'] = pipeType
+        sceneNM.resource = pipeType
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
-        ram.RamFileManager.composeRamsesFileName( sceneFileInfo )
+        sceneNM.fileName()
     ))
     # Save
     cmds.file( rename=sceneFilePath )

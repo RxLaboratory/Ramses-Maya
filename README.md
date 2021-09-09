@@ -17,4 +17,6 @@ The Rx Asset Management System (Ramses) Maya Plugin
 
 ## TODO
 
+- Rebuild publish: check what is passed to the methods, select the right folder (probably: item, step, publishFolder, fileInfo(with version and state))
 - Rebuild import: update to use new versionning in published files
+- retest all pipes

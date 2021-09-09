@@ -76,12 +76,13 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     noFreeze = noFreeze.split(',')
 
     # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
+    nm = ram.RamNameManager()
+    nm.setFilePath( filePath )
+    if nm.project == '':
         endProcess(tempData, progressDialog)
         return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    version = item.latestVersion( nm.resource, '', step )
+    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
 
     # Publish folder
     publishFolder = getPublishFolder(item, step)
@@ -188,18 +189,18 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         if extension == 'abc':
             # Save and create Abc
             # Generate file path
-            abcFileInfo = fileInfo.copy()
+            abcNM = nm.copy()
             # extension
-            abcFileInfo['extension'] = 'abc'
+            abcNM.extension = 'abc'
             # resource
-            if abcFileInfo['resource'] != '':
-                abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pType
+            if abcNM.resource != '':
+                abcNM.resource = abcNM.resource + '-' + nodeName + '-' + pType
             else:
-                abcFileInfo['resource'] = nodeName + '-' + pType
+                abcNM.resource = nodeName + '-' + pType
             # path
             abcFilePath = ram.RamFileManager.buildPath((
                 publishFolder,
-                ram.RamFileManager.composeRamsesFileName( abcFileInfo )
+                abcNM.fileName()
             ))
             # Save
             abcOptions = ' '.join([
@@ -276,7 +277,7 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     maf.removeEmptyGroups()
 
     # Copy published scene to publish
-    sceneFileInfo = fileInfo.copy()
+    sceneNM = nm.copy()
 
     # Get Type
     pipeType = GEO_PIPE_NAME
@@ -287,18 +288,18 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         pipeType = PROXYGEO_PIPE_NAME
 
     if SET_PIPE_FILE in pipeFiles:
-        sceneFileInfo['extension'] = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+        sceneNM.extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
-        sceneFileInfo['extension'] = 'mb'
+        sceneNM.extension = 'mb'
     # resource
-    if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + pipeType
+    if sceneNM.resource != '':
+        sceneNM.resource = sceneNM.resource + '-' + pipeType
     else:
-        sceneFileInfo['resource'] = pipeType
+        sceneNM.resource = pipeType
     # path
     sceneFilePath = ram.RamFileManager.buildPath((
         publishFolder,
-        ram.RamFileManager.composeRamsesFileName( sceneFileInfo )
+        sceneNM.fileName()
     ))
     # Save
     cmds.file( rename=sceneFilePath )
