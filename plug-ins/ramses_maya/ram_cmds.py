@@ -89,15 +89,6 @@ def getNameManager( filePath ):
         return None
     return nm
 
-def getPublishFolder( item, step):
-    publishFolder = item.publishFolderPath( step )
-    if publishFolder == '':
-        ram.log("I can't find the publish folder for this item, maybe it does not respect the ramses naming scheme or it is out of place.", ram.LogLevel.Fatal)
-        cmds.inViewMessage( msg="Can't find the publish folder for this scene, sorry. Check its name and location.", pos='midCenter', fade=True )
-        cmds.error( "Can't find publish folder." )
-        return ''
-    return publishFolder
-
 def getPreviewFolder( item, step):
     previewFolder = item.previewFolderPath( step )
     if previewFolder == '':
