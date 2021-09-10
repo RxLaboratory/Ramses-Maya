@@ -863,7 +863,7 @@ class RamPreviewCmd( om.MPxCommand ):
             # path
             pbFilePath = ram.RamFileManager.buildPath((
                 previewFolder,
-                pbNM.resource.fileName()
+                pbNM.fileName()
             ))
             createPlayblast(pbFilePath, size)
         else:
@@ -871,7 +871,7 @@ class RamPreviewCmd( om.MPxCommand ):
             # path
             pbFilePath = ram.RamFileManager.buildPath((
                 previewFolder,
-                pbNM.resource.fileName()
+                pbNM.fileName()
             ))
             # Attempt to set window size
             dialog.setWindowSize()
