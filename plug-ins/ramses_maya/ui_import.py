@@ -332,7 +332,7 @@ class ImportDialog( QDialog ):
                 resources = currentItem.stepFilePaths( step )
 
                 for resource in resources:
-                    nm = ram.RamNameManager()
+                    nm = ram.RamFileInfo()
                     nm.setFilePath(resource)
                     if nm.project == '': continue
 
@@ -357,7 +357,7 @@ class ImportDialog( QDialog ):
                 if folder == '': return
 
                 for f in os.listdir( folder ):
-                    nm = ram.RamNameManager()
+                    nm = ram.RamFileInfo()
                     if not nm.setFileName( f ):
                         continue
 
@@ -416,7 +416,7 @@ class ImportDialog( QDialog ):
         folder = self.publishVersionBox.currentData()
         files = ram.RamFileManager.getRamsesFiles( folder )
         for f in files:
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             fileName = os.path.basename(f)
             if not nm.setFileName(fileName): continue
             resource = nm.resource
@@ -462,7 +462,7 @@ class ImportDialog( QDialog ):
         # Add other versions
         for v in versionFiles:
             fileName = os.path.basename( v )
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             if not nm.setFileName( fileName ):
                 continue
             comment = ram.RamMetaDataManager.getComment( v )
@@ -527,7 +527,7 @@ class ImportDialog( QDialog ):
         item = self.resourceList.currentItem()
         if not item: return ""
 
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFilePath( item.data(Qt.UserRole) )
         return nm.resource
 

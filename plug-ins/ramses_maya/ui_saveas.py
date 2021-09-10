@@ -203,7 +203,7 @@ class SaveAsDialog( QDialog ):
 
             assetsPath = self.__currentProject.assetsPath( assetGroup )
 
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             nm.project = self.__currentProject.shortName()
             nm.ramType = ram.ItemType.ASSET
             nm.shortName = assetShortName
@@ -236,7 +236,7 @@ class SaveAsDialog( QDialog ):
 
             shotsPath = self.__currentProject.shotsPath()
 
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             nm.project = self.__currentProject.shortName()
             nm.ramType = ram.ItemType.SHOT
             nm.shortName = shotShortName
@@ -268,7 +268,7 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(stepPath)
 
             # The filename
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             nm.project = self.__currentProject.shortName()
             nm.ramType = ram.ItemType.SHOT
             nm.step = self.__currentStep.shortName()

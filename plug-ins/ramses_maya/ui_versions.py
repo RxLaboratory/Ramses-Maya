@@ -50,7 +50,7 @@ class VersionDialog( QDialog ):
         self._versionsBox.clear()
         for f in fileList:
             fileName = os.path.basename( f )
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             if not nm.setFileName( fileName ):
                 continue
             comment = ram.RamMetaDataManager.getComment( f )

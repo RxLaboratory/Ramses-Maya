@@ -58,7 +58,7 @@ def getSaveFilePath( filePath ):
     return saveFilePath
 
 def getCurrentProject( filePath ):
-    nm = ram.RamNameManager()
+    nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
     # Set the project and step
     project = None
@@ -73,14 +73,14 @@ def getCurrentProject( filePath ):
 
 def getStep( filePath ):
     project = getCurrentProject( filePath )
-    nm = ram.RamNameManager()
+    nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
     if nm.step != '':
         return project.step( nm.step )
     return None
 
 def getNameManager( filePath ):
-    nm = ram.RamNameManager()
+    nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
     if nm.project == '':
         ram.log(ram.Log.MalformedName, ram.LogLevel.Fatal)
@@ -114,7 +114,6 @@ def createPlayblast(filePath, size):
 
     # Get a temp dir for rendering the playblast
     tempDir = tempfile.mkdtemp()
-    print(tempDir)
     imageFile = tempDir + '/' + 'blast'
     
     # Create jpg frame sequence
@@ -267,7 +266,7 @@ class RamSaveCmd( om.MPxCommand ):
         increment = False
         incrementReason = ''
         # It it's a restored version, we need to increment
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFilePath( currentFilePath )
         if nm.isRestoredVersion:
             increment = True
@@ -283,8 +282,8 @@ class RamSaveCmd( om.MPxCommand ):
             cmds.warning( "Incremented and Saved as " + saveFilePath )
 
         # If the timeout has expired, we're also incrementing
-        prevVersion = ram.RamFileManager.getLatestVersion( saveFilePath, previous=True )
-        modified = prevVersion[2]
+        prevVersionInfo = ram.RamFileManager.getLatestVersionInfo( saveFilePath, previous=True )
+        modified = prevVersionInfo.date
         now = datetime.today()
         timeout = timedelta(seconds = settings.autoIncrementTimeout * 60 )
         if  timeout < now - modified and not increment:
@@ -296,9 +295,8 @@ class RamSaveCmd( om.MPxCommand ):
         cmds.file( save=True, options="v=1;" )
         # Backup / Increment
         backupFilePath = ram.RamFileManager.copyToVersion( saveFilePath, increment=increment )
-        print(backupFilePath)
         backupFileName = os.path.basename( backupFilePath )
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFileName( backupFileName )
         newVersion = str( nm.version )
         ram.log( "Scene saved! Current version is: " + newVersion )
@@ -438,7 +436,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         saveFileName = os.path.basename( saveFilePath )
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFileName( saveFileName )
         currentStep = nm.step
         currentItem = ram.RamItem.fromPath( saveFilePath )
@@ -484,7 +482,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
             state.shortName()
             )
         backupFileName = os.path.basename( backupFilePath )
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFileName( backupFileName )
         newVersion = nm.version
 
@@ -509,8 +507,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Publish
         if self.publish:
-            publishedFilePath = ram.RamFileManager.getPublishPath( saveFilePath )
+            publishedFileInfo = ram.RamFileManager.getPublishInfo( saveFilePath )
             # Save
+            publishedFilePath = publishedFileInfo.filePath()
             cmds.file( rename = publishedFilePath )
             cmds.file( save=True, options="v=1;" )
             ram.RamMetaDataManager.appendHistoryDate( publishedFilePath )
@@ -571,6 +570,8 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
             return
         
         versionFile = ram.RamFileManager.restoreVersionFile( versionDialog.getVersion() )
+        # We need to wait for the file to be correctly written before opening
+        ram.RamFileManager.waitFiles()
         # open
         cmds.file(versionFile, open=True, force=True)
 
@@ -629,8 +630,8 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             cmds.file( rename = saveFilePath )
             cmds.file( save=True, options="v=1;" )
             # Message
-            cmds.inViewMessage( msg='Template published as: <hl>' + saveName + '</hl> in ' + saveFolder , pos='midCenter', fade=True )
-            ram.log('Template published as: ' + saveName + ' in ' + saveFolder)
+            cmds.inViewMessage( msg='Template saved as: <hl>' + saveName + '</hl> in ' + saveFolder , pos='midCenter', fade=True )
+            ram.log('Template saved as: ' + saveName + ' in ' + saveFolder)
 
 class RamOpenCmd( om.MPxCommand ):
     name = "ramOpen"
@@ -657,7 +658,7 @@ class RamOpenCmd( om.MPxCommand ):
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
         if currentFilePath != '':
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             nm.setFilePath( currentFilePath )
             if nm.project != '':
                 project = ramses.project( nm.project )
@@ -702,7 +703,7 @@ class RamOpenCmd( om.MPxCommand ):
                 # If file path is empty, let's import the default
                 if filePath == "":
                     publishFolder = item.publishFolderPath( step )
-                    nm = ram.RamNameManager()
+                    nm = ram.RamFileInfo()
                     nm.project = item.projectShortName()
                     nm.step = step.shortName()
                     nm.ramType = item.itemType()
@@ -785,7 +786,7 @@ class RamPreviewCmd( om.MPxCommand ):
             cmds.warning( ram.Log.NotAnItem )
             cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
 
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFilePath( saveFilePath )
         currentStep = nm.step
         
