@@ -26,6 +26,7 @@ def publishAnim( item, step, publishFileInfo ):
         filterEuler = ''
     keepCurves = dialog.curves()
     keepSurfaces = dialog.surfaces()
+    keepDeformers = dialog.deformers()
     removeHidden = dialog.removeHidden()
 
     # Progress
@@ -84,6 +85,8 @@ def publishAnim( item, step, publishFileInfo ):
                 cmds.delete(childNode)
                 continue
 
+            if keepDeformers: continue
+
             typesToKeep = ['mesh']
             if keepCurves:
                 typesToKeep.append('bezierCurve')
@@ -133,6 +136,7 @@ def publishAnim( item, step, publishFileInfo ):
             '-renderableOnly',
             '-file "' + abcFilePath + '"',
         ])
+        ram.log("These are the alembic options:\n" + abcOptions, ram.LogLevel.Debug)
         # Export
         cmds.AbcExport(j=abcOptions)
         # Update Ramses Metadata (version)

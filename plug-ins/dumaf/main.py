@@ -121,7 +121,10 @@ def getNodesInSet( setName ):
         iterator.next()
     return publishPaths
 
-def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True ):
+def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True, keepHistory=False ):
+
+    if not cmds.objExists(node):
+        return False
 
     # The shape(s) of this node
     shapes = cmds.listRelatives(node,s=True,f=True)
@@ -151,7 +154,8 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
             return False
     else:
         # Delete history
-        cmds.delete(shape, constructionHistory=True)
+        if not keepHistory:
+            cmds.delete(shape, constructionHistory=True)
 
         # Freeze transform & center pivot
         if freezeTranform and shapeType == 'mesh':
