@@ -10,7 +10,10 @@ from .publish_rig import *
 from .utils_nodes import *
 import ramses as ram
 
-def publisher(item, filePath, step):
+def publisher(item, step, publishFileInfo):
+
+    ram.log("Publishing " + str(item) + " for " + str(step) + " in:\n" + os.path.dirname( publishFileInfo.filePath()), ram.LogLevel.Info)
+
     # Check what needs to be published
     # Get pipes
     pipes = getPipes( step )
@@ -54,7 +57,7 @@ def publisher(item, filePath, step):
             elif pipeFile == ANIM_PIPE_FILE:
                 anim = True
 
-    # We're deleting everything which name starts with "delOnPub_"
+    # We're deleting everything in the "Ramses_DelOnPublish" set
     cmds.delete( getDelOnPubNodes() )
 
     vpShadersPublished = False
@@ -64,45 +67,45 @@ def publisher(item, filePath, step):
         ram.log( "I'm publishing the geometry (and maybe some shading and proxies...)." )
         if vpShaders:
             vpShadersPublished = True
-            publishGeo( item, filePath, step, pipeFiles )
+            publishGeo( item, step, publishFileInfo, pipeFiles )
         elif rdrShaders:
             rdrShadersPublished = True
-            publishGeo( item, filePath, step, pipeFiles )
+            publishGeo( item, step, publishFileInfo, pipeFiles )
         else:
-            publishGeo( item, filePath, step, pipeFiles )
+            publishGeo( item, step, publishFileInfo, pipeFiles )
 
     if rig: # The rig may also publish the vp shaders
         vpShadersPublished = vpShaders
-        publishRig( item, filePath, step, vpShaders )
+        publishRig( item, step, publishFileInfo, vpShaders )
 
     if vpShaders and not vpShadersPublished:
         ram.log( "I'm publishing the viewport shaders." )
-        publishShaders( item, filePath, step, VPSHADERS_PIPE_NAME )
+        publishShaders( item, step, publishFileInfo, VPSHADERS_PIPE_NAME )
     
     if rdrShaders and not rdrShadersPublished:
         ram.log( "I'm publishing the render shaders." )
-        publishShaders( item, filePath, step, RDRSHADERS_PIPE_NAME )
+        publishShaders( item, step, publishFileInfo, RDRSHADERS_PIPE_NAME )
     
     if proxyGeo and not geo:
         ram.log( "I'm publishing the geo proxies." )
-        publishGeo( item, filePath, step, pipeFiles )
+        publishGeo( item, step, publishFileInfo, pipeFiles )
 
     if proxyShade:
         ram.log( "I'm publishing the shading proxies." )
-        publishProxyShaders(item, filePath, step )
+        publishProxyShaders(item, step, publishFileInfo )
 
     if sets:
         ram.log( "I'm publishing the set." )
-        publishGeo(item, filePath, step, pipeFiles)
+        publishGeo(item, step, publishFileInfo, pipeFiles)
 
     if mb:
         ram.log( "Publishing Maya Binary." )
-        publishStandard( item, filePath, step, 'mb' )
+        publishStandard( item, step, publishFileInfo, 'mb' )
     
     if ma:
         ram.log( "Publishing Maya ASCII." )
-        publishStandard( item, filePath, step, 'ma' )
+        publishStandard( item, step, publishFileInfo, 'ma' )
 
     if anim:
         ram.log( "Publishing animation." )
-        publishAnim( item, filePath, step )
+        publishAnim( item, step, publishFileInfo )

@@ -46,11 +46,21 @@ def getPublishFolder( item, step):
     return publishFolder
 
 def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
-    pipes = step.outputPipes()
+    ps = step.outputPipes()
+    
+    pipes = []
+    
+    # Keep only pipes with pipefiles
+    for p in ps:
+        if len(p.pipeFiles()) != 0: pipes.append(p)
+
     if len( pipes ) == 0:
         for s in STEPS:
             if s == step:
+                print(s)
                 pipes = s.outputPipes()
+                print(pipes)
+                break
     
     if len( pipes ) == 0: # Let's ask!
         pipeDialog = PipeDialog( maf.getMayaWindow(), mode )
@@ -68,7 +78,7 @@ def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
     saveFilePath = ram.RamFileManager.getSaveFilePath( currentSceneFilePath )
 
     if saveFilePath != '':
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
         nm.setFilePath( saveFilePath )
         if nm.project != '':
             currentProject = ramses.project( nm.project )

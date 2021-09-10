@@ -12,7 +12,7 @@ from .utils_general import *
 from .utils_items import *
 from .ui_publish_rig import PublishRigDialog
 
-def publishRig( item, filePath, step, vpShaders = True ):
+def publishRig( item, step, publishFileInfo, vpShaders = True ):
 
     # Options
     publishDialog = PublishRigDialog(maf.getMayaWindow())
@@ -33,22 +33,6 @@ def publishRig( item, filePath, step, vpShaders = True ):
 
     # rename scene (cleanscene)
     tempData = maf.cleanScene( removeAnim, lockHiddenVisibility )
-
-    # Item info
-    nm = ram.RamNameManager()
-    nm.setFilePath( filePath )
-    if nm.project == '':
-        endProcess(tempData, progressDialog)
-        return
-    version = item.latestVersion( nm.resource, '', step )
-    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
-
-    # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        endProcess(tempData, progressDialog)
-        return
-    ram.log( "I'm publishing geometry in " + publishFolder )
 
     # get Nodes
     ns = getPublishNodes()
@@ -106,28 +90,14 @@ def publishRig( item, filePath, step, vpShaders = True ):
     progressDialog.setText("Exporting viewport shaders")
     progressDialog.increment()
 
-    # We need to build the future file path where we'll save the scene
-    sceneNM = nm.copy()
-    sceneNM.extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, ['ma','mb'], 'ma' )
-    # resource
-    if sceneNM.resource != '':
-        sceneNM.resource = sceneNM.resource + '-' + RIG_PIPE_NAME
-    else:
-        sceneNM.resource = RIG_PIPE_NAME
-    # path
-    sceneFilePath = ram.RamFileManager.buildPath((
-        publishFolder,
-        sceneNM.fileName()
-    ))
-
     # export viewport shaders
     if vpShaders:
         for node in nodes:
-            shaderFilePath = exportShaders( node, publishFolder, nm.copy(), VPSHADERS_PIPE_NAME )
+            shaderFilePath = exportShaders( node, publishFileInfo, VPSHADERS_PIPE_NAME )
             # Update Ramses Metadata (version)
             ram.RamMetaDataManager.setPipeType( shaderFilePath, VPSHADERS_PIPE_NAME )
-            ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
-            ram.RamMetaDataManager.setVersion( shaderFilePath, version )
+            ram.RamMetaDataManager.setVersion( shaderFilePath, publishFileInfo.version )
+            ram.RamMetaDataManager.setState( shaderFilePath, publishFileInfo.state )
             # Assign initialshadinggroup to all geo
             cmds.sets(node,e=True,forceElement='initialShadingGroup')
 
@@ -136,14 +106,27 @@ def publishRig( item, filePath, step, vpShaders = True ):
 
     progressDialog.setText("Saving")
     progressDialog.increment()
+
+    # We need to build the future file path where we'll save the scene
+    sceneInfo = publishFileInfo.copy()
+    sceneInfo.version = -1
+    sceneInfo.state = ''
+    sceneInfo.extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, ['ma','mb'], 'ma' )
+    # resource
+    if sceneInfo.resource != '':
+        sceneInfo.resource = sceneInfo.resource + '-' + RIG_PIPE_NAME
+    else:
+        sceneInfo.resource = RIG_PIPE_NAME
+    # path
+    sceneFilePath = sceneInfo.filePath()
     
     # save as publish
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
     # Update Ramses Metadata (version)
     ram.RamMetaDataManager.setPipeType( sceneFilePath, RIG_PIPE_NAME )
-    ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, version )
+    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
+    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 
     # reopen scene, etc
     endProcess(tempData, progressDialog)

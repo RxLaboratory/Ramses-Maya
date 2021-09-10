@@ -8,7 +8,7 @@ from .utils_nodes import getPublishNodes
 from .utils_items import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 
-def publishAnim( item, filePath, step ):
+def publishAnim( item, step, publishFileInfo ):
     
     # Options
     dialog = PublishAnimDialog(maf.getMayaWindow())
@@ -49,22 +49,7 @@ def publishAnim( item, filePath, step ):
     progressDialog.setText("Preparing")
     progressDialog.increment()
 
-    # Item info
-    nm = ram.RamNameManager()
-    nm.setFilePath( filePath )
-    if nm.project == '':
-        endProcess(tempData, progressDialog)
-        return
-    version = item.latestVersion( nm.resource, '', step )
-    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
-
-    # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        endProcess(tempData, progressDialog)
-        return
-
-    ram.log( "I'm publishing animation in " + publishFolder )
+    ram.log( "I'm publishing animation in " + os.path.dirname( publishFileInfo.filePath() ) )
     
     # We need to use alembic
     if maf.safeLoadPlugin("AbcExport"):
@@ -118,21 +103,20 @@ def publishAnim( item, filePath, step ):
         controller = r[1]
 
         # Generate file path
-        abcNM = nm.copy()
+        abcInfo = publishFileInfo.copy()
+        abcInfo.version = -1
+        abcInfo.state = ''
         # extension
-        abcNM.extension = 'abc'
+        abcInfo.extension = 'abc'
         # Type
         pipeType = ANIM_PIPE_NAME
         # resource
-        if abcNM.resource != '':
-            abcNM.resource = abcNM.resource + '-' + nodeName + '-' + pipeType
+        if abcInfo.resource != '':
+            abcInfo.resource = abcInfo.resource + '-' + nodeName + '-' + pipeType
         else:
-            abcNM.resource = nodeName + '-' + pipeType
+            abcInfo.resource = nodeName + '-' + pipeType
         # path
-        abcFilePath = ram.RamFileManager.buildPath((
-            publishFolder,
-            abcNM.fileName()
-        ))
+        abcFilePath = abcInfo.filePath()
 
         # Build the ABC command
         abcOptions = ' '.join([
@@ -153,8 +137,8 @@ def publishAnim( item, filePath, step ):
         cmds.AbcExport(j=abcOptions)
         # Update Ramses Metadata (version)
         ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
-        ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( abcFilePath, version )
+        ram.RamMetaDataManager.setVersion( abcFilePath, publishFileInfo.version )
+        ram.RamMetaDataManager.setState( abcFilePath, publishFileInfo.state )
 
         publishedNodes.append(nodeName)
 
@@ -162,26 +146,22 @@ def publishAnim( item, filePath, step ):
     progressDialog.increment()
 
     # Copy published scene to publish
-    sceneNM = nm.copy()
+    sceneInfo = publishFileInfo.copy()
 
-    sceneNM.extension = 'mb'
+    sceneInfo.extension = 'mb'
     # resource
-    if sceneNM.resource != '':
-        sceneNM.resource = sceneNM.resource + '-' + pipeType
+    if sceneInfo.resource != '':
+        sceneInfo.resource = sceneInfo.resource + '-' + pipeType
     else:
-        sceneNM.resource = pipeType
+        sceneInfo.resource = pipeType
     # path
-    sceneFilePath = ram.RamFileManager.buildPath((
-        publishFolder,
-        sceneNM.fileName()
-    ))
+    sceneFilePath = sceneInfo.filePath()
     # Save
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
     ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-    ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, version )
-
+    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
+    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 
     endProcess(tempData, progressDialog)
 

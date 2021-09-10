@@ -15,7 +15,7 @@ ONLY_PROXY = 0
 ALL = 1
 ONLY_GEO = 2
 
-def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
+def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     # Options
     removeHidden = True
@@ -75,21 +75,8 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     noFreeze = noFreeze.replace(' ','')
     noFreeze = noFreeze.split(',')
 
-    # Item info
-    nm = ram.RamNameManager()
-    nm.setFilePath( filePath )
-    if nm.project == '':
-        endProcess(tempData, progressDialog)
-        return
-    version = item.latestVersion( nm.resource, '', step )
-    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
-
     # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        endProcess(tempData, progressDialog)
-        return
-    ram.log( "I'm publishing geometry in " + publishFolder )
+    ram.log( "I'm publishing geometry in " + os.path.dirname( publishFileInfo.filePath() ) )
 
     # Extension
     extension = ''
@@ -189,19 +176,19 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         if extension == 'abc':
             # Save and create Abc
             # Generate file path
-            abcNM = nm.copy()
+            abcInfo = publishFileInfo.copy()
+            # remove version and state
+            abcInfo.version = -1
+            abcInfo.state = ''
             # extension
-            abcNM.extension = 'abc'
+            abcInfo.extension = 'abc'
             # resource
-            if abcNM.resource != '':
-                abcNM.resource = abcNM.resource + '-' + nodeName + '-' + pType
+            if abcInfo.resource != '':
+                abcInfo.resource = abcInfo.resource + '-' + nodeName + '-' + pType
             else:
-                abcNM.resource = nodeName + '-' + pType
-            # path
-            abcFilePath = ram.RamFileManager.buildPath((
-                publishFolder,
-                abcNM.fileName()
-            ))
+                abcInfo.resource = nodeName + '-' + pType
+
+            abcPath = abcInfo.filePath()
             # Save
             abcOptions = ' '.join([
                 '-frameRange 1 1',
@@ -211,13 +198,13 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
                 '-writeUVSets',
                 '-dataFormat hdf',
                 '-root |' + controller,
-                '-file "' + abcFilePath + '"'
+                '-file "' + abcPath + '"'
             ])
             cmds.AbcExport(j=abcOptions)
             # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setPipeType( abcFilePath, pType )
-            ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
-            ram.RamMetaDataManager.setVersion( abcFilePath, version )
+            ram.RamMetaDataManager.setPipeType( abcPath, pType )
+            ram.RamMetaDataManager.setVersion( abcPath, publishFileInfo.version )
+            ram.RamMetaDataManager.setState( abcPath, publishFileInfo.state )
 
         # Export viewport shaders
         shaderMode = ''
@@ -226,13 +213,13 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         elif RDRSHADERS_PIPE_FILE in pipeFiles:
             shaderMode = RDRSHADERS_PIPE_NAME
         if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-            shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), shaderMode )
+            shaderFilePath = exportShaders( node, publishFileInfo.copy(), shaderMode )
             # Update Ramses Metadata (version)
             if extension == 'abc':
-                ram.RamMetaDataManager.setValue( abcFilePath, 'shaderFilePath', shaderFilePath )
+                ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
             ram.RamMetaDataManager.setPipeType( shaderFilePath, shaderMode )
-            ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
-            ram.RamMetaDataManager.setVersion( shaderFilePath, version )
+            ram.RamMetaDataManager.setVersion( shaderFilePath, publishFileInfo.version )
+            ram.RamMetaDataManager.setState( shaderFilePath, publishFileInfo.state )
 
         publishedNodes.append(node)
 
@@ -277,7 +264,9 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
     maf.removeEmptyGroups()
 
     # Copy published scene to publish
-    sceneNM = nm.copy()
+    sceneInfo = publishFileInfo.copy()
+    sceneInfo.version = -1
+    sceneInfo.state = ''
 
     # Get Type
     pipeType = GEO_PIPE_NAME
@@ -288,25 +277,22 @@ def publishGeo(item, filePath, step, pipeFiles = [GEO_PIPE_FILE]):
         pipeType = PROXYGEO_PIPE_NAME
 
     if SET_PIPE_FILE in pipeFiles:
-        sceneNM.extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+        sceneInfo.extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
     else:
-        sceneNM.extension = 'mb'
+        sceneInfo.extension = 'mb'
     # resource
-    if sceneNM.resource != '':
-        sceneNM.resource = sceneNM.resource + '-' + pipeType
+    if sceneInfo.resource != '':
+        sceneInfo.resource = sceneInfo.resource + '-' + pipeType
     else:
-        sceneNM.resource = pipeType
+        sceneInfo.resource = pipeType
     # path
-    sceneFilePath = ram.RamFileManager.buildPath((
-        publishFolder,
-        sceneNM.fileName()
-    ))
+    sceneFilePath = sceneInfo.filePath()
     # Save
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
     ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-    ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, version )
+    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
+    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 
     endProcess(tempData, progressDialog)
 

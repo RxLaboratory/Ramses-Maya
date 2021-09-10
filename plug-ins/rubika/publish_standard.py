@@ -6,7 +6,7 @@ import dumaf as maf # pylint: disable=import-error
 from .utils_items import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 
-def publishStandard( item, filePath, step, extension ):
+def publishStandard( item, step, publishFileInfo, extension ):
     
     # Progress
     progressDialog = maf.ProgressDialog()
@@ -19,38 +19,23 @@ def publishStandard( item, filePath, step, extension ):
     # Remove empty groups from the scene
     maf.removeEmptyGroups()
 
-    # Item info
-    nm = ram.RamNameManager()
-    nm.setFilePath( filePath )
-    if nm.project == '':
-        progressDialog.hide()
-        return
-    version = item.latestVersion( nm.resource, '', step )
-    versionFilePath = item.latestVersionFilePath( nm.resource, '', step )
-
-    # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        progressDialog.hide()
-        return
-    ram.log( "I'm publishing geometry in " + publishFolder )
+    ram.log( "I'm publishing geometry in " + os.path.dirname( publishFileInfo.filePath() ) )
 
     progressDialog.setText( "Publishing..." )
     progressDialog.increment()
 
     # Copy published scene to publish
-    sceneNM = nm.copy()
-    sceneNM.extension = extension
+    sceneInfo = publishFileInfo.copy()
+    sceneInfo.version = -1
+    sceneInfo.state = ''
+    sceneInfo.extension = extension
     # resource
-    if sceneNM.resource != '':
-        sceneNM.resource = sceneNM.resource + '-Published'
+    if sceneInfo.resource != '':
+        sceneInfo.resource = sceneInfo.resource + '-Published'
     else:
-        sceneNM.resource = 'Published'
+        sceneInfo.resource = 'Published'
     # path
-    sceneFilePath = ram.RamFileManager.buildPath((
-        publishFolder,
-        sceneNM.fileName()
-    ))
+    sceneFilePath = sceneInfo.filePath()
 
     # Save
     cmds.file( rename=sceneFilePath )
@@ -59,8 +44,8 @@ def publishStandard( item, filePath, step, extension ):
         ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARDA_PIPE_NAME )
     else:
         ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARDB_PIPE_NAME )
-    ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, version )
+    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
+    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 
     progressDialog.hide()
 
