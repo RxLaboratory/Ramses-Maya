@@ -163,7 +163,7 @@ class PublishTemplateDialog( QDialog ):
 
     @Slot()
     def __buildFileName(self):
-        nm = ram.RamNameManager()
+        nm = ram.RamFileInfo()
 
         nm.project = self.__getCurrentShortName( self.projectBox )
         nm.step = self.__getCurrentShortName( self.stepBox )
@@ -186,7 +186,7 @@ class PublishTemplateDialog( QDialog ):
         self.locationEdit.setText("")
         # Try to extract info from the path
         if path != "":
-            nm = ram.RamNameManager()
+            nm = ram.RamFileInfo()
             nm.setFilePath( path )
             project = nm.project
             step = nm.step
