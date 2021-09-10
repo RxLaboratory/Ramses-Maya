@@ -508,8 +508,14 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if self.publish:
             publishedFileInfo = ram.RamFileManager.getPublishInfo( saveFilePath )
+            print(publishedFileInfo.filePath())
+            # Prepare the file for backup in the published folder
+            backupInfo = publishedFileInfo.copy()
+            backupInfo.version = -1
+            backupInfo.state = ''
             # Save
-            publishedFilePath = publishedFileInfo.filePath()
+            print(backupInfo.filePath())
+            publishedFilePath = backupInfo.filePath()
             cmds.file( rename = publishedFilePath )
             cmds.file( save=True, options="v=1;" )
             ram.RamMetaDataManager.appendHistoryDate( publishedFilePath )
@@ -524,7 +530,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 step = project.step(currentStep)
                 ramses.setCurrentProject(project)
             if step is not None:
-                ramses.publish( currentItem, saveFilePath, step)
+                ramses.publish( currentItem, step, publishedFileInfo.copy() )
 
         if self.preview:
             cmds.ramPreview()
