@@ -100,7 +100,7 @@ def publishShaders( item, step, publishFileInfo, mode):
     # Publish folder
     ram.log( "I'm publishing the shaders in " + os.path.dirname( publishFileInfo.filePath() ) )
 
-    for node in nodes:
+    for node in reversed(nodes):
         progressDialog.setText("Publishing: " + node)
         progressDialog.increment()
 
@@ -116,14 +116,15 @@ def publishShaders( item, step, publishFileInfo, mode):
         childNodes.append(node)
 
         # Clean (remove what we don't want to publish)
-        for childNode in childNodes:
+        for childNode in reversed(childNodes):
 
             # Remove hidden
             if removeHidden and cmds.getAttr(childNode + '.v') == 0:
                 cmds.delete(childNode)
                 continue
 
-            maf.cleanNode( childNode, True, ('mesh'), False, False)
+            maf.cleanNode( childNode, True, False, False)
+            maf.checkNode( childNode, True, ('mesh'))
         
         # Remove remaining empty groups
         maf.removeEmptyGroups(node)

@@ -121,7 +121,31 @@ def getNodesInSet( setName ):
         iterator.next()
     return publishPaths
 
-def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True, keepHistory=False ):
+def checkNode( node, deleteIfEmpty = True, typesToKeep=('mesh') ):
+    if not cmds.objExists(node):
+        return False
+    
+    # The shape(s) of this node
+    shapes = cmds.listRelatives(node,s=True,f=True)
+
+    if shapes is None:
+        # No shapes, no child: empty group to remove
+        if not hasChildren(node) and deleteIfEmpty:
+            cmds.delete(node)
+        # Finished
+        return False
+
+    shape = shapes[0]
+
+    # Check type
+    shapeType = cmds.nodeType( shape )
+    if not shapeType in typesToKeep:
+        cmds.delete(node)
+        return False
+        
+    return True
+
+def cleanNode( node, deleteIfEmpty = True, renameShapes = True, freezeTranform = True, keepHistory=False ):
 
     if not cmds.objExists(node):
         return False
@@ -147,23 +171,18 @@ def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes 
     # Check type
     shapeType = cmds.nodeType( shape )
         
-    if shapeType not in typesToKeep:
-        cmds.delete(shape)
-        if not hasChildren( node ) and deleteIfEmpty:
-            cmds.delete( node )
-            return False
-    else:
-        # Delete history
-        if not keepHistory:
-            cmds.delete(shape, constructionHistory=True)
+    # Delete history
+    if not keepHistory:
+        cmds.delete(shape, constructionHistory=True)
 
-        # Freeze transform & center pivot
-        if freezeTranform and shapeType == 'mesh':
-            freezeTransform(node)
+    # Freeze transform & center pivot
+    if freezeTranform and shapeType == 'mesh':
+        freezeTransform(node)
 
-        # Rename shapes after transform nodes
-        if renameShapes:
-            cmds.rename(shape, getNodeBaseName(node) + 'Shape')    
+    # Rename shapes after transform nodes
+    if renameShapes:
+        cmds.rename(shape, getNodeBaseName(node) + 'Shape')   
+
     return True  
 
 def snapNodeTo( nodeFrom, nodeTo):

@@ -59,7 +59,7 @@ def publishAnim( item, step, publishFileInfo ):
     # Let's count how many objects are published
     publishedNodes = []
 
-    for node in nodes:
+    for node in reversed(nodes):
         # Full path node
         node = maf.getNodeAbsolutePath( node )
         nodeName = maf.getNodeBaseName( node )
@@ -78,7 +78,7 @@ def publishAnim( item, step, publishFileInfo ):
             continue
 
         # Clean (remove what we don't want to publish)
-        for childNode in childNodes:
+        for childNode in reversed(childNodes):
 
             # Remove hidden
             if removeHidden and cmds.getAttr(childNode + '.v') == 0:
@@ -87,14 +87,18 @@ def publishAnim( item, step, publishFileInfo ):
 
             if keepDeformers: continue
 
-            typesToKeep = ['mesh']
-            if keepCurves:
-                typesToKeep.append('bezierCurve')
-                typesToKeep.append('nurbsCurve')
-            if keepSurfaces:
-                typesToKeep.append('nurbsSurface')
+            maf.cleanNode(childNode, True, False, False)
 
-            maf.cleanNode(childNode, True, typesToKeep, False, False)
+        if not keepDeformers:
+            for childNode in reversed(childNodes):
+                typesToKeep = ['mesh']
+                if keepCurves:
+                    typesToKeep.append('bezierCurve')
+                    typesToKeep.append('nurbsCurve')
+                if keepSurfaces:
+                    typesToKeep.append('nurbsSurface')
+
+                maf.checkNode(childNode, True, typesToKeep)
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
@@ -126,7 +130,6 @@ def publishAnim( item, step, publishFileInfo ):
             '-frameRange ' + str(frameIn) + ' ' + str(frameOut),
             filterEuler,
             '-step ' + str(frameStep),
-            '-root ' + controller,
             '-autoSubd', # crease
             '-uvWrite',
             '-writeUVSets',
@@ -134,6 +137,7 @@ def publishAnim( item, step, publishFileInfo ):
             '-writeVisibility',
             '-dataFormat hdf',
             '-renderableOnly',
+            '-root ' + controller,
             '-file "' + abcFilePath + '"',
         ])
         ram.log("These are the alembic options:\n" + abcOptions, ram.LogLevel.Debug)

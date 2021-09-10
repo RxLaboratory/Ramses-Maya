@@ -44,10 +44,21 @@ class PublishGeoDialog( QDialog ):
         self.renameShapesBox.setChecked(True)
         topLayout.addRow("Shape Nodes:", self.renameShapesBox)
         
-        self.onlyRootGroupsBox = QCheckBox("Export only the groups (and their children) from the root of the scene.")
-        self.onlyRootGroupsBox.setChecked(False)
-        topLayout.addRow("Only Root Groups:", self.onlyRootGroupsBox)
+        self.animationBox = QCheckBox("Keep animation.")
+        self.animationBox.setChecked(False)
+        topLayout.addRow("Animation:", self.animationBox)
+
+        self.animatedDeformersBox = QCheckBox("Keep animation.")
+        self.animatedDeformersBox.setChecked(False)
+        self.animatedDeformersBox.setEnabled(False)
+        topLayout.addRow("Animated Deformers:", self.animatedDeformersBox)
         
+        self.keepCurvesBox = QCheckBox("Keep Curves (Bézier or NURBS)")
+        topLayout.addRow("Curves:", self.keepCurvesBox)
+
+        self.keepSurfacesBox = QCheckBox("Keep NURBS Surfaces")
+        topLayout.addRow("Surfaces:", self.keepSurfacesBox)
+
         noFreezeWidget = QWidget()
         noFreezeLayout = QHBoxLayout()
         noFreezeLayout.setContentsMargins(0,0,0,0)
@@ -57,12 +68,6 @@ class PublishGeoDialog( QDialog ):
         noFreezeLayout.addWidget(self.noFreezeCaseBox)
         noFreezeWidget.setLayout(noFreezeLayout)
         topLayout.addRow("Don't freeze transformations for:", noFreezeWidget)
-
-        self.keepCurvesBox = QCheckBox("Keep Curves (Bézier or NURBS)")
-        topLayout.addRow("Curves:", self.keepCurvesBox)
-
-        self.keepSurfacesBox = QCheckBox("Keep NURBS Surfaces")
-        topLayout.addRow("Surfaces:", self.keepSurfacesBox)
 
         mainLayout.addLayout(topLayout)
 
@@ -79,8 +84,14 @@ class PublishGeoDialog( QDialog ):
         self.setLayout( mainLayout )
         
     def __connectEvents(self):
+        self.animationBox.clicked.connect( self.keepAnimationClicked )
         self._publishButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
+
+    @Slot()
+    def keepAnimationClicked(self, keepAnimation):
+        self.animatedDeformersBox.setEnabled( keepAnimation )
+        if not keepAnimation: self.animatedDeformersBox.setChecked(False)
 
     def removeHidden(self):
         return self.removeHiddenBox.isChecked()
@@ -91,8 +102,11 @@ class PublishGeoDialog( QDialog ):
     def renameShapes(self):
         return self.renameShapesBox.isChecked()
 
-    def onlyRootGroups(self):
-        return self.onlyRootGroupsBox.isChecked()
+    def animation(self):
+        return self.animationBox.isChecked()
+
+    def animatedDeformers(self):
+        return self.animatedDeformersBox.isChecked()
 
     def noFreeze(self):
         return self.noFreezeEdit.text()

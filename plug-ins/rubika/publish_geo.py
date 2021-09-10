@@ -21,7 +21,8 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     removeHidden = True
     removeLocators = True
     renameShapes = True
-    onlyRootGroups = False
+    keepAnimation = False
+    keepAnimatedDeformers = False
     noFreeze = ''
     noFreezeCaseSensitive = False
     keepCurves = False
@@ -37,18 +38,19 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         removeHidden = publishGeoDialog.removeHidden()
         removeLocators = publishGeoDialog.removeLocators()
         renameShapes = publishGeoDialog.renameShapes()
-        onlyRootGroups = publishGeoDialog.onlyRootGroups()
         noFreeze = publishGeoDialog.noFreeze()
         noFreezeCaseSensitive = publishGeoDialog.noFreezeCaseSensitive()
         keepCurves = publishGeoDialog.curves()
         keepSurfaces = publishGeoDialog.surfaces()
+        keepAnimation = publishGeoDialog.animation()
+        keepAnimatedDeformers = publishGeoDialog.animatedDeformers()
 
     # Progress
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
     progressDialog.setText("Publishing geometry")
 
-    tempData = maf.cleanScene()
+    tempData = maf.cleanScene(not keepAnimation)
 
     # For all nodes in the publish set or proxy set
     nodes = []
@@ -92,21 +94,9 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     # Let's count how many objects are published
     publishedNodes = []
 
-    for node in nodes:
+    for node in reversed(nodes):
         progressDialog.setText("Publishing: " + node)
         progressDialog.increment()
-
-        if onlyRootGroups:
-            # MOD to publish must be in a group
-            # The node must be a root
-            if maf.hasParent(node):
-                continue
-            # It must be a group
-            if not maf.isGroup(node):
-                continue 
-            # It must have children to publish
-            if not maf.hasChildren(node):
-                continue
 
         # Get all children
         childNodes = cmds.listRelatives( node, ad=True, f=True, type='transform')
@@ -121,22 +111,15 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
         maf.moveToZero(node)
 
-        # Clean (remove what we don't want to publish)
-        for childNode in childNodes:
+        # Clean (freeze transform, rename shapes, etc)
+        for childNode in reversed(childNodes):
 
             # Remove hidden
             if removeHidden and cmds.getAttr(childNode + '.v') == 0:
                 cmds.delete(childNode)
                 continue
 
-            typesToKeep = ['mesh']
-            if not removeLocators:
-                typesToKeep.append('locator')
-            if keepCurves:
-                typesToKeep.append('bezierCurve')
-                typesToKeep.append('nurbsCurve')
-            if keepSurfaces:
-                typesToKeep.append('nurbsSurface')
+            if keepAnimatedDeformers: continue
 
             freeze = True
             childName = childNode.lower()
@@ -145,7 +128,23 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                     freeze = False
                     break
 
-            maf.cleanNode( childNode, True, typesToKeep, renameShapes, freeze)
+            maf.cleanNode( childNode, True, renameShapes, not keepAnimation and freeze)
+
+        # Remove what we don't want
+        if not keepAnimatedDeformers:
+            for childNode in reversed(childNodes):
+
+                typesToKeep = ['mesh']
+                if not removeLocators:
+                    typesToKeep.append('locator')
+                if keepCurves:
+                    typesToKeep.append('bezierCurve')
+                    typesToKeep.append('nurbsCurve')
+                if keepSurfaces:
+                    typesToKeep.append('nurbsSurface')
+                    
+                maf.checkNode(childNode, True, typesToKeep )
+        
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
@@ -189,14 +188,23 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                 abcInfo.resource = nodeName + '-' + pType
 
             abcPath = abcInfo.filePath()
+
+            inFrame = 1
+            outFrame = 1
+            if keepAnimation:
+                inFrame = int(cmds.playbackOptions(q=True,ast=True))
+                outFrame = int(cmds.playbackOptions(q=True,aet=True))
             # Save
             abcOptions = ' '.join([
-                '-frameRange 1 1',
+                '-frameRange ', str(inFrame), str(outFrame),
+                '-step 1',
                 '-autoSubd', # Crease info
                 '-uvWrite',
                 '-worldSpace',
                 '-writeUVSets',
                 '-dataFormat hdf',
+                '-renderableOnly',
+                '-writeVisibility',
                 '-root |' + controller,
                 '-file "' + abcPath + '"'
             ])
