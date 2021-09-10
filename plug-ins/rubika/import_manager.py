@@ -118,6 +118,11 @@ def importer(item, filePaths, step):
         ram.log( "I'm importing the geometry." )
         for geoFile in geoFiles:
             geoNodes = geoNodes + importGeo( item, geoFile, step )
+
+    if len(proxyGeoFiles):
+        ram.log( "I'm importing the proxy geometry." )
+        for geoFile in proxyGeoFiles:
+            geoNodes = geoNodes + importGeo( item, geoFile, step )
     
     if len(setFiles) > 0:
         ram.log( "I'm importing the set." )
