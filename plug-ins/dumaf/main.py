@@ -182,6 +182,15 @@ def lockTransform( transformNode, l=True ):
     for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
         cmds.setAttr(transformNode + a, lock=l )
 
+def lockVisibility( node, l=True ):
+    if not cmds.attributeQuery( 'visibility', n=node, exists=True ): return
+    cmds.setAttr(node+'.visibility',lock=l)
+
+def isHidden( node ):
+    if not cmds.attributeQuery( 'visibility', n=node, exists=True ):
+        return False
+    return cmds.getAttr(node + '.visibility') == 0
+
 def getNodeBaseName( node, keepNameSpace = False ):
     nodeName = node.split('|')[-1]
     if not keepNameSpace:
@@ -341,10 +350,7 @@ def cleanScene(removeAnimation=True, lockVisibility = False):
 
 def lockHiddenVisibility():
     for node in cmds.ls(long=True):
-        if not cmds.attributeQuery( 'visibility', n=node, exists=True ):
-            continue
-        if not cmds.getAttr(node+'.visibility'):
-            cmds.setAttr(node+'.visibility',lock=True)
+        if isHidden(node): lockVisibility( node, True )
 
 def hasParent(node):
     return cmds.listRelatives(node, p=True, f=True) is not None

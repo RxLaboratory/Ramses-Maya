@@ -26,5 +26,7 @@ from .main import (
     restoreSaveSceneHotkey,
     restoreOpenSceneHotkey,
     restoreSaveSceneAsHotkey,
+    lockVisibility,
+    isHidden,
 )
 from .ui_progress import ProgressDialog
