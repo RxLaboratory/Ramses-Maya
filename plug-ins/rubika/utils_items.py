@@ -17,7 +17,7 @@ def getPipeExtension( pipe, pipes, defaultExtension):
         exts = fileType.extensions()
         if len(exts) == 0: continue
         ext = exts[0]
-        if ext.starswith('.'): return ext[1:]
+        if ext.startswith('.'): return ext[1:]
         return ext
     return defaultExtension
 

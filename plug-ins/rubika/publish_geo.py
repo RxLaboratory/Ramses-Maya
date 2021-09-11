@@ -101,6 +101,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
             cmds.delete(node)
             continue
 
+        maf.Node.lockTransform( node, False, recursive=True )
         maf.Node.moveToZero(node)
 
         # Clean (freeze transform, rename shapes, etc)

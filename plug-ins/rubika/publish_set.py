@@ -81,18 +81,19 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
         children.append( node )
 
         # Move the node we're publishing to zero
+        maf.Node.lockTransform( node, False, recursive=True )
         maf.Node.moveToZero( node )
 
         # Clean all children (reversed because we may remove some of them)
         for child in reversed(children):
-            
+
             # Remove hidden
             if removeHidden and maf.Node.isHidden( child ):
                 cmds.delete( child )
                 continue
 
             typesToKeep = ()
-            if not keepAnimatedDeformers:
+            if not keepAnimatedDeformers and not isRamsesManaged( child ):
                 typesToKeep = ['mesh']
                 if not removeLocators:
                     typesToKeep.append('locator')
@@ -104,7 +105,7 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
 
             if not maf.Node.check( child, True, typesToKeep ):
                 continue
-            
+           
             if not keepAnimatedDeformers:
                 maf.Node.removeExtraShapes( child )
                 if renameShapes: maf.Node.renameShapes( child )
@@ -137,13 +138,13 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
                 # else freeze
                 elif not keepAnimation and freeze:
                     maf.Node.freezeTransform( child )
-                    maf.Node.lockTransform( child )
+                    maf.Node.lockTransform( child, True )
 
-        # the main node may have been removed (if hidden for example)
+        # the main node may have been removed (if hidden or empty for example)
         if not cmds.objExists(node):
             continue
 
-        # Remove remaining empty groups
+        # Remove empty groups
         maf.Node.removeEmptyGroups(node)
 
         # Get the node name (without any proxy prefix)
