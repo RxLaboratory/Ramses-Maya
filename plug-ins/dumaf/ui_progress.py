@@ -12,7 +12,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
     Slot,
 )
 
-from dumaf import getMayaWindow
+from .ui import getMayaWindow
 
 class ProgressDialog( QMainWindow ):
 

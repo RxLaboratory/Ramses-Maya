@@ -138,11 +138,12 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
             
             if not keepAnimatedDeformers:
                 maf.nodes.removeExtraShapes( childNode )
-                maf.nodes.renameShapes( childNode )
+                if renameShapes: maf.nodes.renameShapes( childNode )
                 maf.nodes.deleteHistory( childNode )
 
             freeze = True
-            childName = childNode.lower()
+            childName = childNode
+            if not noFreezeCaseSensitive: childName = childNode.lower()
             for no in noFreeze:
                 if no in childName:
                     freeze = False

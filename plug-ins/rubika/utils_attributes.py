@@ -20,7 +20,7 @@ class RamsesAttribute():
     SOURCE_TIME = 'ramsesTimeStamp'
     RIG_FILE = 'ramsesRigFilePath'
     RIG_TIME = 'ramsesRigTimeStamp'
-    DT_TYPES = ('string')
+    DT_TYPES = ('string','float2','float3')
     AT_TYPES = ('long', 'bool')
     IS_PROXY = 'ramsesIsProxy'
     VERSION = 'ramsesVersion'
@@ -28,6 +28,23 @@ class RamsesAttribute():
     ORIGIN_POS = 'ramsesOriginalPos'
     ORIGIN_ROT = 'ramsesOriginalRot'
     ORIGIN_SCA = 'ramsesOriginalSca'
+
+def setRamsesAttr3( node, attr, x, y, z, t):
+    # Add if not already there
+    if attr not in cmds.listAttr(node):
+        if t in RamsesAttribute.DT_TYPES:
+            cmds.addAttr( node, ln= attr, dt=t)
+        else:
+            cmds.addAttr( node, ln=attr, at=t)
+    # Unlock
+    cmds.setAttr( node + '.' + attr, lock=False )
+    # Set
+    if t in RamsesAttribute.DT_TYPES:
+        cmds.setAttr( node + '.' + attr, x, y, z, type=t)
+    else:
+        cmds.setAttr( node + '.' + attr, x, y, z )
+    # Lock
+    cmds.setAttr( node + '.' + attr, lock=True )
 
 def setRamsesAttr( node, attr, value, t):
     # Add if not already there
@@ -42,7 +59,7 @@ def setRamsesAttr( node, attr, value, t):
     if t in RamsesAttribute.DT_TYPES:
         cmds.setAttr( node + '.' + attr, value, type=t)
     else:
-        cmds.setAttr( node + '.' + attr, value )    
+        cmds.setAttr( node + '.' + attr, value )
     # Lock
     cmds.setAttr( node + '.' + attr, lock=True )
 

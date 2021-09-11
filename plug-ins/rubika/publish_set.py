@@ -75,6 +75,9 @@ def publishSet(item, step, publishFileInfo):
         if children is None and maf.nodes.isGroup( node ):
             cmds.delete(node)
             continue
+        
+        # Add the node to the checks run on children
+        children.append( node )
 
         # Move the node we're publishing to zero
         maf.nodes.moveToZero( node )
@@ -103,23 +106,78 @@ def publishSet(item, step, publishFileInfo):
             
             if not keepAnimatedDeformers:
                 maf.nodes.removeExtraShapes( child )
-                maf.nodes.renameShapes( child )
+                if renameShapes: maf.nodes.renameShapes( child )
                 maf.nodes.deleteHistory( child )
 
             freeze = True
-            childName = child.lower()
+            childName = child
+            if not noFreezeCaseSensitive: childName = child.lower()
             for no in noFreeze:
                 if no in childName:
                     freeze = False
                     break
 
-            # If this child is the root of another asset, store it's PRS
-            if isRamsesManaged( child ):
-                # store the current PRS on the node
-            # else freeze
-            else not keepAnimation and freeze:
-                maf.nodes.lockTransform( child )
-                maf.nodes.freezeTransform( child )
+            if maf.nodes.isTransform( child ):
+                # If this child is the root of another asset, store its PRS
+                if isRamsesManaged( child ):
+                    # store the current PRS on the node
+                    tx = cmds.getAttr( child + '.tx' )
+                    ty = cmds.getAttr( child + '.ty' )
+                    tz = cmds.getAttr( child + '.tz' )
+                    setRamsesAttr3( child, RamsesAttribute.ORIGIN_POS, tx, ty, tz, 'float3')
+                    rx = cmds.getAttr( child + '.rx' )
+                    ry = cmds.getAttr( child + '.ry' )
+                    rz = cmds.getAttr( child + '.rz' )
+                    setRamsesAttr3( child, RamsesAttribute.ORIGIN_ROT, rx, ry, rz, 'float3')
+                    sx = cmds.getAttr( child + '.sx' )
+                    sy = cmds.getAttr( child + '.sy' )
+                    sz = cmds.getAttr( child + '.sz' )
+                    setRamsesAttr3( child, RamsesAttribute.ORIGIN_SCA, sx, sy, sz, 'float3')
+                # else freeze
+                elif not keepAnimation and freeze:
+                    maf.nodes.lockTransform( child )
+                    maf.nodes.freezeTransform( child )
 
-            
+        # the main node may have been removed (if hidden for example)
+        if not cmds.objExists(node):
+            continue
 
+        # Remove remaining empty groups
+        maf.nodes.removeEmptyGroups(node)
+
+        # Get the node name (without any proxy prefix)
+        nodeName = maf.paths.baseName(node, True)
+        if nodeName.lower().startswith('proxy_'):
+            nodeName = nodeName[6:]
+
+        # Create a root controller
+        r = maf.nodes.createRootCtrl( node, nodeName + '_' + SET_PIPE_NAME )
+        node = r[0]
+        controller = r[1]
+
+    # Clean scene:
+    # Remove empty groups from the scene
+    maf.nodes.removeEmptyGroups()
+
+    # Save scene
+    saveInfo = publishFileInfo.copy()
+    # remove version and state
+    saveInfo.version = -1
+    saveInfo.state = ''
+    # extension
+    saveInfo.extension = extension
+    # resource
+    if saveInfo.resource != '': saveInfo.resource = saveInfo.resource + '-'
+    saveInfo.resource = saveInfo.resource + nodeName + '-' + SET_PIPE_NAME
+    # save
+    savePath = saveInfo.filePath()
+    cmds.file( rename=savePath )
+    cmds.file( save=True, options="v=1;" )
+    ram.RamMetaDataManager.setPipeType( savePath, SET_PIPE_NAME )
+    ram.RamMetaDataManager.setVersion( savePath, publishFileInfo.version )
+    ram.RamMetaDataManager.setState( savePath, publishFileInfo.state )
+
+    endProcess(tempData, progressDialog)
+
+    ram.log("I've published the set.")
+    cmds.inViewMessage( msg="Set published!", pos='midCenterBot', fade=True)
