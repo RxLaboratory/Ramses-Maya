@@ -26,6 +26,7 @@ from .main import (
     restoreSaveSceneHotkey,
     restoreOpenSceneHotkey,
     restoreSaveSceneAsHotkey,
+    checkNode,
     lockVisibility,
     isHidden,
 )

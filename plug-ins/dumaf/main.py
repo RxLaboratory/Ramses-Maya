@@ -121,6 +121,30 @@ def getNodesInSet( setName ):
         iterator.next()
     return publishPaths
 
+def checkNode( node, deleteIfEmpty = True, typesToKeep=('mesh') ):
+    if not cmds.objExists(node):
+        return False
+    
+    # The shape(s) of this node
+    shapes = cmds.listRelatives(node,s=True,f=True)
+
+    if shapes is None:
+        # No shapes, no child: empty group to remove
+        if not hasChildren(node) and deleteIfEmpty:
+            cmds.delete(node)
+        # Finished
+        return False
+
+    shape = shapes[0]
+
+    # Check type
+    shapeType = cmds.nodeType( shape )
+    if not shapeType in typesToKeep:
+        cmds.delete(node)
+        return False
+        
+    return True
+    
 def cleanNode( node, deleteIfEmpty = True, typesToKeep = ('mesh'), renameShapes = True, freezeTranform = True ):
 
     # The shape(s) of this node
