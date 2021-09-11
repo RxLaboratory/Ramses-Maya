@@ -11,7 +11,7 @@ from .utils_constants import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 from .utils_items import * # pylint: disable=import-error
 
-def publishSet(item, step, publishFileInfo):
+def publishSet(item, step, publishFileInfo, pipeFiles):
 
     # Options
     # Show dialog
@@ -61,7 +61,7 @@ def publishSet(item, step, publishFileInfo):
     ram.log( "I'm publishing the sets in " + os.path.dirname( publishFileInfo.filePath() ) )
 
     # File extension
-    extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
+    extension = getExtension( step, SET_STEP, SET_PIPE_FILE, pipeFiles, ['ma','mb'], 'mb' )
 
     # Publish each set (reversed because we may remove some of them)
     publishedNodes = []

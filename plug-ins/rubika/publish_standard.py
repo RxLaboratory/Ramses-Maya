@@ -6,7 +6,7 @@ import dumaf as maf # pylint: disable=import-error
 from .utils_items import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 
-def publishStandard( item, step, publishFileInfo, extension ):
+def publishStandard( item, step, publishFileInfo, pipeFiles ):
     
     # Progress
     progressDialog = maf.ProgressDialog()
@@ -24,6 +24,8 @@ def publishStandard( item, step, publishFileInfo, extension ):
     progressDialog.setText( "Publishing..." )
     progressDialog.increment()
 
+    extension = getExtension( step, OTHER_STEP, STANDARD_PIPE_FILE, pipeFiles, ['ma', 'mb'], 'mb' )
+
     # Copy published scene to publish
     sceneInfo = publishFileInfo.copy()
     sceneInfo.version = -1
@@ -40,10 +42,7 @@ def publishStandard( item, step, publishFileInfo, extension ):
     # Save
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
-    if extension == 'ma':
-        ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARDA_PIPE_NAME )
-    else:
-        ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARDB_PIPE_NAME )
+    ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARD_PIPE_NAME )
     ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
     ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 

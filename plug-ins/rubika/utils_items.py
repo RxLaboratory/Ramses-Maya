@@ -9,7 +9,19 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 
-def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension ):
+def getPipeExtension( pipe, pipes, defaultExtension):
+    for p in pipes:
+        if pipe != p: continue
+        fileType = p.fileType()
+        if fileType is None: continue
+        exts = fileType.extensions()
+        if len(exts) == 0: continue
+        ext = exts[0]
+        if ext.starswith('.'): return ext[1:]
+        return ext
+    return defaultExtension
+
+def getExtension( step, defaultStep, defaultPipeFile, pipeFiles, filters, defaultExtension ):
     # Get the extension from the pipe (ma or mb)
     pipes = step.outputPipes()
     if len(pipes) == 0:
@@ -24,7 +36,7 @@ def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension 
             if ext.startswith('.'):
                 ext  = ext[1:]
             if ext.lower() in filters:
-                return ext
+                return getPipeExtension( defaultPipeFile, pipeFiles, ext)
 
     # Get default
     ext = defaultPipeFile.fileType().extensions()[0]
@@ -32,9 +44,9 @@ def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension 
     if ext.startswith('.'):
         ext  = ext[1:]
     if ext in filters:
-        return ext
+        return getPipeExtension( defaultPipeFile, pipeFiles, ext)
 
-    return defaultExtension
+    return getPipeExtension( defaultPipeFile, pipeFiles, defaultExtension)
 
 def getPublishFolder( item, step):
     publishFolder = item.publishFolderPath( step )

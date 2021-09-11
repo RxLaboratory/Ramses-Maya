@@ -15,8 +15,7 @@ ASS_FILE = ram.RamFileType( "Arnold Source File", 'ass', ['.ass'] )
 
 # Pipe Names - These are the names to use in the Ramses Pipeline Editor
 
-STANDARDB_PIPE_NAME = 'Standard' # used for layout, lighting, etc non-managed pipes
-STANDARDA_PIPE_NAME = 'StandardA' # used for layout, lighting, etc non-managed pipes
+STANDARD_PIPE_NAME = 'Standard' # used for layout, lighting, etc non-managed pipes
 GEO_PIPE_NAME = 'GeoPipe'
 VPSHADERS_PIPE_NAME = 'vpShaPipe'
 RDRSHADERS_PIPE_NAME = 'rdrShaPipe'
@@ -28,8 +27,7 @@ ANIM_PIPE_NAME = 'AnimPipe'
 
 # PipeFiles - These associate the name with a file type (and a color space, ignored for now)
 
-STANDARDB_PIPE_FILE = ram.RamPipeFile( STANDARDB_PIPE_NAME, MB_FILE, "" )
-STANDARDA_PIPE_FILE = ram.RamPipeFile( STANDARDA_PIPE_NAME, MA_FILE, "" )
+STANDARD_PIPE_FILE = ram.RamPipeFile( STANDARD_PIPE_NAME, MB_FILE, "" )
 GEO_PIPE_FILE = ram.RamPipeFile( GEO_PIPE_NAME, ABC_FILE, "" )
 VPSHADERS_PIPE_FILE = ram.RamPipeFile( VPSHADERS_PIPE_NAME, MB_FILE, "" )
 RDRSHADERS_PIPE_FILE = ram.RamPipeFile( RDRSHADERS_PIPE_NAME, MB_FILE, "" )
@@ -40,8 +38,7 @@ SET_PIPE_FILE = ram.RamPipeFile( SET_PIPE_NAME, MB_FILE, "" )
 ANIM_PIPE_FILE = ram.RamPipeFile( ANIM_PIPE_NAME, ABC_FILE, "" )
 
 PIPE_FILES = ( # All previously configured pipe files have to be listed here
-    STANDARDB_PIPE_FILE,
-    STANDARDA_PIPE_FILE,
+    STANDARD_PIPE_FILE,
     GEO_PIPE_FILE,
     VPSHADERS_PIPE_FILE,
     RDRSHADERS_PIPE_FILE,
@@ -62,6 +59,7 @@ LAY_STEP = ram.RamStep("Layout", 'LAY', '', ram.StepType.SHOT_PRODUCTION )
 LIGHT_STEP = ram.RamStep("Lighting", 'LIGHT', '', ram.StepType.SHOT_PRODUCTION )
 ANIM_STEP = ram.RamStep("Animation", 'ANIM', ram.StepType.SHOT_PRODUCTION )
 FX_STEP = ram.RamStep("Visual Effects", 'VFX', ram.StepType.SHOT_PRODUCTION )
+OTHER_STEP = ram.RamStep("Unknown", "UNK", ram.StepType.SHOT_PRODUCTION)
 
 # Association between the steps and the pipes
 
@@ -81,7 +79,7 @@ RIG_STEP._outputPipes = [
 ]
 
 LAY_STEP._outputPipes = [
-    ram.RamPipe( '', 'LAY', [ STANDARDB_PIPE_FILE ] ),
+    ram.RamPipe( '', 'LAY', [ STANDARD_PIPE_FILE ] ),
 ]
 
 SET_STEP._outputPipes = [
@@ -89,7 +87,7 @@ SET_STEP._outputPipes = [
 ]
 
 LIGHT_STEP._outputPipes = [
-    ram.RamPipe( '', 'LIGHT', [ STANDARDB_PIPE_FILE ] ),
+    ram.RamPipe( '', 'LIGHT', [ STANDARD_PIPE_FILE ] ),
 ]
 
 ANIM_STEP._outputPipes = [
@@ -98,6 +96,10 @@ ANIM_STEP._outputPipes = [
 
 FX_STEP._outputPipes = [
     ram.RamPipe( '', 'VFX', [ ANIM_PIPE_FILE ] ),
+]
+
+OTHER_STEP._outputPipes = [
+    ram.RamPipe( '', '', [ STANDARD_PIPE_FILE ] ),
 ]
 
 STEPS = ( # All previously configured steps files have to be listed here
@@ -109,4 +111,5 @@ STEPS = ( # All previously configured steps files have to be listed here
     LIGHT_STEP,
     ANIM_STEP,
     FX_STEP,
+    OTHER_STEP,
 )

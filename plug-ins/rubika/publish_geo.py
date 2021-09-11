@@ -83,14 +83,6 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     # Publish folder
     ram.log( "I'm publishing geometry in " + os.path.dirname( publishFileInfo.filePath() ) )
 
-    # Extension
-    extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['ma', 'mb', 'abc'], 'abc' )
-
-    if extension == 'abc':
-        # We need to use alembic
-        if maf.Plugin.load("AbcExport"):
-            ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
-
     # Let's count how many objects are published
     publishedNodes = []
 
@@ -162,12 +154,15 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         # Remove remaining empty groups
         maf.Node.removeEmptyGroups(node)
 
-        # Type
+        # Type and extension
         pType = ''
+        extension = ''
         if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             pType = PROXYGEO_PIPE_NAME
+            extension = getExtension( step, MOD_STEP, PROXYGEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
         else:
             pType = GEO_PIPE_NAME
+            extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
 
         # Create a root controller
         r = maf.Node.createRootCtrl( node, nodeName + '_' + pType )
@@ -175,6 +170,9 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         controller = r[1]
 
         if extension == 'abc':
+            if maf.Plugin.load("AbcExport"):
+                ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
+
             # Save and create Abc
             # Generate file path
             abcInfo = publishFileInfo.copy()
@@ -237,6 +235,15 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     progressDialog.increment()
 
     # Publish ma or mb
+
+    # Get Type and extension
+    pipeType = GEO_PIPE_NAME
+    pipe = GEO_PIPE_FILE
+    if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles:
+        pipeType = PROXYGEO_PIPE_NAME
+        pipe = PROXYGEO_PIPE_FILE
+    extension = getExtension( step, MOD_STEP, pipe, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+
     if extension in ('ma', 'mb'):
         # remove all nodes not children or parent of publishedNodes
         allTransformNodes = cmds.ls(transforms=True, long=True)
@@ -279,12 +286,6 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         sceneInfo = publishFileInfo.copy()
         sceneInfo.version = -1
         sceneInfo.state = ''
-
-        # Get Type
-        pipeType = GEO_PIPE_NAME
-
-        if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles:
-            pipeType = PROXYGEO_PIPE_NAME
 
         sceneInfo.extension = extension
         # resource

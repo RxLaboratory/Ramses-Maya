@@ -12,7 +12,7 @@ from .utils_general import *
 from .utils_items import *
 from .ui_publish_rig import PublishRigDialog
 
-def publishRig( item, step, publishFileInfo, vpShaders = True ):
+def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
 
     # Options
     publishDialog = PublishRigDialog(maf.UI.getMayaWindow())
@@ -115,7 +115,7 @@ def publishRig( item, step, publishFileInfo, vpShaders = True ):
     sceneInfo = publishFileInfo.copy()
     sceneInfo.version = -1
     sceneInfo.state = ''
-    sceneInfo.extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, ['ma','mb'], 'ma' )
+    sceneInfo.extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, pipeFiles, ['ma','mb'], 'ma' )
     # resource
     if sceneInfo.resource != '':
         sceneInfo.resource = sceneInfo.resource + '-' + RIG_PIPE_NAME

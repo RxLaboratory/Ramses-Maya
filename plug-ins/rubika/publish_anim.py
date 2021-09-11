@@ -8,10 +8,10 @@ from .utils_nodes import getPublishNodes
 from .utils_items import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 
-def publishAnim( item, step, publishFileInfo ):
+def publishAnim( item, step, publishFileInfo, pipeFiles ):
     
     # Options
-    dialog = PublishAnimDialog(maf.getMayaWindow())
+    dialog = PublishAnimDialog(maf.UI.getMayaWindow())
     if not dialog.exec_():
         return
 
@@ -54,10 +54,13 @@ def publishAnim( item, step, publishFileInfo ):
     progressDialog.increment()
 
     ram.log( "I'm publishing animation in " + os.path.dirname( publishFileInfo.filePath() ) )
+
+    extension = getExtension( step, ANIM_STEP, ANIM_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc')
     
     # We need to use alembic
-    if maf.Plugin.load("AbcExport"):
-        ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
+    if extension == 'abc':
+        if maf.Plugin.load("AbcExport"):
+            ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # Let's count how many objects are published
     publishedNodes = []
@@ -116,44 +119,45 @@ def publishAnim( item, step, publishFileInfo ):
         node = r[0]
         controller = r[1]
 
-        # Generate file path
-        abcInfo = publishFileInfo.copy()
-        abcInfo.version = -1
-        abcInfo.state = ''
-        # extension
-        abcInfo.extension = 'abc'
-        # Type
-        pipeType = ANIM_PIPE_NAME
-        # resource
-        if abcInfo.resource != '':
-            abcInfo.resource = abcInfo.resource + '-' + nodeName + '-' + pipeType
-        else:
-            abcInfo.resource = nodeName + '-' + pipeType
-        # path
-        abcFilePath = abcInfo.filePath()
+        if extension == 'abc':
+            # Generate file path
+            abcInfo = publishFileInfo.copy()
+            abcInfo.version = -1
+            abcInfo.state = ''
+            # extension
+            abcInfo.extension = 'abc'
+            # Type
+            pipeType = ANIM_PIPE_NAME
+            # resource
+            if abcInfo.resource != '':
+                abcInfo.resource = abcInfo.resource + '-' + nodeName + '-' + pipeType
+            else:
+                abcInfo.resource = nodeName + '-' + pipeType
+            # path
+            abcFilePath = abcInfo.filePath()
 
-        # Build the ABC command
-        abcOptions = ' '.join([
-            '-frameRange ' + str(frameIn) + ' ' + str(frameOut),
-            filterEuler,
-            '-step ' + str(frameStep),
-            '-autoSubd', # crease
-            '-uvWrite',
-            '-writeUVSets',
-            '-worldSpace',
-            '-writeVisibility',
-            '-dataFormat hdf',
-            '-renderableOnly',
-            '-root ' + controller,
-            '-file "' + abcFilePath + '"',
-        ])
-        ram.log("These are the alembic options:\n" + abcOptions, ram.LogLevel.Debug)
-        # Export
-        cmds.AbcExport(j=abcOptions)
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
-        ram.RamMetaDataManager.setVersion( abcFilePath, publishFileInfo.version )
-        ram.RamMetaDataManager.setState( abcFilePath, publishFileInfo.state )
+            # Build the ABC command
+            abcOptions = ' '.join([
+                '-frameRange ' + str(frameIn) + ' ' + str(frameOut),
+                filterEuler,
+                '-step ' + str(frameStep),
+                '-autoSubd', # crease
+                '-uvWrite',
+                '-writeUVSets',
+                '-worldSpace',
+                '-writeVisibility',
+                '-dataFormat hdf',
+                '-renderableOnly',
+                '-root ' + controller,
+                '-file "' + abcFilePath + '"',
+            ])
+            ram.log("These are the alembic options:\n" + abcOptions, ram.LogLevel.Debug)
+            # Export
+            cmds.AbcExport(j=abcOptions)
+            # Update Ramses Metadata (version)
+            ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
+            ram.RamMetaDataManager.setVersion( abcFilePath, publishFileInfo.version )
+            ram.RamMetaDataManager.setState( abcFilePath, publishFileInfo.state )
 
         publishedNodes.append(nodeName)
 
@@ -161,22 +165,23 @@ def publishAnim( item, step, publishFileInfo ):
     progressDialog.increment()
 
     # Copy published scene to publish
-    sceneInfo = publishFileInfo.copy()
+    if extension in ('ma', 'mb'):
+        sceneInfo = publishFileInfo.copy()
 
-    sceneInfo.extension = 'mb'
-    # resource
-    if sceneInfo.resource != '':
-        sceneInfo.resource = sceneInfo.resource + '-' + pipeType
-    else:
-        sceneInfo.resource = pipeType
-    # path
-    sceneFilePath = sceneInfo.filePath()
-    # Save
-    cmds.file( rename=sceneFilePath )
-    cmds.file( save=True, options="v=1;" )
-    ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
-    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
+        sceneInfo.extension = extension
+        # resource
+        if sceneInfo.resource != '':
+            sceneInfo.resource = sceneInfo.resource + '-' + pipeType
+        else:
+            sceneInfo.resource = pipeType
+        # path
+        sceneFilePath = sceneInfo.filePath()
+        # Save
+        cmds.file( rename=sceneFilePath )
+        cmds.file( save=True, options="v=1;" )
+        ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
+        ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
+        ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 
     endProcess(tempData, progressDialog)
 

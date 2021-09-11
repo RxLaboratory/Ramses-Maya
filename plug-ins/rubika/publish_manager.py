@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .publish_geo import *
+from .publish_set import *
 from .publish_shaders import *
 from .publish_standard import *
 from .publish_anim import *
@@ -27,8 +28,7 @@ def publisher(item, step, publishFileInfo):
     proxyGeo = False
     rig = False
     sets = False
-    mb = False
-    ma = False
+    standard = False
     anim = False
 
     pipeFiles = []
@@ -50,10 +50,8 @@ def publisher(item, step, publishFileInfo):
                 rig = True
             elif pipeFile == SET_PIPE_FILE:
                 sets = True
-            elif pipeFile == STANDARDB_PIPE_FILE:
-                mb = True
-            elif pipeFile == STANDARDA_PIPE_FILE:
-                ma = True
+            elif pipeFile == STANDARD_PIPE_FILE:
+                standard = True
             elif pipeFile == ANIM_PIPE_FILE:
                 anim = True
 
@@ -76,7 +74,7 @@ def publisher(item, step, publishFileInfo):
 
     if rig: # The rig may also publish the vp shaders
         vpShadersPublished = vpShaders
-        publishRig( item, step, publishFileInfo, vpShaders )
+        publishRig( item, step, publishFileInfo, pipeFiles, vpShaders )
 
     if vpShaders and not vpShadersPublished:
         ram.log( "I'm publishing the viewport shaders." )
@@ -96,16 +94,12 @@ def publisher(item, step, publishFileInfo):
 
     if sets:
         ram.log( "I'm publishing the set." )
-        publishGeo(item, step, publishFileInfo, pipeFiles)
+        publishSet(item, step, publishFileInfo, pipeFiles)
 
-    if mb:
+    if standard:
         ram.log( "Publishing Maya Binary." )
-        publishStandard( item, step, publishFileInfo, 'mb' )
+        publishStandard( item, step, publishFileInfo, pipeFiles )
     
-    if ma:
-        ram.log( "Publishing Maya ASCII." )
-        publishStandard( item, step, publishFileInfo, 'ma' )
-
     if anim:
         ram.log( "Publishing animation." )
-        publishAnim( item, step, publishFileInfo )
+        publishAnim( item, step, publishFileInfo, pipeFiles )
