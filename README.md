@@ -17,6 +17,22 @@ The Rx Asset Management System (Ramses) Maya Plugin
 
 ## TODO
 
-- Rebuild publish: check what is passed to the methods, select the right folder (probably: item, step, publishFolder, fileInfo(with version and state))
-- Rebuild import: update to use new versionning in published files
-- retest all pipes
+- Publish:
+    - Rig: Error: Non-deletable node
+- Import:
+    - when importing shaders (reference): override to set ramses attributes
+    - getCreateGroup does not return existing group
+    - Import anim (and remove rig) issue:
+        # #   File "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/plug-ins\rubika\import_anim.py", line 30, in importAnim
+        # #     step = getRamsesAttr(node, RamsesAttribute.STEP)
+        # #   File "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/plug-ins\rubika\utils_attributes.py", line 82, in getRamsesAttr
+        # #     if attr not in cmds.listAttr(node):
+        # # ValueError: No object matches name: |S001:Main|S001:IS_Rig|S001:IS_Rig_001:Iseult_Root|S001:IS_Rig_001:Iseult_Geo #
+    - autoselect same asset/shot as selected in the viewport
+    - UI: reload versions if action change
+- rebuild update
+    - RamItem latestversion not working
+    - Check/test updates
+    - Rebuild set update
+    - option to filter according to selection
+    

@@ -134,7 +134,7 @@ class UpdateDialog( QDialog ):
             state = getRamsesAttr( node, RamsesAttribute.STATE )
             resource = getRamsesAttr(node, RamsesAttribute.RESOURCE )
             state = ramses.state(state)
-            item.setData(Qt.UserRole + 1, "Current version: " + str(version) + "Current state: " + str(state))
+            item.setData(Qt.UserRole + 1, "Current version: " + str(version) + "\nCurrent state: " + str(state))
 
             updated = False
 

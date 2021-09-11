@@ -185,7 +185,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                 frameIn = int(cmds.playbackOptions(q=True,ast=True))
                 frameOut = int(cmds.playbackOptions(q=True,aet=True))
 
-            abcPath = publishNodeAsABC( publishFileInfo, controller, (frameIn, frameOut))
+            abcPath = publishNodeAsABC( publishFileInfo, controller, pType, (frameIn, frameOut))
 
         # Export shaders
         shaderMode = ''

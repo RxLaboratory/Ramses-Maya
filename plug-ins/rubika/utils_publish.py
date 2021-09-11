@@ -34,7 +34,7 @@ def publishNodesAsMayaScene( publishFileInfo, nodes, pipeName='Published', exten
     cmds.select( nodes, noExpand=True, r=True)
     # Save file
     cmds.file( rename=filePath )
-    cmds.file( save=True, exportSelected=True, options="v=1;", force=True )
+    cmds.file( exportSelected=True, options="v=1;" )
     cmds.select(cl=True)
 
     # Set metadata
