@@ -221,18 +221,18 @@ class PreviewDialog( QDialog ):
         numRenderCam = len(renderableCameras)
         if numRenderCam > 0:
             for camera in renderableCameras:
-                cameraName = maf.paths.baseName(camera)
+                cameraName = maf.Path.baseName(camera)
                 self.cameraBox.addItem( cameraName, camera)
             self.cameraBox.insertSeparator( numRenderCam )
         numPerspCam = len( perspCameras )
         if numPerspCam > 0:
             for camera in perspCameras:
-                cameraName = maf.paths.baseName(camera)
+                cameraName = maf.Path.baseName(camera)
                 self.cameraBox.addItem( cameraName, camera)
             self.cameraBox.insertSeparator( numRenderCam+numPerspCam )
 
         for camera in orthoCameras:
-            cameraName = maf.paths.baseName(camera)
+            cameraName = maf.Path.baseName(camera)
             self.cameraBox.addItem( cameraName, camera)
     
     def comment(self):

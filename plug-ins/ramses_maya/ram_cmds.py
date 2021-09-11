@@ -235,7 +235,7 @@ class RamSaveCmd( om.MPxCommand ):
             latestVersionFile = ram.RamFileManager.getLatestVersionFilePath( saveFilePath )
             currentComment = ram.RamMetaDataManager.getComment( latestVersionFile )
             # Ask for comment
-            commentDialog = CommentDialog(maf.ui.getMayaWindow())
+            commentDialog = CommentDialog(maf.UI.getMayaWindow())
             commentDialog.setComment( currentComment )
             if not commentDialog.exec_():
                 return False
@@ -339,7 +339,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         step = getStep( currentFilePath )
         item = ram.RamItem.fromPath( currentFilePath )
 
-        saveAsDialog = SaveAsDialog(maf.ui.getMayaWindow())
+        saveAsDialog = SaveAsDialog(maf.UI.getMayaWindow())
         if project is not None:
             saveAsDialog.setProject( project )
         if item is not None:
@@ -448,7 +448,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         if self.updateSatus:
             # Show status dialog
-            statusDialog = StatusDialog(maf.ui.getMayaWindow())
+            statusDialog = StatusDialog(maf.UI.getMayaWindow())
             statusDialog.setOffline(not settings.online)
             statusDialog.setPublish( self.publish )
             if currentStatus is not None:
@@ -566,13 +566,13 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='No other version found.', pos='midBottom', fade=True )
             return
 
-        versionDialog = VersionDialog(maf.ui.getMayaWindow())
+        versionDialog = VersionDialog(maf.UI.getMayaWindow())
         versionDialog.setVersions( versionFiles )
         if not versionDialog.exec_():
             return
 
          # If the current file needs to be saved
-        if not maf.scene.checkSaveState():
+        if not maf.Scene.checkSaveState():
             return
         
         versionFile = ram.RamFileManager.restoreVersionFile( versionDialog.getVersion() )
@@ -607,7 +607,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Prepare the dialog
-        publishDialog = PublishTemplateDialog(maf.ui.getMayaWindow())
+        publishDialog = PublishTemplateDialog(maf.UI.getMayaWindow())
         if not settings.online:
             publishDialog.setOffline()
 
@@ -660,7 +660,7 @@ class RamOpenCmd( om.MPxCommand ):
             return
 
         # Let's show the dialog
-        importDialog = ImportDialog(maf.ui.getMayaWindow())
+        importDialog = ImportDialog(maf.UI.getMayaWindow())
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
         if currentFilePath != '':
@@ -679,7 +679,7 @@ class RamOpenCmd( om.MPxCommand ):
 
         if result == 1: # open
             # If the current file needs to be saved
-            if not maf.scene.checkSaveState():
+            if not maf.Scene.checkSaveState():
                 return
             # Get the file, check if it's a version
             file = importDialog.getFile()
@@ -751,18 +751,18 @@ class RamOpenCmd( om.MPxCommand ):
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                groupName = maf.nodes.getCreateGroup(groupName)
+                groupName = maf.Node.getCreateGroup(groupName)
                 # Import the file
                 newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
                 # Add a group for the imported asset
-                itemGroupName = maf.nodes.getCreateGroup( itemShortName, groupName)
+                itemGroupName = maf.Node.getCreateGroup( itemShortName, groupName)
                 for node in newNodes:
                     # When parenting the root, children won't exist anymore
                     if not cmds.objExists(node):
                         continue
                     # only the root transform nodes
-                    if cmds.nodeType(node) == 'transform' and not maf.nodes.hasParent(node):
-                        maf.nodes.parent(node, itemGroupName)
+                    if cmds.nodeType(node) == 'transform' and not maf.Node.hasParent(node):
+                        maf.Node.parent(node, itemGroupName)
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
@@ -814,7 +814,7 @@ class RamPreviewCmd( om.MPxCommand ):
         currentAO = cmds.getAttr('hardwareRenderingGlobals.ssaoEnable')
 
         # show UI
-        dialog = PreviewDialog( maf.ui.getMayaWindow() )
+        dialog = PreviewDialog( maf.UI.getMayaWindow() )
         result = dialog.exec_()
         if not result:
             return
@@ -840,7 +840,7 @@ class RamPreviewCmd( om.MPxCommand ):
             itemName = 'Asset: ' + itemName
         else:
             itemName = 'Item: ' + itemName
-        camName = maf.paths.baseName(cam)
+        camName = maf.Path.baseName(cam)
         focalLength = str(round(cmds.getAttr(cam + '.focalLength'))) + ' mm'
         if cmds.keyframe(cam, at='focalLength', query=True, keyframeCount=True):
             focalLength = 'Animated'
@@ -904,7 +904,7 @@ class RamPreviewCmd( om.MPxCommand ):
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
 
-    settingsDialog = SettingsDialog( maf.ui.getMayaWindow() )
+    settingsDialog = SettingsDialog( maf.UI.getMayaWindow() )
 
     def __init__(self):
         om.MPxCommand.__init__(self)
