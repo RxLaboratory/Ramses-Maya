@@ -762,7 +762,7 @@ class RamOpenCmd( om.MPxCommand ):
                         continue
                     # only the root transform nodes
                     if cmds.nodeType(node) == 'transform' and not maf.hasParent(node):
-                        maf.parentNodeTo(node, itemGroupName)
+                        maf.parent(node, itemGroupName)
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
@@ -840,7 +840,7 @@ class RamPreviewCmd( om.MPxCommand ):
             itemName = 'Asset: ' + itemName
         else:
             itemName = 'Item: ' + itemName
-        camName = maf.getNodeBaseName(cam)
+        camName = maf.baseName(cam)
         focalLength = str(round(cmds.getAttr(cam + '.focalLength'))) + ' mm'
         if cmds.keyframe(cam, at='focalLength', query=True, keyframeCount=True):
             focalLength = 'Animated'
