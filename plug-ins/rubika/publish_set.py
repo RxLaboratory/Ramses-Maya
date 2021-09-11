@@ -86,3 +86,40 @@ def publishSet(item, step, publishFileInfo):
             if removeHidden and maf.nodes.isHidden( child ):
                 cmds.delete( child )
                 continue
+
+            typesToKeep = ()
+            if not keepAnimatedDeformers:
+                typesToKeep = ['mesh']
+                if not removeLocators:
+                    typesToKeep.append('locator')
+                if keepCurves:
+                    typesToKeep.append('bezierCurve')
+                    typesToKeep.append('nurbsCurve')
+                if keepSurfaces:
+                    typesToKeep.append('nurbsSurface')
+
+            if not maf.nodes.check( child, True, typesToKeep ):
+                continue
+            
+            if not keepAnimatedDeformers:
+                maf.nodes.removeExtraShapes( child )
+                maf.nodes.renameShapes( child )
+                maf.nodes.deleteHistory( child )
+
+            freeze = True
+            childName = child.lower()
+            for no in noFreeze:
+                if no in childName:
+                    freeze = False
+                    break
+
+            # If this child is the root of another asset, store it's PRS
+            if isRamsesManaged( child ):
+                # store the current PRS on the node
+            # else freeze
+            else not keepAnimation and freeze:
+                maf.nodes.lockTransform( child )
+                maf.nodes.freezeTransform( child )
+
+            
+

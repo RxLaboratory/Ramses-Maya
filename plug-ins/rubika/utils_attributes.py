@@ -25,6 +25,9 @@ class RamsesAttribute():
     IS_PROXY = 'ramsesIsProxy'
     VERSION = 'ramsesVersion'
     STATE = 'ramsesState'
+    ORIGIN_POS = 'ramsesOriginalPos'
+    ORIGIN_ROT = 'ramsesOriginalRot'
+    ORIGIN_SCA = 'ramsesOriginalSca'
 
 def setRamsesAttr( node, attr, value, t):
     # Add if not already there
