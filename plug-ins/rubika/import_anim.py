@@ -26,22 +26,16 @@ def importAnim( item, filePath, step ):
             currentAssetName = rootCtrl.split('|')[-1].split(':')[-1].split('_')[0]
             ramsesNodes = listRamsesNodes()
             for node in ramsesNodes:
+                newRootCtrls.append(rootCtrl)
                 step = getRamsesAttr(node, RamsesAttribute.STEP)
-                if not step:
-                    newRootCtrls.append(rootCtrl)
-                    continue
-                if step != RIG_STEP.shortName():
-                    newRootCtrls.append(rootCtrl)
-                    continue
+                if not step: continue
+                if step != RIG_STEP.shortName():  continue
                 itemName = getRamsesAttr(node, RamsesAttribute.ITEM)
-                if not itemName:
-                    newRootCtrls.append(rootCtrl)
-                    continue
+                if not itemName: continue
                 if itemName == currentAssetName:
                     # Re-parent
                     p = cmds.listRelatives( node, parent=True, f=True, type='transform')
-                    if p:
-                        rootCtrl = maf.Node.parent( rootCtrl, p[0] )
+                    if p is not None: rootCtrl = maf.Node.parent( rootCtrl, p[0] )
                     maf.Node.delete( node )
                 newRootCtrls.append(rootCtrl)
 

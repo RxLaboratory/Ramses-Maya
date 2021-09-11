@@ -11,6 +11,7 @@ from .utils_constants import *
 from .utils_general import *
 from .utils_items import *
 from .ui_publish_rig import PublishRigDialog
+from .utils_publish import *
 
 def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
 
@@ -97,41 +98,19 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
     # export viewport shaders
     if vpShaders:
         for node in nodes:
-            shaderFilePath = exportShaders( node, publishFileInfo, VPSHADERS_PIPE_NAME )
-            # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setPipeType( shaderFilePath, VPSHADERS_PIPE_NAME )
-            ram.RamMetaDataManager.setVersion( shaderFilePath, publishFileInfo.version )
-            ram.RamMetaDataManager.setState( shaderFilePath, publishFileInfo.state )
+            exportShaders( node, publishFileInfo, VPSHADERS_PIPE_NAME )
             # Assign initialshadinggroup to all geo
             cmds.sets(node,e=True,forceElement='initialShadingGroup')
-
-    # delete all user shaders
-    mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteShadingGroupsAndMaterials")')
+            # delete all user shaders
+            mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteShadingGroupsAndMaterials")')
 
     progressDialog.setText("Saving")
     progressDialog.increment()
 
-    # We need to build the future file path where we'll save the scene
-    sceneInfo = publishFileInfo.copy()
-    sceneInfo.version = -1
-    sceneInfo.state = ''
-    sceneInfo.extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, pipeFiles, ['ma','mb'], 'ma' )
-    # resource
-    if sceneInfo.resource != '':
-        sceneInfo.resource = sceneInfo.resource + '-' + RIG_PIPE_NAME
-    else:
-        sceneInfo.resource = RIG_PIPE_NAME
-    # path
-    sceneFilePath = sceneInfo.filePath()
-    
-    # save as publish
-    cmds.file( rename=sceneFilePath )
-    cmds.file( save=True, options="v=1;" )
-    # Update Ramses Metadata (version)
-    ram.RamMetaDataManager.setPipeType( sceneFilePath, RIG_PIPE_NAME )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
-    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
-
+    # export
+    extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, pipeFiles, ['ma','mb'], 'ma' )
+    publishNodesAsMayaScene( publishFileInfo, nodes, RIG_PIPE_NAME, extension)
+   
     # reopen scene, etc
     endProcess(tempData, progressDialog)
 

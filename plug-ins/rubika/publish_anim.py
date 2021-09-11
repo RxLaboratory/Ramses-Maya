@@ -7,6 +7,7 @@ import dumaf as maf # pylint: disable=import-error
 from .utils_nodes import getPublishNodes
 from .utils_items import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
+from .utils_publish import * # pylint: disable=import-error
 
 def publishAnim( item, step, publishFileInfo, pipeFiles ):
     
@@ -20,10 +21,6 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
     frameStep = dialog.getFrameStep()
     frameIn = frameRange[1] - frameRange[0]
     frameOut = frameRange[2] + frameRange[3]
-    if filterEuler:
-        filterEuler = '-eulerFilter'
-    else:
-        filterEuler = ''
     keepCurves = dialog.curves()
     keepSurfaces = dialog.surfaces()
     keepDeformers = dialog.deformers()
@@ -57,11 +54,6 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
 
     extension = getExtension( step, ANIM_STEP, ANIM_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc')
     
-    # We need to use alembic
-    if extension == 'abc':
-        if maf.Plugin.load("AbcExport"):
-            ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
-
     # Let's count how many objects are published
     publishedNodes = []
 
@@ -123,82 +115,25 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
         if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'abc'): ext = 'abc'
 
         if ext == 'abc':
-            # Generate file path
-            abcInfo = publishFileInfo.copy()
-            abcInfo.version = -1
-            abcInfo.state = ''
-            # extension
-            abcInfo.extension = 'abc'
-            # Type
-            pipeType = ANIM_PIPE_NAME
-            # resource
-            if abcInfo.resource != '':
-                abcInfo.resource = abcInfo.resource + '-' + nodeName + '-' + pipeType
-            else:
-                abcInfo.resource = nodeName + '-' + pipeType
-            # path
-            abcFilePath = abcInfo.filePath()
+            publishNodeAsABC( publishFileInfo, controller, ANIM_PIPE_NAME, (frameIn, frameOut), frameStep, filterEuler)
 
-            # Build the ABC command
-            abcOptions = ' '.join([
-                '-frameRange ' + str(frameIn) + ' ' + str(frameOut),
-                filterEuler,
-                '-step ' + str(frameStep),
-                '-autoSubd', # crease
-                '-uvWrite',
-                '-writeUVSets',
-                '-worldSpace',
-                '-writeVisibility',
-                '-dataFormat hdf',
-                '-renderableOnly',
-                '-root ' + controller,
-                '-file "' + abcFilePath + '"',
-            ])
-            ram.log("These are the alembic options:\n" + abcOptions, ram.LogLevel.Debug)
-            # Export
-            cmds.AbcExport(j=abcOptions)
-            # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
-            ram.RamMetaDataManager.setVersion( abcFilePath, publishFileInfo.version )
-            ram.RamMetaDataManager.setState( abcFilePath, publishFileInfo.state )
-
-        publishedNodes.append(nodeName)
+        publishedNodes.append(controller)
 
     progressDialog.setText("Cleaning...")
     progressDialog.increment()
 
+    # Publish as ma/mb
     ext = extension
     if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'ma'): ext = 'ma'
     if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
 
-    # Copy published scene to publish
     if ext in ('ma', 'mb'):
-        sceneInfo = publishFileInfo.copy()
-        sceneInfo.version = -1
-        sceneInfo.state = ''
+        publishNodesAsMayaScene( publishFileInfo, publishedNodes, ANIM_PIPE_NAME, ext)
 
-        pipeType = ANIM_PIPE_NAME
-
-        sceneInfo.extension = ext
-        # resource
-        if sceneInfo.resource != '':
-            sceneInfo.resource = sceneInfo.resource + '-' + pipeType
-        else:
-            sceneInfo.resource = pipeType
-        # path
-        sceneFilePath = sceneInfo.filePath()
-        # Save
-        cmds.file( rename=sceneFilePath )
-        cmds.file( save=True, options="v=1;" )
-        ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-        ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
-        ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
-
+    # End and log
     endProcess(tempData, progressDialog)
 
-    ram.log("I've published these animations:")
-    for publishedNode in publishedNodes:
-        ram.log(" > " + publishedNode)
-    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
+    ram.log("I've published the animation.")
+    cmds.inViewMessage(  msg="Animation has been published.", pos='midCenterBot', fade=True )
 
 

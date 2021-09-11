@@ -11,6 +11,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=impo
     QCheckBox,
     QPushButton,
     QAbstractItemView,
+    QLabel,
 )
 
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-error
@@ -19,6 +20,9 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
 )
 
 from .utils_attributes import * # pylint: disable=import-error
+import ramses as ram
+
+ramses = ram.Ramses.instance()
 
 class UpdateDialog( QDialog ):
 
@@ -43,6 +47,18 @@ class UpdateDialog( QDialog ):
         self.itemList = QListWidget()
         self.itemList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         mainLayout.addWidget(self.itemList)
+
+        detailsLayout = QHBoxLayout()
+        detailsLayout.setContentsMargins(6,6,6,6)
+        detailsLayout.setSpacing(3)
+
+        self.currentDetailsLabel = QLabel("\n\n")
+        detailsLayout.addWidget(self.currentDetailsLabel)
+        
+        self.newDetailsLabel = QLabel("\n\n")
+        detailsLayout.addWidget(self.newDetailsLabel)
+
+        mainLayout.addLayout(detailsLayout)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -76,6 +92,14 @@ class UpdateDialog( QDialog ):
         items = self.itemList.selectedItems()
         self._updateSelectedButton.setEnabled(len(items) > 0)
 
+        currentItem = self.itemList.currentItem()
+        if currentItem is not None:
+            self.currentDetailsLabel.setText(currentItem.data(Qt.UserRole + 1))
+            self.newDetailsLabel.setText(currentItem.data(Qt.UserRole + 2))
+        else:
+            self.currentDetailsLabel.setText("\n\n")
+            self.newDetailsLabel.setText("\n\n")
+
     Slot()
     def showOnlyNew(self, checked = True):
         for i in range(0, self.itemList.count()):
@@ -103,27 +127,35 @@ class UpdateDialog( QDialog ):
             item.setToolTip(node)
 
             itemText = name + ' (' + step + ') - ' + maf.Path.baseName( node )
-            # Check timestamp
-            geoFile = getRamsesAttr(node, RamsesAttribute.GEO_FILE)
-            geoTime = getRamsesAttr(node, RamsesAttribute.GEO_TIME)
-            shadingFile = getRamsesAttr(node, RamsesAttribute.SHADING_FILE)
-            shadingTime = getRamsesAttr(node, RamsesAttribute.SHADING_TIME)
+
+            # Check source info
+            sourceFile = getRamsesAttr( node, RamsesAttribute.SOURCE_FILE )
+            version = getRamsesAttr( node, RamsesAttribute.VERSION )
+            state = getRamsesAttr( node, RamsesAttribute.STATE )
+            resource = getRamsesAttr(node, RamsesAttribute.RESOURCE )
+            state = ramses.state(state)
+            item.setData(Qt.UserRole + 1, "Current version: " + str(version) + "Current state: " + str(state))
+
             updated = False
-            if geoFile is not None:
-                geoFTimeStamp = os.path.getmtime( geoFile )
-                geoFTimeStamp = int(geoFTimeStamp)
-                if geoFTimeStamp > geoTime:
+
+            if sourceFile is not None:
+                # Get the latest one and check its version and state
+                fileName = os.path.basename( sourceFile )
+                ramItem = ram.RamItem.fromPath( sourceFile )
+                latestFile = ramItem.latestPublishedVersion( fileName, resource )
+                if latestFile != sourceFile:
                     updated = True
-            # Shaders are referenced, they're always up-to-date
-            # if shadingFile is not None:
-            #     shadingFTimeStamp = os.path.getmtime( shadingFile )
-            #     shadingFTimeStamp = int( shadingFTimeStamp )
-            #     if shadingFTimeStamp > shadingTime:
-            #         updated = True
+                    newVersion = ram.RamMetaDataManager.getVersion( latestFile )
+                    newState = ram.RamMetaDataManager.getState( latestFile )
+                    newState = ramses.state( newState )
+                    item.setData( Qt.UserRole + 2, "New version: " + str(newVersion) + "\nNew state: " + str(newState) )
+
             if updated:
                 itemText = 'New: ' + itemText 
+
             elif self.onlyNewButton.isChecked():
                 item.setHidden(True)
+
             item.setText(itemText)
 
     def getAllNodes(self):

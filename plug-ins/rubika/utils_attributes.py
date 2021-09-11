@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 import maya.cmds as cmds # pylint: disable=import-error
 import dumaf as maf # pylint: disable=import-error
-
+import ramses as ram
 
 class RamsesAttribute():
     MANAGED = 'ramsesManaged'
@@ -10,16 +11,10 @@ class RamsesAttribute():
     ITEM = 'ramsesItem'
     ASSET_GROUP = 'ramsesAssetGroup'
     ITEM_TYPE = 'ramsesItemType'
-    GEO_FILE = 'ramsesGeoFilePath'
-    GEO_TIME = 'ramsesGeoTimeStamp'
-    SHADING_TYPE = 'ramsesShadingType'
-    SHADING_FILE = 'ramsesShadingFilePath'
-    SHADING_TIME = 'ramsesShadingTimeStamp'
-    SHADED_OBJECTS = 'ramsesShadedObjects'
     SOURCE_FILE = 'ramsesSourceFile'
     SOURCE_TIME = 'ramsesTimeStamp'
-    RIG_FILE = 'ramsesRigFilePath'
-    RIG_TIME = 'ramsesRigTimeStamp'
+    SHADING_TYPE = 'ramsesShadingType'
+    SHADED_OBJECTS = 'ramsesShadedObjects'
     DT_TYPES = ('string','float2','float3')
     AT_TYPES = ('long', 'bool')
     IS_PROXY = 'ramsesIsProxy'
@@ -28,6 +23,26 @@ class RamsesAttribute():
     ORIGIN_POS = 'ramsesOriginalPos'
     ORIGIN_ROT = 'ramsesOriginalRot'
     ORIGIN_SCA = 'ramsesOriginalSca'
+    RESOURCE = 'ramsesResource'
+
+def setImportAttributes( node, item, step, filePath ):
+    timestamp = os.path.getmtime( filePath )
+    timestamp = int(timestamp)
+    
+    version = ram.RamMetaDataManager.getVersion( filePath )
+    state = ram.RamMetaDataManager.getState( filePath )
+    resource = ram.RamMetaDataManager.getResource(filePath)
+
+    setRamsesManaged( node )
+    setRamsesAttr( node, RamsesAttribute.SOURCE_FILE, filePath, 'string' )
+    setRamsesAttr( node, RamsesAttribute.SOURCE_TIME, timestamp, 'long' )
+    setRamsesAttr( node, RamsesAttribute.VERSION, version, 'long' )
+    setRamsesAttr( node, RamsesAttribute.STATE, state, 'string' )
+    setRamsesAttr( node, RamsesAttribute.STEP, step, 'string' )
+    setRamsesAttr( node, RamsesAttribute.ITEM, item.shortName(), 'string' )
+    setRamsesAttr( node, RamsesAttribute.ITEM_TYPE, item.itemType(), 'string' )
+    setRamsesAttr( node, RamsesAttribute.ASSET_GROUP, item.group(), 'string' )
+    setRamsesAttr( node, RamsesAttribute.RESOURCE, resource, 'string' )
 
 def setRamsesAttr3( node, attr, x, y, z, t):
     # Add if not already there
@@ -74,17 +89,20 @@ def setRamsesManaged(node, managed=True):
 def isRamsesManaged(node):
     return getRamsesAttr( node, RamsesAttribute.MANAGED )
 
-def listRamsesNodes():
+def listRamsesNodes(t='transform'):
     # Scan all transform nodes
-    transformNodes = cmds.ls(type='transform', long=True)
+    sceneNodes = ()
+    if t == '': sceneNodes = cmds.ls( long=True )
+    else: sceneNodes = cmds.ls( type=t, long=True )
+
     nodes = []
 
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
     progressDialog.setText("Scanning Scene for Ramses Nodes")
-    progressDialog.setMaximum(len(nodes))
+    progressDialog.setMaximum(len(sceneNodes))
 
-    for node in transformNodes:
+    for node in sceneNodes:
         progressDialog.increment()
         if isRamsesManaged(node):
             nodes.append(node)

@@ -46,6 +46,7 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
     ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARD_PIPE_NAME )
     ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
     ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
+    ram.RamMetaDataManager.setResource( sceneFilePath, publishFileInfo.resource )
     # Reopen
     cmds.file(prevScene,o=True,f=True)
 

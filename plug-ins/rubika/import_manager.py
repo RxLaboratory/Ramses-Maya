@@ -139,12 +139,12 @@ def importer(item, filePaths, step):
     if len(vpShaderFiles) > 0:
         ram.log( "I'm importing the viewport shaders." )
         for vpShaderFile in vpShaderFiles:
-            importShaders( item, vpShaderFile, VPSHADERS_PIPE_NAME, geoNodes )
+            importShaders( item, vpShaderFile, VPSHADERS_PIPE_NAME, step, geoNodes )
 
     if len(rdrShaderFiles) > 0:
         ram.log( "I'm importing the render shaders." )
         for rdrShaderFile in rdrShaderFiles:
-            importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, geoNodes )
+            importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, step, geoNodes )
 
     if len(standardFiles) > 0:
         ram.log( "I'm importing " + item.shortName() )

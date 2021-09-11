@@ -11,6 +11,7 @@ import dumaf as maf # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 from .utils_constants import *
+from .utils_publish import *
 
 
 def publishProxyShaders( item, step, publishFileInfo ):
@@ -63,9 +64,7 @@ def publishProxyShaders( item, step, publishFileInfo ):
         assFilePath = saveInfo.filePath()
 
         cmds.arnoldExportAss(f=assFilePath, s=True, mask=223, lightLinks=0, shadowLinks=0, cam="perspShape" )
-        ram.RamMetaDataManager.setPipeType( assFilePath, PROXYSHADE_PIPE_NAME )
-        ram.RamMetaDataManager.setVersion( assFilePath, publishFileInfo.version )
-        ram.RamMetaDataManager.setState( assFilePath, publishFileInfo.state )
+        setExportMetaData( assFilePath, PROXYSHADE_PIPE_NAME, publishFileInfo )
 
     progressDialog.setText( "Cleaning" )
     progressDialog.increment()
@@ -137,11 +136,7 @@ def publishShaders( item, step, publishFileInfo, mode):
         maf.Node.removeEmptyGroups(node)
 
         # Export
-        shaderFilePath = exportShaders(node, publishFileInfo, mode )
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setPipeType( shaderFilePath, mode )
-        ram.RamMetaDataManager.setVersion( shaderFilePath, publishFileInfo.version )
-        ram.RamMetaDataManager.setState( shaderFilePath, publishFileInfo.state )
+        exportShaders(node, publishFileInfo, mode )
 
     progressDialog.setText("Cleaning...")
 

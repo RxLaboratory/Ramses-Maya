@@ -10,6 +10,7 @@ from .utils_attributes import * # pylint: disable=import-error
 from .utils_constants import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 from .utils_items import * # pylint: disable=import-error
+from .utils_publish import *
 
 def publishSet(item, step, publishFileInfo, pipeFiles):
 
@@ -59,9 +60,6 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
 
     # Publish folder
     ram.log( "I'm publishing the sets in " + os.path.dirname( publishFileInfo.filePath() ) )
-
-    # File extension
-    extension = getExtension( step, SET_STEP, SET_PIPE_FILE, pipeFiles, ['ma','mb'], 'mb' )
 
     # Publish each set (reversed because we may remove some of them)
     publishedNodes = []
@@ -157,63 +155,17 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
         node = r[0]
         controller = r[1]
 
-        publishedNodes.append(node)
-
-    # remove all nodes not children or parent of publishedNodes
-    allTransformNodes = cmds.ls(transforms=True, long=True)
-    allPublishedNodes = []
-    for publishedNode in publishedNodes:
-        try:
-            # Children
-            published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
-            if published is not None:
-                allPublishedNodes = allPublishedNodes + published
-        except: pass
-        try:
-            # Parents
-            published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
-            if published is not None:
-                allPublishedNodes = allPublishedNodes + published
-        except: pass
-        try:
-            # And Self
-            published = cmds.ls(publishedNode, transforms=True, long=True)
-            if published is not None:
-                allPublishedNodes = allPublishedNodes + published
-        except: pass
-
-    for transformNode in reversed(allTransformNodes):
-        if transformNode in allPublishedNodes:
-            continue
-        if transformNode in maf.Node.nonDeletableObjects:
-            continue
-        try:
-            cmds.delete(transformNode)
-        except:
-            pass
+        publishedNodes.append(controller)
 
     # Clean scene:
     # Remove empty groups from the scene
     maf.Node.removeEmptyGroups()
 
     # Save scene
-    saveInfo = publishFileInfo.copy()
-    # remove version and state
-    saveInfo.version = -1
-    saveInfo.state = ''
-    # extension
-    saveInfo.extension = extension
-    # resource
-    if saveInfo.resource != '': saveInfo.resource = saveInfo.resource + '-'
-    saveInfo.resource = saveInfo.resource + nodeName + '-' + SET_PIPE_NAME
-    # save
-    savePath = saveInfo.filePath()
-    cmds.file( rename=savePath )
-    cmds.file( save=True, options="v=1;" )
-    ram.RamMetaDataManager.setPipeType( savePath, SET_PIPE_NAME )
-    ram.RamMetaDataManager.setVersion( savePath, publishFileInfo.version )
-    ram.RamMetaDataManager.setState( savePath, publishFileInfo.state )
-
+    extension = getExtension( step, SET_STEP, SET_PIPE_FILE, pipeFiles, ['ma','mb'], 'mb' )
+    publishNodesAsMayaScene( publishFileInfo, publishedNodes, SET_PIPE_NAME, extension )
+    
+    # End and log
     endProcess(tempData, progressDialog)
 
     ram.log("I've published the set.")

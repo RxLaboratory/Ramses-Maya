@@ -25,9 +25,8 @@ def importRig( item, rigFile, step):
     timestamp = int(timestamp)
     # Get version and state
     version = ram.RamMetaDataManager.getVersion( rigFile )
-    if version is None: version = -1
     state = ram.RamMetaDataManager.getState( rigFile )
-    if state is None: state = ''
+    resource = ram.RamMetaDataManager.getResource( rigFile )
 
     # Get the Asset Group
     assetGroup = 'RamASSETS_' + assetGroupName
@@ -80,16 +79,9 @@ def importRig( item, rigFile, step):
         # set the color and the attr on the group (it acts as the root)
         cmds.setAttr(rootGroup+'.useOutlinerColor',1)
         cmds.setAttr(rootGroup+'.outlinerColor',168/255.0,138/255.0,244/255.0)
+        
         # Store Ramses Data!
-        setRamsesManaged( rootGroup )
-        setRamsesAttr( rootGroup, RamsesAttribute.RIG_FILE, rigFile, 'string' )
-        setRamsesAttr( rootGroup, RamsesAttribute.RIG_TIME, timestamp, 'long' )
-        setRamsesAttr( rootGroup, RamsesAttribute.STEP, step, 'string' )
-        setRamsesAttr( rootGroup, RamsesAttribute.ITEM, item.shortName(), 'string' )
-        setRamsesAttr( rootGroup, RamsesAttribute.ITEM_TYPE, itemType, 'string' )
-        setRamsesAttr( rootGroup, RamsesAttribute.ASSET_GROUP, item.group(), 'string' )
-        setRamsesAttr( rootGroup, RamsesAttribute.VERSION, version, 'long' )
-        setRamsesAttr( rootGroup, RamsesAttribute.STATE, state, 'string' )
+        setImportAttributes( rootGroup, item, step, rigFile )
 
         # lock transform of the root group
         maf.Node.lockTransform( rootGroup )

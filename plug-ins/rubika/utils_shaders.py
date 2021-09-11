@@ -6,6 +6,8 @@ import dumaf as maf
 import ramses as ram # pylint: disable=import-error
 from .utils_attributes import * # pylint: disable=import-error
 from .utils_constants import *
+from .utils_general import *
+from .utils_publish import *
 
 # mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
 def exportShaders(node, publishFileInfo, mode = ''): 
@@ -60,26 +62,9 @@ def exportShaders(node, publishFileInfo, mode = ''):
         allShadingEngines.append(shadingEngine)
 
     # Select and export shadingEngines
-    cmds.select(allShadingEngines, noExpand=True, r=True)
     nodeName = maf.Path.baseName( node )
-
-    # extension
-    saveInfo = publishFileInfo.copy()
-    saveInfo.version = -1
-    saveInfo.state = ''
-    saveInfo.extension = 'mb'
-    # resource
-    if saveInfo.resource != '':
-        saveInfo.resource = saveInfo.resource + '-' + nodeName
-    else:
-        saveInfo.resource = nodeName
-    if mode != '':
-        saveInfo.resource = saveInfo.resource + '-' + mode
-    # path
-    savePath = saveInfo.filePath()
-    cmds.file( savePath, exportSelected=True, type='mayaBinary', force=True )
-    cmds.select(cl=True)
-   
+    savePath = publishNodesAsMayaScene( publishFileInfo, allShadingEngines, nodeName + '-' + mode, 'mb')
+       
     return savePath
 
 # mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
@@ -100,10 +85,9 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
 
     if shaderNodes is None or len(shaderNodes) == 0:
         ram.log( "I did not find any shader to import, sorry." )
-        return
+        return []
 
     for node in nodes:
-
         # For all mesh
         meshes = cmds.listRelatives( node, ad=True, type='mesh', f=True)
         if meshes is None:
@@ -132,9 +116,7 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
 
         if found:
             # Shading Data
-            timestamp = os.path.getmtime( filePath )
             setRamsesManaged( node )
             setRamsesAttr( node, RamsesAttribute.SHADING_TYPE, mode, 'string')
-            setRamsesAttr( node, RamsesAttribute.SHADING_FILE, filePath, 'string')
-            setRamsesAttr( node, RamsesAttribute.SHADING_TIME, timestamp, 'long')
 
+    return shaderNodes

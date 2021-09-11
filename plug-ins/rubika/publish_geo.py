@@ -10,6 +10,7 @@ from .utils_attributes import * # pylint: disable=import-error
 from .utils_constants import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
 from .utils_items import * # pylint: disable=import-error
+from .utils_publish import *
 
 ONLY_PROXY = 0
 ALL = 1
@@ -177,145 +178,52 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         controller = r[1]
 
         if extension == 'abc':
-            if maf.Plugin.load("AbcExport"):
-                ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
-            # Save and create Abc
-            # Generate file path
-            abcInfo = publishFileInfo.copy()
-            # remove version and state
-            abcInfo.version = -1
-            abcInfo.state = ''
-            # extension
-            abcInfo.extension = 'abc'
-            # resource
-            if abcInfo.resource != '':
-                abcInfo.resource = abcInfo.resource + '-' + nodeName + '-' + pType
-            else:
-                abcInfo.resource = nodeName + '-' + pType
-
-            abcPath = abcInfo.filePath()
-
-            inFrame = 1
-            outFrame = 1
+            frameIn = 1
+            frameOut = 1
             if keepAnimation:
-                inFrame = int(cmds.playbackOptions(q=True,ast=True))
-                outFrame = int(cmds.playbackOptions(q=True,aet=True))
-            # Save
-            abcOptions = ' '.join([
-                '-frameRange ', str(inFrame), str(outFrame),
-                '-step 1',
-                '-autoSubd', # Crease info
-                '-uvWrite',
-                '-worldSpace',
-                '-writeUVSets',
-                '-dataFormat hdf',
-                '-renderableOnly',
-                '-writeVisibility',
-                '-root |' + controller,
-                '-file "' + abcPath + '"'
-            ])
-            cmds.AbcExport(j=abcOptions)
-            # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setPipeType( abcPath, pType )
-            ram.RamMetaDataManager.setVersion( abcPath, publishFileInfo.version )
-            ram.RamMetaDataManager.setState( abcPath, publishFileInfo.state )
+                frameIn = int(cmds.playbackOptions(q=True,ast=True))
+                frameOut = int(cmds.playbackOptions(q=True,aet=True))
 
-        # Export viewport shaders
+            abcPath = publishNodeAsABC( publishFileInfo, controller, (frameIn, frameOut))
+
+        # Export shaders
         shaderMode = ''
         if VPSHADERS_PIPE_FILE in pipeFiles:
             shaderMode = VPSHADERS_PIPE_NAME
         elif RDRSHADERS_PIPE_FILE in pipeFiles:
             shaderMode = RDRSHADERS_PIPE_NAME
+        
         if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             shaderFilePath = exportShaders( node, publishFileInfo.copy(), shaderMode )
-            # Update Ramses Metadata (version)
+            # Update Ramses Metadata
             if extension == 'abc':
                 ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
-            ram.RamMetaDataManager.setPipeType( shaderFilePath, shaderMode )
-            ram.RamMetaDataManager.setVersion( shaderFilePath, publishFileInfo.version )
-            ram.RamMetaDataManager.setState( shaderFilePath, publishFileInfo.state )
 
-        publishedNodes.append(node)
+        publishedNodes.append(controller)
 
     progressDialog.setText( "Cleaning" )
     progressDialog.increment()
 
     # Publish ma or mb
 
-    # Get Type and extension
+    # Get Type
     pipeType = GEO_PIPE_NAME
     pipe = GEO_PIPE_FILE
     if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles:
         pipeType = PROXYGEO_PIPE_NAME
         pipe = PROXYGEO_PIPE_FILE
+    # Get extension
     if hasExtension( pipe, pipeFiles, 'ma'): extension = 'ma'
     elif hasExtension( pipe, pipeFiles, 'mb'): extension = 'mb'
     else: extension = getExtension( step, MOD_STEP, pipe, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
 
     if extension in ('ma', 'mb'):
-        # remove all nodes not children or parent of publishedNodes
-        allTransformNodes = cmds.ls(transforms=True, long=True)
-        allPublishedNodes = []
-        for publishedNode in publishedNodes:
-            try:
-                # Children
-                published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
-                if published is not None:
-                    allPublishedNodes = allPublishedNodes + published
-            except: pass
-            try:
-                # Parents
-                published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
-                if published is not None:
-                    allPublishedNodes = allPublishedNodes + published
-            except: pass
-            try:
-                # And Self
-                published = cmds.ls(publishedNode, transforms=True, long=True)
-                if published is not None:
-                    allPublishedNodes = allPublishedNodes + published
-            except: pass
+        publishNodesAsMayaScene( publishFileInfo, publishedNodes, pipeType, extension)
 
-        for transformNode in reversed(allTransformNodes):
-            if transformNode in allPublishedNodes:
-                continue
-            if transformNode in maf.Node.nonDeletableObjects:
-                continue
-            try:
-                cmds.delete(transformNode)
-            except:
-                pass
-
-        # Clean scene:
-        # Remove empty groups from the scene
-        maf.Node.removeEmptyGroups()
-
-        # Copy published scene to publish
-        sceneInfo = publishFileInfo.copy()
-        sceneInfo.version = -1
-        sceneInfo.state = ''
-
-        sceneInfo.extension = extension
-        # resource
-        if sceneInfo.resource != '':
-            sceneInfo.resource = sceneInfo.resource + '-' + pipeType
-        else:
-            sceneInfo.resource = pipeType
-        # path
-        sceneFilePath = sceneInfo.filePath()
-        # Save
-        cmds.file( rename=sceneFilePath )
-        cmds.file( save=True, options="v=1;" )
-        ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-        ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
-        ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
-
+    # End and log
     endProcess(tempData, progressDialog)
 
-    ram.log("I've published these assets:")
-    for publishedNode in publishedNodes:
-        publishedNode = maf.Path.baseName( publishedNode )
-        ram.log(" > " + publishedNode)
-    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>, <hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
+    ram.log("I've published the geometry.")
+    cmds.inViewMessage(  msg="Geometry has been published.", pos='midCenterBot', fade=True )
 

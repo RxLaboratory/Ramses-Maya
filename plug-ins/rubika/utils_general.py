@@ -2,6 +2,7 @@
 
 import os
 import maya.cmds as cmds # pylint: disable=import-error
+import ramses as ram
 
 def endProcess(tempData, progressDialog):
     # Re-Open initial scene
@@ -13,3 +14,4 @@ def endProcess(tempData, progressDialog):
 
     if progressDialog:
         progressDialog.hide()
+
