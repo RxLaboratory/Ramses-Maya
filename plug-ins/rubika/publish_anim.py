@@ -119,7 +119,10 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
         node = r[0]
         controller = r[1]
 
-        if extension == 'abc':
+        ext = extension
+        if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'abc'): ext = 'abc'
+
+        if ext == 'abc':
             # Generate file path
             abcInfo = publishFileInfo.copy()
             abcInfo.version = -1
@@ -164,11 +167,19 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
     progressDialog.setText("Cleaning...")
     progressDialog.increment()
 
-    # Copy published scene to publish
-    if extension in ('ma', 'mb'):
-        sceneInfo = publishFileInfo.copy()
+    ext = extension
+    if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'ma'): ext = 'ma'
+    if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
 
-        sceneInfo.extension = extension
+    # Copy published scene to publish
+    if ext in ('ma', 'mb'):
+        sceneInfo = publishFileInfo.copy()
+        sceneInfo.version = -1
+        sceneInfo.state = ''
+
+        pipeType = ANIM_PIPE_NAME
+
+        sceneInfo.extension = ext
         # resource
         if sceneInfo.resource != '':
             sceneInfo.resource = sceneInfo.resource + '-' + pipeType

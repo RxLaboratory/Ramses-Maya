@@ -9,9 +9,21 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 
+def hasExtension( pipeFile, pipeFiles, extension ):
+    for p in pipeFiles:
+        if not pipeFile == p: continue
+        fileType = p.fileType()
+        if fileType is None: continue
+        exts = fileType.extensions()
+        if len(exts) == 0: continue
+        for e in exts:
+            if e.startswith('.'): e = e[1:]
+            if extension == e: return True
+    return False
+
 def getPipeExtension( pipe, pipes, defaultExtension):
     for p in pipes:
-        if pipe != p: continue
+        if not pipe == p: continue
         fileType = p.fileType()
         if fileType is None: continue
         exts = fileType.extensions()

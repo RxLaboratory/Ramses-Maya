@@ -160,10 +160,16 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         extension = ''
         if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             pType = PROXYGEO_PIPE_NAME
-            extension = getExtension( step, MOD_STEP, PROXYGEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+            if hasExtension( PROXYGEO_PIPE_FILE, pipeFiles, 'abc'):
+                extension = 'abc'
+            else:
+                extension = getExtension( step, MOD_STEP, PROXYGEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
         else:
             pType = GEO_PIPE_NAME
-            extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+            if hasExtension( GEO_PIPE_FILE, pipeFiles, 'abc'):
+                extension = 'abc'
+            else:
+                extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
 
         # Create a root controller
         r = maf.Node.createRootCtrl( node, nodeName + '_' + pType )
@@ -243,7 +249,9 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles:
         pipeType = PROXYGEO_PIPE_NAME
         pipe = PROXYGEO_PIPE_FILE
-    extension = getExtension( step, MOD_STEP, pipe, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+    if hasExtension( pipe, pipeFiles, 'ma'): extension = 'ma'
+    elif hasExtension( pipe, pipeFiles, 'mb'): extension = 'mb'
+    else: extension = getExtension( step, MOD_STEP, pipe, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
 
     if extension in ('ma', 'mb'):
         # remove all nodes not children or parent of publishedNodes

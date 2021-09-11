@@ -15,15 +15,15 @@ ASS_FILE = ram.RamFileType( "Arnold Source File", 'ass', ['.ass'] )
 
 # Pipe Names - These are the names to use in the Ramses Pipeline Editor
 
-STANDARD_PIPE_NAME = 'Standard' # used for layout, lighting, etc non-managed pipes
-GEO_PIPE_NAME = 'GeoPipe'
-VPSHADERS_PIPE_NAME = 'vpShaPipe'
-RDRSHADERS_PIPE_NAME = 'rdrShaPipe'
-PROXYSHADE_PIPE_NAME = 'pShaPipe'
-PROXYGEO_PIPE_NAME = 'pGeoPipe'
-RIG_PIPE_NAME = 'RigPipe'
-SET_PIPE_NAME = 'SetPipe'
-ANIM_PIPE_NAME = 'AnimPipe'
+STANDARD_PIPE_NAME = 'Std' # used for layout, lighting, etc non-managed pipes
+GEO_PIPE_NAME = 'Geo'
+VPSHADERS_PIPE_NAME = 'vpSha'
+RDRSHADERS_PIPE_NAME = 'rdrSha'
+PROXYSHADE_PIPE_NAME = 'pSha'
+PROXYGEO_PIPE_NAME = 'pGeo'
+RIG_PIPE_NAME = 'Rig'
+SET_PIPE_NAME = 'Set'
+ANIM_PIPE_NAME = 'Anim'
 
 # PipeFiles - These associate the name with a file type (and a color space, ignored for now)
 
