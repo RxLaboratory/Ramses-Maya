@@ -28,7 +28,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     keepCurves = False
     keepSurfaces = False
 
-    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles:
         # Show dialog
         publishGeoDialog = PublishGeoDialog( maf.UI.getMayaWindow() )
         if not publishGeoDialog.exec_():
@@ -57,7 +57,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     # For all nodes in the publish set or proxy set
     nodes = []
-    if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
         nodes = getPublishNodes()
     if PROXYGEO_PIPE_FILE in pipeFiles:
         showAlert = GEO_PIPE_FILE not in pipeFiles
@@ -84,11 +84,8 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     ram.log( "I'm publishing geometry in " + os.path.dirname( publishFileInfo.filePath() ) )
 
     # Extension
-    extension = ''
-    if SET_PIPE_FILE in pipeFiles:
-        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb', 'abc'], 'mb' )
-    else:
-        extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['ma','mb', 'abc'], 'abc' )
+    extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['ma', 'mb', 'abc'], 'abc' )
+
     if extension == 'abc':
         # We need to use alembic
         if maf.Plugin.load("AbcExport"):
@@ -150,8 +147,8 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                     break
 
             if not keepAnimation and freeze:
-                maf.Node.lockTransform( childNode )
                 maf.Node.freezeTransform( childNode )
+                maf.Node.lockTransform( childNode )
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
@@ -169,8 +166,6 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         pType = ''
         if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
             pType = PROXYGEO_PIPE_NAME
-        elif SET_PIPE_FILE in pipeFiles:
-            pType = SET_PIPE_NAME
         else:
             pType = GEO_PIPE_NAME
 
@@ -241,73 +236,70 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     progressDialog.setText( "Cleaning" )
     progressDialog.increment()
 
-    # remove all nodes not children or parent of publishedNodes
-    allTransformNodes = cmds.ls(transforms=True, long=True)
-    allPublishedNodes = []
-    for publishedNode in publishedNodes:
-        try:
-            # Children
-            published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
-            if published is not None:
-                allPublishedNodes = allPublishedNodes + published
-        except: pass
-        try:
-            # Parents
-            published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
-            if published is not None:
-                allPublishedNodes = allPublishedNodes + published
-        except: pass
-        try:
-            # And Self
-            published = cmds.ls(publishedNode, transforms=True, long=True)
-            if published is not None:
-                allPublishedNodes = allPublishedNodes + published
-        except: pass
+    # Publish ma or mb
+    if extension in ('ma', 'mb'):
+        # remove all nodes not children or parent of publishedNodes
+        allTransformNodes = cmds.ls(transforms=True, long=True)
+        allPublishedNodes = []
+        for publishedNode in publishedNodes:
+            try:
+                # Children
+                published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
+                if published is not None:
+                    allPublishedNodes = allPublishedNodes + published
+            except: pass
+            try:
+                # Parents
+                published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
+                if published is not None:
+                    allPublishedNodes = allPublishedNodes + published
+            except: pass
+            try:
+                # And Self
+                published = cmds.ls(publishedNode, transforms=True, long=True)
+                if published is not None:
+                    allPublishedNodes = allPublishedNodes + published
+            except: pass
 
-    for transformNode in reversed(allTransformNodes):
-        if transformNode in allPublishedNodes:
-            continue
-        if transformNode in maf.Node.nonDeletableObjects:
-            continue
-        try:
-            cmds.delete(transformNode)
-        except:
-            pass
+        for transformNode in reversed(allTransformNodes):
+            if transformNode in allPublishedNodes:
+                continue
+            if transformNode in maf.Node.nonDeletableObjects:
+                continue
+            try:
+                cmds.delete(transformNode)
+            except:
+                pass
 
-    # Clean scene:
-    # Remove empty groups from the scene
-    maf.Node.removeEmptyGroups()
+        # Clean scene:
+        # Remove empty groups from the scene
+        maf.Node.removeEmptyGroups()
 
-    # Copy published scene to publish
-    sceneInfo = publishFileInfo.copy()
-    sceneInfo.version = -1
-    sceneInfo.state = ''
+        # Copy published scene to publish
+        sceneInfo = publishFileInfo.copy()
+        sceneInfo.version = -1
+        sceneInfo.state = ''
 
-    # Get Type
-    pipeType = GEO_PIPE_NAME
-    if SET_PIPE_FILE in pipeFiles:
-        pipeType = SET_PIPE_NAME
+        # Get Type
+        pipeType = GEO_PIPE_NAME
 
-    if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles and not SET_PIPE_FILE in pipeFiles:
-        pipeType = PROXYGEO_PIPE_NAME
+        if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles:
+            pipeType = PROXYGEO_PIPE_NAME
 
-    if SET_PIPE_FILE in pipeFiles:
-        sceneInfo.extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
-    else:
-        sceneInfo.extension = 'mb'
-    # resource
-    if sceneInfo.resource != '':
-        sceneInfo.resource = sceneInfo.resource + '-' + pipeType
-    else:
-        sceneInfo.resource = pipeType
-    # path
-    sceneFilePath = sceneInfo.filePath()
-    # Save
-    cmds.file( rename=sceneFilePath )
-    cmds.file( save=True, options="v=1;" )
-    ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
-    ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
+        sceneInfo.extension = extension
+        # resource
+        if sceneInfo.resource != '':
+            sceneInfo.resource = sceneInfo.resource + '-' + pipeType
+        else:
+            sceneInfo.resource = pipeType
+        # path
+        sceneFilePath = sceneInfo.filePath()
+        # Save
+        cmds.file( rename=sceneFilePath )
+        cmds.file( save=True, options="v=1;" )
+        ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
+        ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
+        ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
 
     endProcess(tempData, progressDialog)
 
@@ -315,5 +307,5 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     for publishedNode in publishedNodes:
         publishedNode = maf.Path.baseName( publishedNode )
         ram.log(" > " + publishedNode)
-    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
+    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>, <hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
 

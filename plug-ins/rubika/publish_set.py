@@ -64,6 +64,7 @@ def publishSet(item, step, publishFileInfo):
     extension = getExtension( step, SET_STEP, SET_PIPE_FILE, ['ma','mb'], 'mb' )
 
     # Publish each set (reversed because we may remove some of them)
+    publishedNodes = []
     for node in reversed(nodes):
         progressDialog.setText("Publishing: " + node)
         progressDialog.increment()
@@ -135,8 +136,8 @@ def publishSet(item, step, publishFileInfo):
                     setRamsesAttr3( child, RamsesAttribute.ORIGIN_SCA, sx, sy, sz, 'float3')
                 # else freeze
                 elif not keepAnimation and freeze:
-                    maf.Node.lockTransform( child )
                     maf.Node.freezeTransform( child )
+                    maf.Node.lockTransform( child )
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
@@ -154,6 +155,41 @@ def publishSet(item, step, publishFileInfo):
         r = maf.Node.createRootCtrl( node, nodeName + '_' + SET_PIPE_NAME )
         node = r[0]
         controller = r[1]
+
+        publishedNodes.append(node)
+
+    # remove all nodes not children or parent of publishedNodes
+    allTransformNodes = cmds.ls(transforms=True, long=True)
+    allPublishedNodes = []
+    for publishedNode in publishedNodes:
+        try:
+            # Children
+            published = cmds.listRelatives(publishedNode, ad=True, f=True, type='transform')
+            if published is not None:
+                allPublishedNodes = allPublishedNodes + published
+        except: pass
+        try:
+            # Parents
+            published = cmds.listRelatives(publishedNode, ap=True, f=True, type='transform')
+            if published is not None:
+                allPublishedNodes = allPublishedNodes + published
+        except: pass
+        try:
+            # And Self
+            published = cmds.ls(publishedNode, transforms=True, long=True)
+            if published is not None:
+                allPublishedNodes = allPublishedNodes + published
+        except: pass
+
+    for transformNode in reversed(allTransformNodes):
+        if transformNode in allPublishedNodes:
+            continue
+        if transformNode in maf.Node.nonDeletableObjects:
+            continue
+        try:
+            cmds.delete(transformNode)
+        except:
+            pass
 
     # Clean scene:
     # Remove empty groups from the scene
