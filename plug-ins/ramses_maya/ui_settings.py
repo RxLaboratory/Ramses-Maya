@@ -218,11 +218,11 @@ ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramSave()
 """
-            cm = maf.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
+            cm = maf.nameCommands.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
             cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
             cmds.savePrefs(hotkeys=True)
         else:
-            maf.restoreSaveSceneHotkey()
+            maf.nameCommands.restoreSaveSceneHotkey()
 
         if self._openHotkeyBox.isChecked():
             pyCommand="""
@@ -232,11 +232,11 @@ if not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramOpen()
 """
-            cm = maf.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
+            cm = maf.nameCommands.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
             cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
             cmds.savePrefs(hotkeys=True)
         else:
-            maf.restoreOpenSceneHotkey()
+            maf.nameCommands.restoreOpenSceneHotkey()
 
         if self._saveAsHotkeyBox.isChecked():
             pyCommand="""
@@ -246,11 +246,11 @@ if not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramSaveAs()
 """
-            cm = maf.createNameCommand('RamSaveSceneAsma', "Ramses Save Scene As", pyCommand)
+            cm = maf.nameCommands.createNameCommand('RamSaveSceneAsma', "Ramses Save Scene As", pyCommand)
             cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
             cmds.savePrefs(hotkeys=True)
         else:
-            maf.restoreSaveSceneAsHotkey()
+            maf.nameCommands.restoreSaveSceneAsHotkey()
 
         self.close()
 
