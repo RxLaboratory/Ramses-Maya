@@ -15,7 +15,7 @@ def publishSet(item, step, publishFileInfo):
 
     # Options
     # Show dialog
-    publishGeoDialog = PublishGeoDialog( maf.ui.getMayaWindow() )
+    publishGeoDialog = PublishGeoDialog( maf.UI.getMayaWindow() )
     if not publishGeoDialog.exec_():
         return
 
@@ -41,10 +41,10 @@ def publishSet(item, step, publishFileInfo):
     progressDialog.show()
     progressDialog.setText("Publishing set")
 
-    tempData = maf.scene.createTempScene()
-    maf.references.importAll()
-    maf.namespaces.removeAll()
-    if not keepAnimation: maf.animation.removeAll()
+    tempData = maf.Scene.createTempScene()
+    maf.Reference.importAll()
+    maf.Namespace.removeAll()
+    if not keepAnimation: maf.Animation.removeAll()
     
     nodes = getPublishNodes()
 
@@ -72,7 +72,7 @@ def publishSet(item, step, publishFileInfo):
         children = cmds.listRelatives(node, ad=True, f=True, type='transform')
 
         # If there's no child and just an empty group, nothing to publish
-        if children is None and maf.nodes.isGroup( node ):
+        if children is None and maf.Node.isGroup( node ):
             cmds.delete(node)
             continue
         
@@ -80,13 +80,13 @@ def publishSet(item, step, publishFileInfo):
         children.append( node )
 
         # Move the node we're publishing to zero
-        maf.nodes.moveToZero( node )
+        maf.Node.moveToZero( node )
 
         # Clean all children (reversed because we may remove some of them)
         for child in reversed(children):
             
             # Remove hidden
-            if removeHidden and maf.nodes.isHidden( child ):
+            if removeHidden and maf.Node.isHidden( child ):
                 cmds.delete( child )
                 continue
 
@@ -101,13 +101,13 @@ def publishSet(item, step, publishFileInfo):
                 if keepSurfaces:
                     typesToKeep.append('nurbsSurface')
 
-            if not maf.nodes.check( child, True, typesToKeep ):
+            if not maf.Node.check( child, True, typesToKeep ):
                 continue
             
             if not keepAnimatedDeformers:
-                maf.nodes.removeExtraShapes( child )
-                if renameShapes: maf.nodes.renameShapes( child )
-                maf.nodes.deleteHistory( child )
+                maf.Node.removeExtraShapes( child )
+                if renameShapes: maf.Node.renameShapes( child )
+                maf.Node.deleteHistory( child )
 
             freeze = True
             childName = child
@@ -117,7 +117,7 @@ def publishSet(item, step, publishFileInfo):
                     freeze = False
                     break
 
-            if maf.nodes.isTransform( child ):
+            if maf.Node.isTransform( child ):
                 # If this child is the root of another asset, store its PRS
                 if isRamsesManaged( child ):
                     # store the current PRS on the node
@@ -135,29 +135,29 @@ def publishSet(item, step, publishFileInfo):
                     setRamsesAttr3( child, RamsesAttribute.ORIGIN_SCA, sx, sy, sz, 'float3')
                 # else freeze
                 elif not keepAnimation and freeze:
-                    maf.nodes.lockTransform( child )
-                    maf.nodes.freezeTransform( child )
+                    maf.Node.lockTransform( child )
+                    maf.Node.freezeTransform( child )
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
             continue
 
         # Remove remaining empty groups
-        maf.nodes.removeEmptyGroups(node)
+        maf.Node.removeEmptyGroups(node)
 
         # Get the node name (without any proxy prefix)
-        nodeName = maf.paths.baseName(node, True)
+        nodeName = maf.Path.baseName(node, True)
         if nodeName.lower().startswith('proxy_'):
             nodeName = nodeName[6:]
 
         # Create a root controller
-        r = maf.nodes.createRootCtrl( node, nodeName + '_' + SET_PIPE_NAME )
+        r = maf.Node.createRootCtrl( node, nodeName + '_' + SET_PIPE_NAME )
         node = r[0]
         controller = r[1]
 
     # Clean scene:
     # Remove empty groups from the scene
-    maf.nodes.removeEmptyGroups()
+    maf.Node.removeEmptyGroups()
 
     # Save scene
     saveInfo = publishFileInfo.copy()

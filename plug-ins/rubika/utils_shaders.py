@@ -61,7 +61,7 @@ def exportShaders(node, publishFileInfo, mode = ''):
 
     # Select and export shadingEngines
     cmds.select(allShadingEngines, noExpand=True, r=True)
-    nodeName = maf.paths.baseName( node )
+    nodeName = maf.Path.baseName( node )
 
     # extension
     saveInfo = publishFileInfo.copy()
@@ -115,7 +115,7 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
         for mesh in meshes:
             # Get the transform node (which has the name we're looking for)
             transformNode = cmds.listRelatives(mesh, p=True, type='transform')[0]
-            nodeName = maf.paths.baseName( transformNode )
+            nodeName = maf.Path.baseName( transformNode )
             # Apply
             cmds.select(mesh, r=True)
             for shaderNode in shaderNodes:

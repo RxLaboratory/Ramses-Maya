@@ -31,7 +31,7 @@ def importRig( item, rigFile, step):
 
     # Get the Asset Group
     assetGroup = 'RamASSETS_' + assetGroupName
-    assetGroup = maf.nodes.getCreateGroup( assetGroup )
+    assetGroup = maf.Node.getCreateGroup( assetGroup )
 
     # Check if the short name is not made only of numbers
     regex = re.compile('^\\d+$')
@@ -39,7 +39,7 @@ def importRig( item, rigFile, step):
         itemShortName = itemType + itemShortName
 
     # Get the Item Group
-    itemGroup = maf.nodes.getCreateGroup( itemShortName, assetGroup )
+    itemGroup = maf.Node.getCreateGroup( itemShortName, assetGroup )
 
     # Generate the namespace
     rigNameSpace = itemShortName + '_Rig_001'
@@ -69,7 +69,7 @@ def importRig( item, rigFile, step):
         if not cmds.objExists(node):
             continue
         # only the root
-        if maf.nodes.hasParent(node):
+        if maf.Node.hasParent(node):
             continue
         if not cmds.nodeType(node) == 'transform':
             continue
@@ -92,10 +92,10 @@ def importRig( item, rigFile, step):
         setRamsesAttr( rootGroup, RamsesAttribute.STATE, state, 'string' )
 
         # lock transform of the root group
-        maf.nodes.lockTransform( rootGroup )
+        maf.Node.lockTransform( rootGroup )
 
         # move it to its category
-        rootGroup = maf.nodes.parent(rootGroup, itemGroup)
+        rootGroup = maf.Node.parent(rootGroup, itemGroup)
         rootNodes.append(rootGroup) 
 
     progressDialog.hide()

@@ -39,7 +39,7 @@ def importGeo(item, filePath, step):
     else:
         itemsGroup = 'RamITEMS'
 
-    itemsGroup = maf.nodes.getCreateGroup( itemsGroup )
+    itemsGroup = maf.Node.getCreateGroup( itemsGroup )
 
     # Check if the short name is not made only of numbers
     regex = re.compile('^\\d+$')
@@ -47,10 +47,10 @@ def importGeo(item, filePath, step):
         itemShortName = itemType + itemShortName
 
     # Get the Item Group
-    itemGroup = maf.nodes.getCreateGroup( itemShortName + ':' + itemShortName, itemsGroup )
+    itemGroup = maf.Node.getCreateGroup( itemShortName + ':' + itemShortName, itemsGroup )
 
     # We may need to use alembic
-    if maf.plugins.load("AbcImport"):
+    if maf.Plugin.load("AbcImport"):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # Import the file
@@ -70,12 +70,12 @@ def importGeo(item, filePath, step):
         if not cmds.objExists(node):
             continue
         # only the root
-        if maf.nodes.hasParent(node):
+        if maf.Node.hasParent(node):
             continue
         if not cmds.nodeType(node) == 'transform':
             continue
         # Parent to the item group
-        rootCtrl = maf.nodes.parent(node, itemGroup)
+        rootCtrl = maf.Node.parent(node, itemGroup)
         if '_root' in node:
             # Get the shape
             nodeShapes = cmds.listRelatives(rootCtrl, shapes=True, f=True, type='nurbsCurve')
@@ -105,7 +105,7 @@ def importGeo(item, filePath, step):
         # Lock transform
         children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
         for child in children:
-            maf.nodes.lockTransform(child)
+            maf.Node.lockTransform(child)
 
         rootCtrls.append( rootCtrl )
 

@@ -17,7 +17,7 @@ def publishStandard( item, step, publishFileInfo, extension ):
 
     # Clean scene:
     # Remove empty groups from the scene
-    maf.nodes.removeEmptyGroups()
+    maf.Node.removeEmptyGroups()
 
     ram.log( "I'm publishing geometry in " + os.path.dirname( publishFileInfo.filePath() ) )
 

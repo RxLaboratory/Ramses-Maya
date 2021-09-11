@@ -37,9 +37,9 @@ def publishAnim( item, step, publishFileInfo ):
     progressDialog.increment()
 
     # Prepare the scene
-    tempData = maf.scene.createTempScene()
-    maf.references.importAll()
-    maf.namespaces.removeAll()
+    tempData = maf.Scene.createTempScene()
+    maf.Reference.importAll()
+    maf.Namespace.removeAll()
 
     # For all nodes in the publish set or proxy set
     nodes = getPublishNodes()
@@ -56,7 +56,7 @@ def publishAnim( item, step, publishFileInfo ):
     ram.log( "I'm publishing animation in " + os.path.dirname( publishFileInfo.filePath() ) )
     
     # We need to use alembic
-    if maf.plugins.load("AbcExport"):
+    if maf.Plugin.load("AbcExport"):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # Let's count how many objects are published
@@ -64,8 +64,8 @@ def publishAnim( item, step, publishFileInfo ):
 
     for node in reversed(nodes):
         # Full path node
-        node = maf.paths.absolutePath( node )
-        nodeName = maf.paths.baseName( node )
+        node = maf.Path.absolutePath( node )
+        nodeName = maf.Path.baseName( node )
         progressDialog.setText("Baking: " + nodeName)
         progressDialog.increment()
 
@@ -76,7 +76,7 @@ def publishAnim( item, step, publishFileInfo ):
         childNodes.append(node)
 
         # Empty group, nothing to do
-        if childNodes is None and maf.nodes.isGroup(node):
+        if childNodes is None and maf.Node.isGroup(node):
             cmds.delete(node)
             continue
 
@@ -99,20 +99,20 @@ def publishAnim( item, step, publishFileInfo ):
                 if keepSurfaces:
                     typesToKeep.append('nurbsSurface')
             
-            if not maf.nodes.check( childNode, True, typesToKeep ):
+            if not maf.Node.check( childNode, True, typesToKeep ):
                 continue
             
             if not keepDeformers:
-                maf.nodes.removeExtraShapes( childNode )
-                maf.nodes.deleteHistory( childNode )
-                maf.nodes.renameShapes( childNode )        
+                maf.Node.removeExtraShapes( childNode )
+                maf.Node.deleteHistory( childNode )
+                maf.Node.renameShapes( childNode )        
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
             continue
 
         # Create a root controller
-        r = maf.nodes.createRootCtrl( node, nodeName + '_' + ANIM_PIPE_NAME )
+        r = maf.Node.createRootCtrl( node, nodeName + '_' + ANIM_PIPE_NAME )
         node = r[0]
         controller = r[1]
 

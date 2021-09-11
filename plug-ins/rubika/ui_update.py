@@ -102,7 +102,7 @@ class UpdateDialog( QDialog ):
             item.setData(Qt.UserRole, node)
             item.setToolTip(node)
 
-            itemText = name + ' (' + step + ') - ' + maf.paths.baseName( node )
+            itemText = name + ' (' + step + ') - ' + maf.Path.baseName( node )
             # Check timestamp
             geoFile = getRamsesAttr(node, RamsesAttribute.GEO_FILE)
             geoTime = getRamsesAttr(node, RamsesAttribute.GEO_TIME)
