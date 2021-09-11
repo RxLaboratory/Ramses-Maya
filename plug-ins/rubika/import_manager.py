@@ -58,7 +58,7 @@ def importer(item, filePaths, step):
                     rig = True
                 elif pipeFile == SET_PIPE_FILE:
                     sets = True
-                elif pipeFile == STANDARDA_PIPE_FILE or pipeFile == STANDARDB_PIPE_FILE:
+                elif pipeFile == STANDARD_PIPE_FILE:
                     standard = True
                 elif pipeFile == ANIM_PIPE_FILE:
                     anim = True
@@ -81,8 +81,7 @@ def importer(item, filePaths, step):
         if sets:
             setFiles = SET_PIPE_FILE.getFiles( publishFolder )
         if standard:
-            standardFiles = STANDARDB_PIPE_FILE.getFiles( publishFolder )
-            standardFiles = standardFiles + STANDARDA_PIPE_FILE.getFiles( publishFolder )
+            standardFiles = STANDARD_PIPE_FILE.getFiles( publishFolder )
         if anim:
             animFiles = ANIM_PIPE_FILE.getFiles( publishFolder )
  
@@ -102,9 +101,7 @@ def importer(item, filePaths, step):
                 rigFiles.append( file )
             if SET_PIPE_FILE.check( file ):
                 setFiles.append( file )
-            if STANDARDA_PIPE_FILE.check( file ):
-                standardFiles.append( file )
-            if STANDARDB_PIPE_FILE.check( file ):
+            if STANDARD_PIPE_FILE.check( file ):
                 standardFiles.append( file )
             if ANIM_PIPE_FILE.check( file ):
                 animFiles.append( file )

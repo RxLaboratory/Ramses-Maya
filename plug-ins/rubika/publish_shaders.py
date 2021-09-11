@@ -130,11 +130,11 @@ def publishShaders( item, step, publishFileInfo, mode):
                 continue
 
             maf.Node.check( True, ('mesh') )
-            maf.Node.removeExtraShapes()
-            maf.Node.deleteHistory()
+            maf.Node.removeExtraShapes( childNode )
+            maf.Node.deleteHistory( childNode )
         
         # Remove remaining empty groups
-        maf.removeEmptyGroups(node)
+        maf.Node.removeEmptyGroups(node)
 
         # Export
         shaderFilePath = exportShaders(node, publishFileInfo, mode )

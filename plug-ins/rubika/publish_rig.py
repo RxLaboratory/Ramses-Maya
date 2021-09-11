@@ -89,7 +89,7 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
                 if hideJointsMode == 1:
                     cmds.setAttr( joint + '.visibility', False )
                 else:
-                    cmds.setAttr( joint + '.drawStyle', 0 )
+                    cmds.setAttr( joint + '.drawStyle', 2 )
 
     progressDialog.setText("Exporting viewport shaders")
     progressDialog.increment()

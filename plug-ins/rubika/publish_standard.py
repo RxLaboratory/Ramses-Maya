@@ -33,18 +33,21 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
     sceneInfo.extension = extension
     # resource
     if sceneInfo.resource != '':
-        sceneInfo.resource = sceneInfo.resource + '-Published'
+        sceneInfo.resource = sceneInfo.resource + '-' + STANDARD_PIPE_NAME
     else:
-        sceneInfo.resource = 'Published'
+        sceneInfo.resource = STANDARD_PIPE_NAME
     # path
     sceneFilePath = sceneInfo.filePath()
 
     # Save
+    prevScene = cmds.file( q=True, sn=True )
     cmds.file( rename=sceneFilePath )
     cmds.file( save=True, options="v=1;" )
     ram.RamMetaDataManager.setPipeType( sceneFilePath, STANDARD_PIPE_NAME )
     ram.RamMetaDataManager.setVersion( sceneFilePath, publishFileInfo.version )
     ram.RamMetaDataManager.setState( sceneFilePath, publishFileInfo.state )
+    # Reopen
+    cmds.file(prevScene,o=True,f=True)
 
     progressDialog.hide()
 
