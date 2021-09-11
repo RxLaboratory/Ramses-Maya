@@ -7,4 +7,5 @@ from . import ui
 from . import plugins
 from . import namespaces
 from . import animation
+from . import references
 from .ui_progress import ProgressDialog

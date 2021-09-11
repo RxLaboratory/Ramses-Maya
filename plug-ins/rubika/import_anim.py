@@ -10,7 +10,7 @@ from .import_geo import *
 
 def importAnim( item, filePath, step ):
     
-    dialog = ImportAnimDialog(maf.getMayaWindow())
+    dialog = ImportAnimDialog(maf.ui.getMayaWindow())
     if not dialog.exec_():
         return
 
@@ -41,8 +41,8 @@ def importAnim( item, filePath, step ):
                     # Re-parent
                     p = cmds.listRelatives( node, parent=True, f=True, type='transform')
                     if p:
-                        rootCtrl = maf.parentNodeTo( rootCtrl, p[0] )
-                    maf.deleteNode( node )
+                        rootCtrl = maf.nodes.parent( rootCtrl, p[0] )
+                    maf.nodes.delete( node )
                 newRootCtrls.append(rootCtrl)
 
     return rootCtrls

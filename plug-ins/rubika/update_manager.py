@@ -7,7 +7,7 @@ import dumaf as maf
 from .update_geo import updateGeo
 
 def updateRamsesItems():
-    updateDialog = UpdateDialog(maf.getMayaWindow())
+    updateDialog = UpdateDialog(maf.ui.getMayaWindow())
     result = updateDialog.exec_() 
     if result == 0:
         return

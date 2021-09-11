@@ -63,7 +63,7 @@ def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
                 break
     
     if len( pipes ) == 0: # Let's ask!
-        pipeDialog = PipeDialog( maf.getMayaWindow(), mode )
+        pipeDialog = PipeDialog( maf.ui.getMayaWindow(), mode )
         if pipeDialog.exec_():
             pipes = pipeDialog.getPipes()
         return pipes

@@ -15,7 +15,7 @@ def publishSet(item, step, publishFileInfo):
 
     # Options
     # Show dialog
-    publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
+    publishGeoDialog = PublishGeoDialog( maf.ui.getMayaWindow() )
     if not publishGeoDialog.exec_():
         return
 
@@ -41,8 +41,11 @@ def publishSet(item, step, publishFileInfo):
     progressDialog.show()
     progressDialog.setText("Publishing set")
 
-    tempData = maf.cleanScene(not keepAnimation)
-
+    tempData = maf.scene.createTempScene()
+    maf.references.importAll()
+    maf.namespaces.removeAll()
+    if not keepAnimation: maf.animation.removeAll()
+    
     nodes = getPublishNodes()
 
     if len(nodes) == 0:
@@ -69,17 +72,17 @@ def publishSet(item, step, publishFileInfo):
         children = cmds.listRelatives(node, ad=True, f=True, type='transform')
 
         # If there's no child and just an empty group, nothing to publish
-        if children is None and maf.isGroup( node ):
+        if children is None and maf.nodes.isGroup( node ):
             cmds.delete(node)
             continue
 
         # Move the node we're publishing to zero
-        maf.moveToZero( node )
+        maf.nodes.moveToZero( node )
 
         # Clean all children (reversed because we may remove some of them)
         for child in reversed(children):
             
             # Remove hidden
-            if removeHidden and maf.isHidden( child ):
+            if removeHidden and maf.nodes.isHidden( child ):
                 cmds.delete( child )
                 continue

@@ -19,7 +19,10 @@ def publishProxyShaders( item, step, publishFileInfo ):
     progressDialog.show()
     progressDialog.setText("Publishing Arnold Scene Source")
 
-    tempData = maf.cleanScene()
+    tempData = maf.scene.createTempScene()
+    maf.references.importAll()
+    maf.namespaces.removeAll()
+    maf.animation.removeAll()
 
     # For all nodes in the proxy set
     nodes = getProxyNodes( False )
@@ -35,14 +38,14 @@ def publishProxyShaders( item, step, publishFileInfo ):
     ram.log( "I'm publishing the shaders in " + os.path.dirname( publishFileInfo.filePath() ) )
 
     # We need Arnold, of course
-    maf.safeLoadPlugin('mtoa')
+    maf.plugins.load('mtoa')
 
     for node in nodes:
         progressDialog.setText("Publishing proxy: " + node)
         progressDialog.increment()
 
         cmds.select(node,r=True)
-        nodeName = maf.getNodeBaseName( node )
+        nodeName = maf.paths.baseName( node )
         if nodeName.lower().startswith( 'proxy_' ):
             nodeName = nodeName[6:]
 
@@ -72,7 +75,7 @@ def publishProxyShaders( item, step, publishFileInfo ):
 def publishShaders( item, step, publishFileInfo, mode):
     
     # Show dialog
-    publishShaderDialog = PublishShaderDialog( maf.getMayaWindow() )
+    publishShaderDialog = PublishShaderDialog( maf.ui.getMayaWindow() )
     if not publishShaderDialog.exec_():
         return
 
@@ -84,7 +87,10 @@ def publishShaders( item, step, publishFileInfo, mode):
     # Options
     removeHidden = publishShaderDialog.removeHidden()
 
-    tempData = maf.cleanScene()
+    tempData = maf.scene.createTempScene()
+    maf.references.importAll()
+    maf.namespaces.removeAll()
+    maf.animation.removeAll()
 
     # For all nodes in the publish set
     nodes = getPublishNodes()
@@ -123,8 +129,9 @@ def publishShaders( item, step, publishFileInfo, mode):
                 cmds.delete(childNode)
                 continue
 
-            maf.cleanNode( childNode, True, False, False)
-            maf.checkNode( childNode, True, ('mesh'))
+            maf.nodes.check( True, ('mesh') )
+            maf.nodes.removeExtraShapes()
+            maf.nodes.deleteHistory()
         
         # Remove remaining empty groups
         maf.removeEmptyGroups(node)

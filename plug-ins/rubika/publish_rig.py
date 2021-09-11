@@ -15,7 +15,7 @@ from .ui_publish_rig import PublishRigDialog
 def publishRig( item, step, publishFileInfo, vpShaders = True ):
 
     # Options
-    publishDialog = PublishRigDialog(maf.getMayaWindow())
+    publishDialog = PublishRigDialog(maf.ui.getMayaWindow())
     if not publishDialog.exec_():
         return
 
@@ -32,7 +32,11 @@ def publishRig( item, step, publishFileInfo, vpShaders = True ):
     progressDialog.increment()
 
     # rename scene (cleanscene)
-    tempData = maf.cleanScene( removeAnim, lockHiddenVisibility )
+    tempData = maf.scene.createTempScene()
+    maf.references.importAll()
+    maf.namespaces.removeAll()
+    if removeAnim: maf.animation.removeAll()
+    if lockHiddenVisibility: maf.nodes.lockHiddenVisibility()
 
     # get Nodes
     ns = getPublishNodes()
@@ -44,7 +48,7 @@ def publishRig( item, step, publishFileInfo, vpShaders = True ):
         if p is None:
             nodes.append('|' + node)
             continue
-        n = maf.parentNodeTo(node, '|')
+        n = maf.nodes.parent(node, '|')
         nodes.append(n)
 
     # Delete the nodes we're not publishing
@@ -70,7 +74,7 @@ def publishRig( item, step, publishFileInfo, vpShaders = True ):
         if objects is None:
             continue
         for obj in objects:
-            if obj in maf.nonDeletableObjects:
+            if obj in maf.nodes.nonDeletableObjects:
                 continue
             try:
                 cmds.delete( obj )

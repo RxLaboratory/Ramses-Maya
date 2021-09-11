@@ -10,7 +10,7 @@ def updateGeo( rootCtrl ):
     # Create a locator to keep current transform
     rootLocator = cmds.spaceLocator(name='_ramsesTempLocator_')
     # Snap!
-    rootLocator = maf.snapNodeTo( rootLocator, rootCtrl )
+    rootLocator = maf.nodes.snap( rootLocator, rootCtrl )
 
     # We need to transfer the deformers and rendering sets to the new geo
     currentNodes = cmds.listRelatives(rootCtrl, ad = True, f=True)
@@ -20,7 +20,7 @@ def updateGeo( rootCtrl ):
     for node in currentNodes:
         sets = cmds.listSets(object=node, ets= True)
         if sets is not None:
-            nodeName = maf.getNodeBaseName(node, True)
+            nodeName = maf.paths.baseName(node, True)
             nodeSets[nodeName] = sets
 
     # Re-Import
@@ -39,13 +39,13 @@ def updateGeo( rootCtrl ):
 
     for newRootCtrl in newRootCtrls:
         # Move to the locator
-        newRootCtrl = maf.snapNodeTo( newRootCtrl, rootLocator )
+        newRootCtrl = maf.nodes.snap( newRootCtrl, rootLocator )
 
         # Re-set deformers and rendering sets
         newNodes = cmds.listRelatives( newRootCtrl, ad = True, f = True)
         if newNodes is not None:
             for newNode in newNodes:
-                newName = maf.getNodeBaseName(newNode, True)
+                newName = maf.paths.baseName(newNode, True)
                 if newName in nodeSets:
                     newSets = nodeSets[newName]
                     for newSet in newSets:
@@ -58,7 +58,7 @@ def updateGeo( rootCtrl ):
         else:
             rootParent = '|'
 
-        newRootCtrl = maf.parentNodeTo( newRootCtrl, rootParent )
+        newRootCtrl = maf.nodes.parent( newRootCtrl, rootParent )
         rootCtrls.append(newRootCtrl)
 
     # Re-set shader

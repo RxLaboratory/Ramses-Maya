@@ -58,7 +58,7 @@ def importStandard( item, filePath, step):
         if not cmds.objExists(node):
             continue
         # only the root
-        if maf.hasParent(node):
+        if maf.nodes.hasParent(node):
             continue
         if not cmds.nodeType(node) == 'transform':
             continue

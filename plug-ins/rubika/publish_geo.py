@@ -30,7 +30,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     if GEO_PIPE_FILE in pipeFiles or SET_PIPE_FILE in pipeFiles:
         # Show dialog
-        publishGeoDialog = PublishGeoDialog( maf.getMayaWindow() )
+        publishGeoDialog = PublishGeoDialog( maf.ui.getMayaWindow() )
         if not publishGeoDialog.exec_():
             return
 
@@ -49,8 +49,11 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
     progressDialog.setText("Publishing geometry")
-
-    tempData = maf.cleanScene(not keepAnimation)
+    tempData = maf.scene.createTempScene()
+    maf.references.importAll()
+    maf.namespaces.removeAll()
+    if not keepAnimation: maf.animation.removeAll()
+    maf.nodes.lockHiddenVisibility()
 
     # For all nodes in the publish set or proxy set
     nodes = []
@@ -88,7 +91,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, ['ma','mb', 'abc'], 'abc' )
     if extension == 'abc':
         # We need to use alembic
-        if maf.safeLoadPlugin("AbcExport"):
+        if maf.plugins.load("AbcExport"):
             ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     # Let's count how many objects are published
@@ -105,11 +108,11 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         childNodes.append(node)
 
         # Empty group, nothing to do
-        if childNodes is None and maf.isGroup(node):
+        if childNodes is None and maf.nodes.isGroup(node):
             cmds.delete(node)
             continue
 
-        maf.moveToZero(node)
+        maf.nodes.moveToZero(node)
 
         # Clean (freeze transform, rename shapes, etc)
         for childNode in reversed(childNodes):
@@ -119,21 +122,8 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                 cmds.delete(childNode)
                 continue
 
-            if keepAnimatedDeformers: continue
-
-            freeze = True
-            childName = childNode.lower()
-            for no in noFreeze:
-                if no in childName:
-                    freeze = False
-                    break
-
-            maf.cleanNode( childNode, True, renameShapes, not keepAnimation and freeze)
-
-        # Remove what we don't want
-        if not keepAnimatedDeformers:
-            for childNode in reversed(childNodes):
-
+            typesToKeep = ()
+            if not keepAnimatedDeformers:
                 typesToKeep = ['mesh']
                 if not removeLocators:
                     typesToKeep.append('locator')
@@ -142,21 +132,37 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                     typesToKeep.append('nurbsCurve')
                 if keepSurfaces:
                     typesToKeep.append('nurbsSurface')
-                    
-                maf.checkNode(childNode, True, typesToKeep )
-        
+
+            if not maf.nodes.check( childNode, True, typesToKeep ):
+                continue
+            
+            if not keepAnimatedDeformers:
+                maf.nodes.removeExtraShapes( childNode )
+                maf.nodes.renameShapes( childNode )
+                maf.nodes.deleteHistory( childNode )
+
+            freeze = True
+            childName = childNode.lower()
+            for no in noFreeze:
+                if no in childName:
+                    freeze = False
+                    break
+
+            if not keepAnimation and freeze:
+                maf.nodes.lockTransform( childNode )
+                maf.nodes.freezeTransform( childNode )
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
             continue
 
         # Last steps
-        nodeName = maf.getNodeBaseName(node, True)
+        nodeName = maf.paths.baseName(node, True)
         if nodeName.lower().startswith('proxy_'):
             nodeName = nodeName[6:]
 
         # Remove remaining empty groups
-        maf.removeEmptyGroups(node)
+        maf.nodes.removeEmptyGroups(node)
 
         # Type
         pType = ''
@@ -168,7 +174,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
             pType = GEO_PIPE_NAME
 
         # Create a root controller
-        r = maf.createRootCtrl( node, nodeName + '_' + pType )
+        r = maf.nodes.createRootCtrl( node, nodeName + '_' + pType )
         node = r[0]
         controller = r[1]
 
@@ -260,7 +266,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     for transformNode in reversed(allTransformNodes):
         if transformNode in allPublishedNodes:
             continue
-        if transformNode in maf.nonDeletableObjects:
+        if transformNode in maf.nodes.nonDeletableObjects:
             continue
         try:
             cmds.delete(transformNode)
@@ -269,7 +275,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     # Clean scene:
     # Remove empty groups from the scene
-    maf.removeEmptyGroups()
+    maf.nodes.removeEmptyGroups()
 
     # Copy published scene to publish
     sceneInfo = publishFileInfo.copy()
@@ -306,7 +312,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     ram.log("I've published these assets:")
     for publishedNode in publishedNodes:
-        publishedNode = maf.getNodeBaseName( publishedNode )
+        publishedNode = maf.paths.baseName( publishedNode )
         ram.log(" > " + publishedNode)
     cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
 
