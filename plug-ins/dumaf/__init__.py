@@ -1,33 +1,10 @@
-from .main import (
-    getCreateGroup,
-    getMayaWindow,
-    nonDeletableObjects,
-    safeLoadPlugin,
-    removeAllNamespaces,
-    removeAllAnimCurves,
-    createTempScene,
-    cleanScene,
-    hasParent,
-    hasChildren,
-    isGroup,
-    moveToZero,
-    removeEmptyGroups,
-    freezeTransform,
-    lockTransform,
-    getNodeBaseName,
-    snapNodeTo,
-    cleanNode,
-    getNodeAbsolutePath,
-    parentNodeTo,
-    checkSaveState,
-    createRootCtrl,
-    deleteNode,
-    createNameCommand,
-    restoreSaveSceneHotkey,
-    restoreOpenSceneHotkey,
-    restoreSaveSceneAsHotkey,
-    checkNode,
-    lockVisibility,
-    isHidden,
-)
+from . import nameCommands
+from . import nodes
+from . import paths
+from . import scene
+from . import set
+from . import ui
+from . import plugins
+from . import namespaces
+from . import animation
 from .ui_progress import ProgressDialog
