@@ -137,8 +137,11 @@ def parent( child, parent, r=False):
     child = parent + '|' + child
     return child
 
+def isTransform( node ):
+    return cmds.nodeType(node) == 'transform'
+
 def lockTransform( transformNode, l=True ):
-    if cmds.nodeType(transformNode) != 'transform':
+    if not isTransform( transformNode) :
         return
     for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
         cmds.setAttr(transformNode + a, lock=l )
