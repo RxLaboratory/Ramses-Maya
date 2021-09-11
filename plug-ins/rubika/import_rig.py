@@ -23,6 +23,11 @@ def importRig( item, rigFile, step):
     # Get the file timestamp
     timestamp = os.path.getmtime( rigFile )
     timestamp = int(timestamp)
+    # Get version and state
+    version = ram.RamMetaDataManager.getVersion( rigFile )
+    if version is None: version = -1
+    state = ram.RamMetaDataManager.getState( rigFile )
+    if state is None: state = ''
 
     # Get the Asset Group
     assetGroup = 'RamASSETS_' + assetGroupName
@@ -83,6 +88,8 @@ def importRig( item, rigFile, step):
         setRamsesAttr( rootGroup, RamsesAttribute.ITEM, item.shortName(), 'string' )
         setRamsesAttr( rootGroup, RamsesAttribute.ITEM_TYPE, itemType, 'string' )
         setRamsesAttr( rootGroup, RamsesAttribute.ASSET_GROUP, item.group(), 'string' )
+        setRamsesAttr( rootGroup, RamsesAttribute.VERSION, version, 'long' )
+        setRamsesAttr( rootGroup, RamsesAttribute.STATE, state, 'string' )
 
         # lock transform of the root group
         maf.lockTransform( rootGroup )

@@ -22,6 +22,11 @@ def importStandard( item, filePath, step):
     # Get the file timestamp
     timestamp = os.path.getmtime( filePath )
     timestamp = int(timestamp)
+    # Get version and state
+    version = ram.RamMetaDataManager.getVersion( filePath )
+    if version is None: version = -1
+    state = ram.RamMetaDataManager.getState( filePath )
+    if state is None: state = ''
 
     # Check if the short name is not made only of numbers
     regex = re.compile('^\\d+$')
@@ -70,6 +75,8 @@ def importStandard( item, filePath, step):
             setRamsesAttr( node, RamsesAttribute.STEP, step, 'string' )
             setRamsesAttr( node, RamsesAttribute.ITEM, item.shortName(), 'string' )
             setRamsesAttr( node, RamsesAttribute.ITEM_TYPE, itemType, 'string' )
+            setRamsesAttr( node, RamsesAttribute.VERSION, version, 'long' )
+            setRamsesAttr( node, RamsesAttribute.STATE, state, 'string' )
 
         rootCtrls.append( node )
 

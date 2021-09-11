@@ -23,6 +23,8 @@ class RamsesAttribute():
     DT_TYPES = ('string')
     AT_TYPES = ('long', 'bool')
     IS_PROXY = 'ramsesIsProxy'
+    VERSION = 'ramsesVersion'
+    STATE = 'ramsesState'
 
 def setRamsesAttr( node, attr, value, t):
     # Add if not already there

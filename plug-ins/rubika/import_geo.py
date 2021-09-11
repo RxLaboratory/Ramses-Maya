@@ -24,6 +24,11 @@ def importGeo(item, filePath, step):
     # Get the file timestamp
     timestamp = os.path.getmtime( filePath )
     timestamp = int(timestamp)
+    # Get version and state
+    version = ram.RamMetaDataManager.getVersion( filePath )
+    if version is None: version = -1
+    state = ram.RamMetaDataManager.getState( filePath )
+    if state is None: state = ''
 
     # Get the Asset Group
     itemsGroup = ''
@@ -90,6 +95,8 @@ def importGeo(item, filePath, step):
         setRamsesManaged( rootCtrl )
         setRamsesAttr( rootCtrl, RamsesAttribute.GEO_FILE, filePath, 'string' )
         setRamsesAttr( rootCtrl, RamsesAttribute.GEO_TIME, timestamp, 'long' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.VERSION, version, 'long' )
+        setRamsesAttr( rootCtrl, RamsesAttribute.STATE, state, 'string' )
         setRamsesAttr( rootCtrl, RamsesAttribute.STEP, step, 'string' )
         setRamsesAttr( rootCtrl, RamsesAttribute.ITEM, item.shortName(), 'string' )
         setRamsesAttr( rootCtrl, RamsesAttribute.ITEM_TYPE, itemType, 'string' )
