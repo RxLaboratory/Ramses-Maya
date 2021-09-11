@@ -12,13 +12,13 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
     Slot,
 )
 
-from dumaf import getMayaWindow
+from .ui import UI
 
 class ProgressDialog( QMainWindow ):
 
     def __init__(self, parent = None):
         if parent is None:
-            parent = getMayaWindow()
+            parent = UI.getMayaWindow()
         super(ProgressDialog, self).__init__( parent )
         self.__canceled = False
         self.__setupUi()
