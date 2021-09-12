@@ -103,7 +103,6 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
             # Apply
             cmds.select(mesh, r=True)
             for shaderNode in shaderNodes:
-                print(shaderNode)
                 shadedObjects = getRamsesAttr( shaderNode, RamsesAttribute.SHADED_OBJECTS )
                 if shadedObjects is None:
                     continue

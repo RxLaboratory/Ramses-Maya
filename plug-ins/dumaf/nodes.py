@@ -199,6 +199,7 @@ class Node():
 
     @staticmethod
     def getCreateGroup( groupName, parentNode=None ):
+        groupName = groupName.replace(' ', '_')
         # Check if exists
         if parentNode is None:
             if not groupName.startswith('|'):

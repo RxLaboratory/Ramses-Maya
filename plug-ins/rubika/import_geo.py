@@ -19,6 +19,7 @@ def importGeo(item, filePath, step):
 
     # Get info
     itemShortName = item.shortName()
+    itemName = item.name()
     itemType = item.itemType()
     itemGroupName = item.group()
     # Get version and state
@@ -40,7 +41,7 @@ def importGeo(item, filePath, step):
         itemShortName = itemType + itemShortName
 
     # Get the Item Group
-    itemGroup = maf.Node.getCreateGroup( itemShortName + ':' + itemShortName, itemsGroup )
+    itemGroup = maf.Node.getCreateGroup( itemShortName + ':' + itemName, itemsGroup )
 
     # We may need to use alembic
     if maf.Plugin.load("AbcImport"):

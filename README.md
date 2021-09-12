@@ -18,7 +18,6 @@ The Rx Asset Management System (Ramses) Maya Plugin
 ## TODO
 
 - Import:
-    - getCreateGroup does not return existing group
     - Import anim (and remove rig) issue:
         # #   File "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/plug-ins\rubika\import_anim.py", line 30, in importAnim
         # #     step = getRamsesAttr(node, RamsesAttribute.STEP)

@@ -45,40 +45,49 @@ def setImportAttributes( node, item, step, filePath ):
     setRamsesAttr( node, RamsesAttribute.RESOURCE, resource, 'string' )
 
 def setRamsesAttr3( node, attr, x, y, z, t):
-    # Add if not already there
-    if attr not in cmds.listAttr(node):
+    # Temporarily unlock ref edit
+    cmds.optionVar(iv=("refLockEditable",1))
+    try: # Some nodes won't accept new attributes
+        # Add if not already there
+        if attr not in cmds.listAttr(node):
+            if t in RamsesAttribute.DT_TYPES:
+                cmds.addAttr( node, ln= attr, dt=t)
+            else:
+                cmds.addAttr( node, ln=attr, at=t)
+        # Unlock
+        cmds.setAttr( node + '.' + attr, lock=False )
+        # Set
         if t in RamsesAttribute.DT_TYPES:
-            cmds.addAttr( node, ln= attr, dt=t)
+            cmds.setAttr( node + '.' + attr, x, y, z, type=t)
         else:
-            cmds.addAttr( node, ln=attr, at=t)
-    # Unlock
-    cmds.setAttr( node + '.' + attr, lock=False )
-    # Set
-    if t in RamsesAttribute.DT_TYPES:
-        cmds.setAttr( node + '.' + attr, x, y, z, type=t)
-    else:
-        cmds.setAttr( node + '.' + attr, x, y, z )
-    # Lock
-    cmds.setAttr( node + '.' + attr, lock=True )
+            cmds.setAttr( node + '.' + attr, x, y, z )
+        # Lock
+        cmds.setAttr( node + '.' + attr, lock=True )
+    except:
+        pass
+    cmds.optionVar(iv=("refLockEditable",0))
 
 def setRamsesAttr( node, attr, value, t):
     # Temporarily unlock ref edit
     cmds.optionVar(iv=("refLockEditable",1))
-    # Add if not already there
-    if attr not in cmds.listAttr(node):
+    try: # Some nodes won't accept new attributes
+        # Add if not already there
+        if attr not in cmds.listAttr(node):
+            if t in RamsesAttribute.DT_TYPES:
+                cmds.addAttr( node, ln= attr, dt=t)
+            else:
+                cmds.addAttr( node, ln=attr, at=t)
+        # Unlock
+        cmds.setAttr( node + '.' + attr, lock=False )
+        # Set
         if t in RamsesAttribute.DT_TYPES:
-            cmds.addAttr( node, ln= attr, dt=t)
+            cmds.setAttr( node + '.' + attr, value, type=t)
         else:
-            cmds.addAttr( node, ln=attr, at=t)
-    # Unlock
-    cmds.setAttr( node + '.' + attr, lock=False )
-    # Set
-    if t in RamsesAttribute.DT_TYPES:
-        cmds.setAttr( node + '.' + attr, value, type=t)
-    else:
-        cmds.setAttr( node + '.' + attr, value )
-    # Lock
-    cmds.setAttr( node + '.' + attr, lock=True )
+            cmds.setAttr( node + '.' + attr, value )
+        # Lock
+        cmds.setAttr( node + '.' + attr, lock=True )
+    except:
+        pass
     cmds.optionVar(iv=("refLockEditable",0))
 
 def getRamsesAttr( node, attr):
