@@ -92,11 +92,11 @@ def setRamsesAttr( node, attr, value, t):
 
 def getRamsesAttr( node, attr):
     if attr not in cmds.listAttr(node):
-        return None
+        return ''
     return cmds.getAttr(node + '.' + attr)
 
 def setRamsesManaged(node, managed=True):
-    setRamsesAttr( node, RamsesAttribute.MANAGED, True, 'bool' )
+    setRamsesAttr( node, RamsesAttribute.MANAGED, managed, 'bool' )
     
 def getItem( node ):
     # try from path first

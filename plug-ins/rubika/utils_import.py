@@ -100,6 +100,9 @@ def importFile(item, filePath, step, progressDialog=maf.ProgressDialog(), refere
         # When parenting the roots, children won't exist anymore
         if not cmds.objExists(node):
             continue
+        # If it's not a root, and this is referenced, it can't be ramses managed (unless the reference is imported)
+        if isRamsesManaged( node ) and reference:
+            setRamsesManaged( node, False )
         # only the root
         if maf.Node.hasParent(node):
             continue

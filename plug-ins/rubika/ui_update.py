@@ -53,6 +53,10 @@ class UpdateDialog( QDialog ):
         self.onlyNewButton.setChecked(True)
         currentLayout.addWidget( self.onlyNewButton )
 
+        self.onlySelectedButton = QCheckBox("Show only selected nodes.")
+        self.onlySelectedButton.setChecked(False)
+        currentLayout.addWidget( self.onlySelectedButton )
+
         self.itemList = QListWidget()
         self.itemList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         currentLayout.addWidget(self.itemList)
@@ -100,6 +104,7 @@ class UpdateDialog( QDialog ):
         self._updateButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
         self.onlyNewButton.clicked.connect( self.showOnlyNew )
+        self.onlySelectedButton.clicked.connect( self.showOnlySelected )
         self.itemList.itemSelectionChanged.connect( self.selectionChanged )
         self._updateSelectedButton.clicked.connect( self._updateSelected )
 
@@ -159,15 +164,38 @@ class UpdateDialog( QDialog ):
             self.currentDetailsLabel.setText("")
     Slot()
     def showOnlyNew(self, checked = True):
+        self.__filterList()
+
+    Slot()
+    def showOnlySelected(self, checked = True):
+        self.__filterList()
+
+    def __filterList(self):
+        selection = cmds.ls( long=True, selection=True )
+        if selection is None: selection = []
+
+        onlySelected = self.onlySelectedButton.isChecked()
+        onlyUpdated = self.onlyNewButton.isChecked()
+    
         for i in range(0, self.itemList.count()):
-            if not checked:
-                self.itemList.item(i).setHidden(False)
-            else:
-                itemText = self.itemList.item(i).text()
-                hidden =  not itemText.startswith('New: ')
-                self.itemList.item(i).setHidden(hidden)
-                if hidden:
-                    self.itemList.item(i).setSelected(False)
+            listItem = self.itemList.item( i )
+            if not onlySelected and not onlyUpdated:
+                listItem.setHidden(False)
+                continue
+
+            node = listItem.data(Qt.UserRole)
+            updated = listItem.text().startswith('New: ')
+            selected = node in selection
+
+            if onlyUpdated and not updated:
+                listItem.setHidden(True)
+                continue
+            if onlySelected and not selected:
+                listItem.setHidden(True)
+                continue
+
+            listItem.setHidden(False)
+            
 
     def __listItems(self):
         nodes = listRamsesNodes()
@@ -237,12 +265,15 @@ class UpdateDialog( QDialog ):
         return nodes
 
     def getSelectedNodes(self):
+        nodes = []
+
         updateItem = self.updateList.currentItem()
         currentItem = self.itemList.currentItem()
-        if updateItem is not None and currentItem is not None:
-            return (( currentItem.data(Qt.UserRole), updateItem.data(Qt.UserRole) ))
 
-        nodes = []
+        if updateItem is not None and currentItem is not None:
+            nodes.append( ( currentItem.data(Qt.UserRole), updateItem.data(Qt.UserRole) ) )
+            return nodes
+
         for item in self.itemList.selectedItems():
             nodes.append( ( item.data(Qt.UserRole), item.data(Qt.UserRole + 9) ) )
         return nodes

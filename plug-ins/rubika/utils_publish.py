@@ -47,7 +47,8 @@ def publishNodeAsABC( publishFileInfo, node, pipeName, timeRange=(1,1), frameSte
     if maf.Plugin.load("AbcExport"):
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
-    nodeName = maf.Path.baseName( node ).replace('_', ' ')
+    nodeName = maf.Path.baseName( node )
+    nodeName = nodeName.replace('_root_', '').replace(pipeName, '')
     filePath = getPublishFilePath( publishFileInfo, 'abc', nodeName + '-' + pipeName )
 
     eulerFilter = ''

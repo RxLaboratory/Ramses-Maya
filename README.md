@@ -20,8 +20,6 @@ The Rx Asset Management System (Ramses) Maya Plugin
 - Import:
     - autoselect same asset/shot as selected in the viewport
 - rebuild update
-    - RamItem latestversion not working
     - Check/test updates
-    - Rebuild set update
     - option to filter according to selection
     

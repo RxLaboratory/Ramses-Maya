@@ -8,12 +8,14 @@ from .utils_constants import *
 from .ui_import_anim import ImportAnimDialog
 from .import_geo import *
 
-def importAnim( item, filePath, step ):
+def importAnim( item, filePath, step, showDialog=True ):
     
-    dialog = ImportAnimDialog(maf.UI.getMayaWindow())
-    if not dialog.exec_():
-        return
-    removeRigs = dialog.removeRig()
+    removeRigs = False
+    if showDialog:
+        dialog = ImportAnimDialog(maf.UI.getMayaWindow())
+        if not dialog.exec_():
+            return
+        removeRigs = dialog.removeRig()
 
     # Progress
     progressDialog = maf.ProgressDialog()
