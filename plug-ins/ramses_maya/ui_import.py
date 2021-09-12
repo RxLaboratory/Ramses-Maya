@@ -309,6 +309,7 @@ class ImportDialog( QDialog ):
             self.resourcesLabel.hide()
             self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self.publishVersionBox.setVisible(True)
+        self.__updateResources()
         self.__resourceChanged( self.resourceList.currentRow() )
     
     @Slot()
