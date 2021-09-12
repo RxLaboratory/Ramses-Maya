@@ -51,7 +51,7 @@ def getSaveFilePath( filePath ):
     if saveFilePath == '':
         cmds.warning( ram.Log.MalformedName )
         # Set file to be renamed
-        cmds.file( renameToSave = True )
+        # cmds.file( renameToSave = True )
         cmds.inViewMessage( msg='Some Problem occured, <hl>the file name is still invalid for Ramses</hl>, sorry.', pos='midCenter', fade=True )
         return ''
 

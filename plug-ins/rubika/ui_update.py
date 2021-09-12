@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from re import split
 
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
     QDialog,
@@ -19,7 +20,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
     Qt,
 )
 
-from .utils_attributes import * # pylint: disable=import-error
+from rubika.utils_attributes import * # pylint: disable=import-error
 import ramses as ram
 
 ramses = ram.Ramses.instance()
@@ -40,25 +41,44 @@ class UpdateDialog( QDialog ):
         mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
 
+        columnLayout = QHBoxLayout()
+        columnLayout.setContentsMargins(0,0,0,0)
+        columnLayout.setSpacing(6)
+
+        currentLayout = QVBoxLayout()
+        currentLayout.setContentsMargins(0,0,0,0)
+        currentLayout.setSpacing(3)
+        
         self.onlyNewButton = QCheckBox("Show only updated items.")
         self.onlyNewButton.setChecked(True)
-        mainLayout.addWidget( self.onlyNewButton )
+        currentLayout.addWidget( self.onlyNewButton )
 
         self.itemList = QListWidget()
         self.itemList.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        mainLayout.addWidget(self.itemList)
+        currentLayout.addWidget(self.itemList)
 
-        detailsLayout = QHBoxLayout()
-        detailsLayout.setContentsMargins(6,6,6,6)
-        detailsLayout.setSpacing(3)
-
-        self.currentDetailsLabel = QLabel("\n\n")
-        detailsLayout.addWidget(self.currentDetailsLabel)
+        self.currentDetailsLabel = QLabel("")
+        currentLayout.addWidget(self.currentDetailsLabel)
         
-        self.newDetailsLabel = QLabel("\n\n")
-        detailsLayout.addWidget(self.newDetailsLabel)
+        columnLayout.addLayout(currentLayout)
 
-        mainLayout.addLayout(detailsLayout)
+        updateLayout = QVBoxLayout()
+        updateLayout.setContentsMargins(0,0,0,0)
+        updateLayout.setSpacing(3)
+
+        updateLabel = QLabel("Published versions:")
+        updateLayout.addWidget(updateLabel)
+
+        self.updateList = QListWidget()
+        self.updateList.setSelectionMode(QAbstractItemView.SingleSelection)
+        updateLayout.addWidget(self.updateList)
+
+        self.updateDetailsLabel = QLabel("")
+        updateLayout.addWidget(self.updateDetailsLabel)
+        
+        columnLayout.addLayout(updateLayout)
+
+        mainLayout.addLayout(columnLayout)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -91,15 +111,50 @@ class UpdateDialog( QDialog ):
     def selectionChanged(self):
         items = self.itemList.selectedItems()
         self._updateSelectedButton.setEnabled(len(items) > 0)
+        self.updateList.clear()
 
         currentItem = self.itemList.currentItem()
-        if currentItem is not None:
-            self.currentDetailsLabel.setText(currentItem.data(Qt.UserRole + 1))
-            self.newDetailsLabel.setText(currentItem.data(Qt.UserRole + 2))
-        else:
-            self.currentDetailsLabel.setText("\n\n")
-            self.newDetailsLabel.setText("\n\n")
+        if currentItem is not None and len(items) == 1:
 
+            # Details
+
+            currentDetails = '\n'.join((
+                "Current version: " + str( currentItem.data(Qt.UserRole + 4) ),
+                "Current state: " + currentItem.data(Qt.UserRole + 3).name()
+            ))
+            self.currentDetailsLabel.setText( currentDetails )
+
+            updateDetails = '\n'.join((
+                "Latest version: " + str( currentItem.data(Qt.UserRole + 7) ),
+                "Latest state: " + currentItem.data(Qt.UserRole + 8).name()
+            ))
+            self.updateDetailsLabel.setText( updateDetails )
+
+            # List available versions
+            ramItem = currentItem.data(Qt.UserRole + 1)
+            ramStep = currentItem.data(Qt.UserRole + 2)
+            sourceFile = currentItem.data(Qt.UserRole + 5)
+            resource = currentItem.data(Qt.UserRole + 6)
+            sourceFileName = os.path.basename(sourceFile)
+            publishedFolders = ramItem.publishedVersionFolderPaths( ramStep, sourceFileName, resource )
+            for f in reversed(publishedFolders):
+                updateItem = QListWidgetItem(self.updateList)
+
+                splitName = os.path.basename(f).split('_')
+                if len(splitName) == 3:
+                    splitName[1] = 'v' + str(int(splitName[1]))
+                    splitName[2] = str( ram.Ramses.instance().state(splitName[2]).name() )
+                elif len(splitName) == 2:
+                    splitName[0] = 'v' + str(int(splitName[0]))
+                    splitName[1] = str( ram.Ramses.instance().state(splitName[1]).name() )
+
+                itemName = ' | '.join(splitName)
+                updateItem.setText( itemName )
+
+            self.updateList.setCurrentItem( self.updateList.item(0) )
+                            
+        else:
+            self.currentDetailsLabel.setText("")
     Slot()
     def showOnlyNew(self, checked = True):
         for i in range(0, self.itemList.count()):
@@ -120,43 +175,54 @@ class UpdateDialog( QDialog ):
             return
         self._updateButton.setEnabled(True)
         for node in nodes:
-            name = getRamsesAttr(node, RamsesAttribute.ITEM )
-            step = getRamsesAttr(node, RamsesAttribute.STEP )
-            item = QListWidgetItem( self.itemList )
-            item.setData(Qt.UserRole, node)
-            item.setToolTip(node)
+            nodeName = maf.Path.baseName(node)
 
-            itemText = name + ' (' + step + ') - ' + maf.Path.baseName( node )
+            ramItem = getItem( node )
+            ramStep = getStep( node )
+            ramState = getState( node )
 
             # Check source info
             sourceFile = getRamsesAttr( node, RamsesAttribute.SOURCE_FILE )
             version = getRamsesAttr( node, RamsesAttribute.VERSION )
-            state = getRamsesAttr( node, RamsesAttribute.STATE )
             resource = getRamsesAttr(node, RamsesAttribute.RESOURCE )
-            state = ramses.state(state)
-            item.setData(Qt.UserRole + 1, "Current version: " + str(version) + "\nCurrent state: " + str(state))
+
+            listItem = QListWidgetItem( self.itemList )
+            listItem.setData(Qt.UserRole, node)
+            listItem.setData(Qt.UserRole + 1, ramItem )
+            listItem.setData(Qt.UserRole + 2, ramStep )
+            listItem.setData(Qt.UserRole + 3, ramState )
+            listItem.setData(Qt.UserRole + 4, version )
+            listItem.setData(Qt.UserRole + 5, sourceFile )
+            listItem.setData(Qt.UserRole + 6, resource )
+            listItem.setData(Qt.UserRole + 7, '-Not found-')
+            listItem.setData(Qt.UserRole + 8, ram.RamState('-Not found-', '-NF-') )
+            listItem.setToolTip( node )
+
+            itemText = ramItem.name() + ' | ' + ramStep.name()
+            if resource != '': itemText = itemText + ' | ' + resource
+            itemText = itemText + ' (' + nodeName + ')'
 
             updated = False
 
             if sourceFile is not None:
                 # Get the latest one and check its version and state
                 fileName = os.path.basename( sourceFile )
-                ramItem = ram.RamItem.fromPath( sourceFile )
-                latestFile = ramItem.latestPublishedVersion( fileName, resource )
-                if latestFile != sourceFile:
+                latestFolder = ramItem.latestPublishedVersionFolderPath( ramStep, fileName, resource )
+                latestFile = ram.RamFileManager.buildPath((latestFolder, fileName))
+                if latestFile != sourceFile and latestFile != '':
                     updated = True
-                    newVersion = ram.RamMetaDataManager.getVersion( latestFile )
-                    newState = ram.RamMetaDataManager.getState( latestFile )
-                    newState = ramses.state( newState )
-                    item.setData( Qt.UserRole + 2, "New version: " + str(newVersion) + "\nNew state: " + str(newState) )
-
+                updateVersion = ram.RamMetaDataManager.getVersion(latestFile)
+                updateState = ram.RamMetaDataManager.getState( latestFile )
+                updateState = ram.Ramses.instance().state(updateState)
+                listItem.setData(Qt.UserRole + 7, updateVersion)
+                listItem.setData(Qt.UserRole + 8, updateState)
             if updated:
                 itemText = 'New: ' + itemText 
 
             elif self.onlyNewButton.isChecked():
-                item.setHidden(True)
+                listItem.setHidden(True)
 
-            item.setText(itemText)
+            listItem.setText(itemText)
 
     def getAllNodes(self):
         nodes = []
@@ -171,3 +237,8 @@ class UpdateDialog( QDialog ):
         for item in self.itemList.selectedItems():
             nodes.append( item.data(Qt.UserRole) )
         return nodes
+
+
+if __name__ == '__main__':
+    updateDialog = UpdateDialog()
+    ok = updateDialog.exec_()

@@ -98,6 +98,32 @@ def getRamsesAttr( node, attr):
 def setRamsesManaged(node, managed=True):
     setRamsesAttr( node, RamsesAttribute.MANAGED, True, 'bool' )
     
+def getItem( node ):
+    # try from path first
+    sourcePath = getRamsesAttr( node, RamsesAttribute.SOURCE_FILE )
+    if sourcePath != '':
+        item = ram.RamItem.fromPath( sourcePath )
+        if item is not None: return item
+    # try from name
+    name = getRamsesAttr( node, RamsesAttribute.ITEM )
+    itemType = getRamsesAttr( node, RamsesAttribute.ITEM_TYPE )
+    if name == '': return None
+    return ram.RamItem.fromString( name, itemType )
+
+def getStep( node ):
+    # try from path first
+    sourcePath = getRamsesAttr( node, RamsesAttribute.SOURCE_FILE )
+    if sourcePath != '':
+        step = ram.RamStep.fromPath( sourcePath )
+        if step is not None: return step
+    # try from name
+    name = getRamsesAttr( node, RamsesAttribute.STEP )
+    if name == '': return None
+    return ram.RamStep.fromString( name )
+
+def getState( node ):
+    state = getRamsesAttr( node, RamsesAttribute.STATE )
+    return ram.Ramses.instance().state(state)
 
 def isRamsesManaged(node):
     return getRamsesAttr( node, RamsesAttribute.MANAGED )
