@@ -644,6 +644,7 @@ class RamOpenCmd( om.MPxCommand ):
 
     def __init__(self):
         om.MPxCommand.__init__(self)
+        self.importMode = False
 
     @staticmethod
     def createCommand():
@@ -652,15 +653,26 @@ class RamOpenCmd( om.MPxCommand ):
     @staticmethod
     def createSyntax():
         syntax = om.MSyntax()
+        syntax.addFlag('-i', "-importMode", om.MSyntax.kBoolean )
         return syntax
+
+    def parseArgs(self, args):
+        parser = om.MArgParser( self.syntax(), args)
+        if parser.isFlagSet( '-i' ):
+            self.importMode = parser.flagArgumentBool('-i', 0)
+        else:
+            self.importMode = False
 
     def doIt(self, args):
         # Check if the Daemon is available if Ramses is set to be used "online"
         if not checkDaemon():
             return
 
+        self.parseArgs(args)
+
         # Let's show the dialog
         importDialog = ImportDialog(maf.UI.getMayaWindow())
+        importDialog.setImportMode( self.importMode )
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
         if currentFilePath != '':
@@ -668,8 +680,12 @@ class RamOpenCmd( om.MPxCommand ):
             nm.setFilePath( currentFilePath )
             if nm.project != '':
                 project = ramses.project( nm.project )
-                ramses.setCurrentProject( project )
-                importDialog.setProject( project )
+                if project is not None:
+                    ramses.setCurrentProject( project )
+                    importDialog.setProject( project )
+                    importDialog.setType( nm.ramType )
+                    importDialog.setItem( nm.shortName )
+                    # importDialog.setStep( nm.step )
         else:
             # Try to get project from ramses
             project = ramses.currentProject()

@@ -482,6 +482,10 @@ class ImportDialog( QDialog ):
     def __import(self):
         self.done(2)
 
+    def setImportMode(self, importMode=True):
+        self.importButton.setChecked( importMode )
+        self.__actionChanged()
+
     def setProject(self, project):
         
         if project is None:
@@ -496,6 +500,30 @@ class ImportDialog( QDialog ):
 
         self.projectBox.addItem( str(project), project )
         self.projectBox.setCurrentIndex( self.projectBox.count() - 1)
+
+    def setType( self, itemType):
+        if itemType == ram.ItemType.ASSET:
+            self.assetButton.setChecked(True)
+        elif itemType == ram.ItemType.SHOT:
+            self.shotButton.setChecked(True)
+        self.__typeChanged()
+
+    def setItem(self, itemShortName ):
+        self.groupBox.setCurrentIndex(0)
+        for i in range( 0, self.itemList.count()):
+            listItem = self.itemList.item(i)
+            if listItem.data(Qt.UserRole).shortName() == itemShortName:
+                self.itemList.setCurrentItem(listItem)
+                self.__updateResources()
+                return
+
+    def setStep(self, stepShortName):
+        for i in range(0, self.stepList.count()):
+            listItem = self.stepList.item(i)
+            if listItem.data(Qt.UserRole).shortName == stepShortName:
+                self.stepList.setCurrentItem(listItem)
+                self.__updateResources()
+                return
 
     def getProject(self):
         return self.projectBox.currentData()
