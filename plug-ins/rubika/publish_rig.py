@@ -23,8 +23,8 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
     hideJointsMode = publishDialog.hideJointsMode()
     lockHiddenVisibility = publishDialog.lockHidden()
     removeAnim = publishDialog.removeAnim()
-    deformerSetsToDelete = publishDialog.getDeformerSets()
-    renderingSetsToDelete = publishDialog.getRenderingSets()
+    """deformerSetsToDelete = publishDialog.getDeformerSets()
+    renderingSetsToDelete = publishDialog.getRenderingSets()"""
 
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
@@ -40,9 +40,9 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
     if lockHiddenVisibility: maf.Node.lockHiddenVisibility()
 
     # get Nodes
-    ns = getPublishNodes()
-    nodes = []
-    # move them to the root
+    nodes = getPublishNodes()
+
+    """# move them to the root
     for node in ns:
         p = cmds.listRelatives(node, p=True)
         # already in the world
@@ -57,9 +57,10 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
     for rootNode in reversed(allRootNodes):
         if rootNode in nodes:
             continue
-        cmds.delete( rootNode )
 
-    # Delete objects in sets if option
+        cmds.delete( rootNode )"""
+
+    """# Delete objects in sets if option
     for deformerSet in deformerSetsToDelete:
         objects = cmds.sets( deformerSet, q=True)
         if objects is None:
@@ -80,7 +81,7 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
             try:
                 cmds.delete( obj )
             except:
-                pass
+                pass"""
 
     # hide joints if option (using drawstyle or visibility)
     if hideJointsMode > 0:
