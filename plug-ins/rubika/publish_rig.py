@@ -41,47 +41,30 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
 
     # get Nodes
     nodes = getPublishNodes()
+    progressDialog.setMaximum( len(nodes) )
 
-    """# move them to the root
-    for node in ns:
-        p = cmds.listRelatives(node, p=True)
-        # already in the world
-        if p is None:
-            nodes.append('|' + node)
-            continue
-        n = maf.Node.parent(node, '|')
-        nodes.append(n)
+    publishedNodes = []
+    for node in nodes:
+        # Full path node
+        node = maf.Path.absolutePath( node )
+        
+        # Move to origin
+        maf.Node.moveToZero(node)
+        nodeName = maf.Path.baseName(node, True)
 
-    # Delete the nodes we're not publishing
-    allRootNodes = cmds.ls( '|*', r=True, long=True )
-    for rootNode in reversed(allRootNodes):
-        if rootNode in nodes:
-            continue
+        # Export viewport shaders
+        if vpShaders:
+            exportShaders( node, publishFileInfo, VPSHADERS_PIPE_NAME )
+            # Assign initialshadinggroup to all geo
+            cmds.sets(node,e=True,forceElement='initialShadingGroup')
+            # delete all user shaders
+            mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteShadingGroupsAndMaterials")')
 
-        cmds.delete( rootNode )"""
-
-    """# Delete objects in sets if option
-    for deformerSet in deformerSetsToDelete:
-        objects = cmds.sets( deformerSet, q=True)
-        if objects is None:
-            continue
-        for obj in objects:
-            try:
-                cmds.delete( obj )
-            except:
-                pass
-
-    for renderingSet in renderingSetsToDelete:
-        objects = cmds.sets( renderingSet, q=True)
-        if objects is None:
-            continue
-        for obj in objects:
-            if obj in maf.Node.nonDeletableObjects:
-                continue
-            try:
-                cmds.delete( obj )
-            except:
-                pass"""
+        # Create a root controller
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + RIG_PIPE_NAME )
+        node = r[0]
+        controller = r[1]
+        publishedNodes.append(controller)
 
     # hide joints if option (using drawstyle or visibility)
     if hideJointsMode > 0:
@@ -92,18 +75,6 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
                     cmds.setAttr( joint + '.visibility', False )
                 else:
                     cmds.setAttr( joint + '.drawStyle', 2 )
-
-    progressDialog.setText("Exporting viewport shaders")
-    progressDialog.increment()
-
-    # export viewport shaders
-    if vpShaders:
-        for node in nodes:
-            exportShaders( node, publishFileInfo, VPSHADERS_PIPE_NAME )
-            # Assign initialshadinggroup to all geo
-            cmds.sets(node,e=True,forceElement='initialShadingGroup')
-            # delete all user shaders
-            mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteShadingGroupsAndMaterials")')
 
     progressDialog.setText("Saving")
     progressDialog.increment()

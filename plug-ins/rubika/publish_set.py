@@ -151,7 +151,7 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
             nodeName = nodeName[6:]
 
         # Create a root controller
-        r = maf.Node.createRootCtrl( node, nodeName + '_' + SET_PIPE_NAME )
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + SET_PIPE_NAME )
         node = r[0]
         controller = r[1]
 

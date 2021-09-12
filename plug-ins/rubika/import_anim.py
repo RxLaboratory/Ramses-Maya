@@ -13,11 +13,19 @@ def importAnim( item, filePath, step ):
     dialog = ImportAnimDialog(maf.UI.getMayaWindow())
     if not dialog.exec_():
         return
-
     removeRigs = dialog.removeRig()
 
+    # Progress
+    progressDialog = maf.ProgressDialog()
+    progressDialog.show()
+    progressDialog.setText("Importing Animation...")
+    progressDialog.setMaximum(2)
+    progressDialog.increment()
+
     # Just import as any Geo
-    rootCtrls = importGeo( item, filePath, step )
+    rootCtrls = importFile( item, filePath, step, progressDialog)
+
+    progressDialog.setText("Removing corresponding rigs.")
 
     if removeRigs:
         newRootCtrls = []
@@ -26,6 +34,7 @@ def importAnim( item, filePath, step ):
             currentAssetName = rootCtrl.split('|')[-1].split(':')[-1].split('_')[0]
             ramsesNodes = listRamsesNodes()
             for node in ramsesNodes:
+                if not cmds.objExists(node): continue
                 newRootCtrls.append(rootCtrl)
                 step = getRamsesAttr(node, RamsesAttribute.STEP)
                 if not step: continue
@@ -38,5 +47,7 @@ def importAnim( item, filePath, step ):
                     if p is not None: rootCtrl = maf.Node.parent( rootCtrl, p[0] )
                     maf.Node.delete( node )
                 newRootCtrls.append(rootCtrl)
+
+    progressDialog.close()
 
     return rootCtrls

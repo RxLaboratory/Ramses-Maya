@@ -69,7 +69,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         return
 
     numNodes = len(nodes)
-    progressDialog.setMaximum(numNodes + 2)
+    progressDialog.setMaximum(numNodes)
     progressDialog.setText("Preparing")
     progressDialog.increment()
     
@@ -88,7 +88,10 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     publishedNodes = []
 
     for node in reversed(nodes):
-        progressDialog.setText("Publishing: " + node)
+        # Full path node
+        node = maf.Path.absolutePath( node )
+        nodeName = maf.Path.baseName( node )
+        progressDialog.setText("Publishing: " + nodeName)
         progressDialog.increment()
 
         # Get all children
@@ -148,11 +151,6 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         if not cmds.objExists(node):
             continue
 
-        # Last steps
-        nodeName = maf.Path.baseName(node, True)
-        if nodeName.lower().startswith('proxy_'):
-            nodeName = nodeName[6:]
-
         # Remove remaining empty groups
         maf.Node.removeEmptyGroups(node)
 
@@ -173,7 +171,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
                 extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
 
         # Create a root controller
-        r = maf.Node.createRootCtrl( node, nodeName + '_' + pType )
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + pType )
         node = r[0]
         controller = r[1]
 

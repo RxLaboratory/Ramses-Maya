@@ -38,7 +38,7 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
     maf.Reference.importAll()
     maf.Namespace.removeAll()
 
-    # For all nodes in the publish set or proxy set
+    # For all nodes in the publish set
     nodes = getPublishNodes()
 
     if len(nodes) == 0:
@@ -46,7 +46,7 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
         return
 
     numNodes = len(nodes)
-    progressDialog.setMaximum(numNodes + 2)
+    progressDialog.setMaximum( numNodes )
     progressDialog.setText("Preparing")
     progressDialog.increment()
 
@@ -61,7 +61,7 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
         # Full path node
         node = maf.Path.absolutePath( node )
         nodeName = maf.Path.baseName( node )
-        progressDialog.setText("Baking: " + nodeName)
+        progressDialog.setText("Publishing: " + nodeName)
         progressDialog.increment()
 
         # Get all children
@@ -107,7 +107,7 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
             continue
 
         # Create a root controller
-        r = maf.Node.createRootCtrl( node, nodeName + '_' + ANIM_PIPE_NAME )
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + ANIM_PIPE_NAME )
         node = r[0]
         controller = r[1]
 

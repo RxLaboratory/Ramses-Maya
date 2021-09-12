@@ -18,12 +18,6 @@ The Rx Asset Management System (Ramses) Maya Plugin
 ## TODO
 
 - Import:
-    - Import anim (and remove rig) issue:
-        # #   File "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/plug-ins\rubika\import_anim.py", line 30, in importAnim
-        # #     step = getRamsesAttr(node, RamsesAttribute.STEP)
-        # #   File "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/plug-ins\rubika\utils_attributes.py", line 82, in getRamsesAttr
-        # #     if attr not in cmds.listAttr(node):
-        # # ValueError: No object matches name: |S001:Main|S001:IS_Rig|S001:IS_Rig_001:Iseult_Root|S001:IS_Rig_001:Iseult_Geo #
     - autoselect same asset/shot as selected in the viewport
     - UI: reload versions if action change
 - Update:
