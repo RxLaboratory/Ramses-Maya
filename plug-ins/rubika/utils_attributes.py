@@ -38,8 +38,8 @@ def setImportAttributes( node, item, step, filePath ):
     setRamsesAttr( node, RamsesAttribute.SOURCE_TIME, timestamp, 'long' )
     setRamsesAttr( node, RamsesAttribute.VERSION, version, 'long' )
     setRamsesAttr( node, RamsesAttribute.STATE, state, 'string' )
-    setRamsesAttr( node, RamsesAttribute.STEP, step, 'string' )
-    setRamsesAttr( node, RamsesAttribute.ITEM, item.shortName(), 'string' )
+    setRamsesAttr( node, RamsesAttribute.STEP, str(step), 'string' )
+    setRamsesAttr( node, RamsesAttribute.ITEM, str(item), 'string' )
     setRamsesAttr( node, RamsesAttribute.ITEM_TYPE, item.itemType(), 'string' )
     setRamsesAttr( node, RamsesAttribute.ASSET_GROUP, item.group(), 'string' )
     setRamsesAttr( node, RamsesAttribute.RESOURCE, resource, 'string' )
@@ -62,6 +62,8 @@ def setRamsesAttr3( node, attr, x, y, z, t):
     cmds.setAttr( node + '.' + attr, lock=True )
 
 def setRamsesAttr( node, attr, value, t):
+    # Temporarily unlock ref edit
+    cmds.optionVar(iv=("refLockEditable",1))
     # Add if not already there
     if attr not in cmds.listAttr(node):
         if t in RamsesAttribute.DT_TYPES:
@@ -77,6 +79,7 @@ def setRamsesAttr( node, attr, value, t):
         cmds.setAttr( node + '.' + attr, value )
     # Lock
     cmds.setAttr( node + '.' + attr, lock=True )
+    cmds.optionVar(iv=("refLockEditable",0))
 
 def getRamsesAttr( node, attr):
     if attr not in cmds.listAttr(node):
@@ -85,6 +88,7 @@ def getRamsesAttr( node, attr):
 
 def setRamsesManaged(node, managed=True):
     setRamsesAttr( node, RamsesAttribute.MANAGED, True, 'bool' )
+    
 
 def isRamsesManaged(node):
     return getRamsesAttr( node, RamsesAttribute.MANAGED )

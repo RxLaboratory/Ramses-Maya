@@ -17,10 +17,7 @@ The Rx Asset Management System (Ramses) Maya Plugin
 
 ## TODO
 
-- Publish:
-    - Rig: Error: Non-deletable node
 - Import:
-    - when importing shaders (reference): override to set ramses attributes
     - getCreateGroup does not return existing group
     - Import anim (and remove rig) issue:
         # #   File "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/plug-ins\rubika\import_anim.py", line 30, in importAnim
@@ -30,6 +27,8 @@ The Rx Asset Management System (Ramses) Maya Plugin
         # # ValueError: No object matches name: |S001:Main|S001:IS_Rig|S001:IS_Rig_001:Iseult_Root|S001:IS_Rig_001:Iseult_Geo #
     - autoselect same asset/shot as selected in the viewport
     - UI: reload versions if action change
+- Update:
+    - check for malformed name
 - rebuild update
     - RamItem latestversion not working
     - Check/test updates
