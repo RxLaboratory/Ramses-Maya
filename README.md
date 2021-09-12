@@ -18,7 +18,6 @@ The Rx Asset Management System (Ramses) Maya Plugin
 ## TODO
 
 - Import:
-    - get step color
     - autoselect same asset/shot as selected in the viewport
     - UI: reload versions if action change
 - Update:
