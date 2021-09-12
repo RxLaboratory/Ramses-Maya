@@ -653,12 +653,12 @@ class RamOpenCmd( om.MPxCommand ):
     @staticmethod
     def createSyntax():
         syntax = om.MSyntax()
-        syntax.addFlag('-i', "-import", om.MSyntax.kBoolean )
+        syntax.addFlag('-i', "-importMode", om.MSyntax.kBoolean )
         return syntax
 
     def parseArgs(self, args):
         parser = om.MArgParser( self.syntax(), args)
-        if parser.isFlagSet( '-sc' ):
+        if parser.isFlagSet( '-i' ):
             self.importMode = parser.flagArgumentBool('-i', 0)
         else:
             self.importMode = False
