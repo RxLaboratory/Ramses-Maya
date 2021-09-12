@@ -8,16 +8,26 @@ from .utils_constants import *
 from .ui_import_anim import ImportAnimDialog
 from .import_geo import *
 
-def importAnim( item, filePath, step ):
+def importAnim( item, filePath, step, showDialog=True ):
     
-    dialog = ImportAnimDialog(maf.getMayaWindow())
-    if not dialog.exec_():
-        return
+    removeRigs = False
+    if showDialog:
+        dialog = ImportAnimDialog(maf.UI.getMayaWindow())
+        if not dialog.exec_():
+            return
+        removeRigs = dialog.removeRig()
 
-    removeRigs = dialog.removeRig()
+    # Progress
+    progressDialog = maf.ProgressDialog()
+    progressDialog.show()
+    progressDialog.setText("Importing Animation...")
+    progressDialog.setMaximum(2)
+    progressDialog.increment()
 
     # Just import as any Geo
-    rootCtrls = importGeo( item, filePath, step )
+    rootCtrls = importFile( item, filePath, step, progressDialog)
+
+    progressDialog.setText("Removing corresponding rigs.")
 
     if removeRigs:
         newRootCtrls = []
@@ -26,23 +36,23 @@ def importAnim( item, filePath, step ):
             currentAssetName = rootCtrl.split('|')[-1].split(':')[-1].split('_')[0]
             ramsesNodes = listRamsesNodes()
             for node in ramsesNodes:
+                if not cmds.objExists(node): continue
+                newRootCtrls.append(rootCtrl)
+                # Ramses info
                 step = getRamsesAttr(node, RamsesAttribute.STEP)
-                if not step:
-                    newRootCtrls.append(rootCtrl)
-                    continue
-                if step != RIG_STEP.shortName():
-                    newRootCtrls.append(rootCtrl)
-                    continue
+                step = step.split(' | ')[0]
+                if not step: continue
+                if step != RIG_STEP.shortName():  continue
                 itemName = getRamsesAttr(node, RamsesAttribute.ITEM)
-                if not itemName:
-                    newRootCtrls.append(rootCtrl)
-                    continue
+                itemName = itemName.split(' | ')[0]
+                if not itemName: continue
                 if itemName == currentAssetName:
                     # Re-parent
                     p = cmds.listRelatives( node, parent=True, f=True, type='transform')
-                    if p:
-                        rootCtrl = maf.parentNodeTo( rootCtrl, p[0] )
-                    maf.deleteNode( node )
+                    if p is not None: rootCtrl = maf.Node.parent( rootCtrl, p[0] )
+                    maf.Node.delete( node )
                 newRootCtrls.append(rootCtrl)
+
+    progressDialog.close()
 
     return rootCtrls

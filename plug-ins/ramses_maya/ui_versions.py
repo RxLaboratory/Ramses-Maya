@@ -50,11 +50,11 @@ class VersionDialog( QDialog ):
         self._versionsBox.clear()
         for f in fileList:
             fileName = os.path.basename( f )
-            decomposedFileName = ram.RamFileManager.decomposeRamsesFileName( fileName )
-            if decomposedFileName is None:
+            nm = ram.RamFileInfo()
+            if not nm.setFileName( fileName ):
                 continue
             comment = ram.RamMetaDataManager.getComment( f )
-            itemText = decomposedFileName['state'] + ' | ' + str(decomposedFileName['version'])
+            itemText = nm.state + ' | ' + str( nm.version )
             if comment != "":
                 itemText = itemText + ' | ' + comment
             self._versionsBox.addItem( 

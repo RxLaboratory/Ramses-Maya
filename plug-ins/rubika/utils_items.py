@@ -9,7 +9,31 @@ import ramses as ram
 
 ramses = ram.Ramses.instance()
 
-def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension ):
+def hasExtension( pipeFile, pipeFiles, extension ):
+    for p in pipeFiles:
+        if not pipeFile == p: continue
+        fileType = p.fileType()
+        if fileType is None: continue
+        exts = fileType.extensions()
+        if len(exts) == 0: continue
+        for e in exts:
+            if e.startswith('.'): e = e[1:]
+            if extension == e: return True
+    return False
+
+def getPipeExtension( pipe, pipes, defaultExtension):
+    for p in pipes:
+        if not pipe == p: continue
+        fileType = p.fileType()
+        if fileType is None: continue
+        exts = fileType.extensions()
+        if len(exts) == 0: continue
+        ext = exts[0]
+        if ext.startswith('.'): return ext[1:]
+        return ext
+    return defaultExtension
+
+def getExtension( step, defaultStep, defaultPipeFile, pipeFiles, filters, defaultExtension ):
     # Get the extension from the pipe (ma or mb)
     pipes = step.outputPipes()
     if len(pipes) == 0:
@@ -24,7 +48,7 @@ def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension 
             if ext.startswith('.'):
                 ext  = ext[1:]
             if ext.lower() in filters:
-                return ext
+                return getPipeExtension( defaultPipeFile, pipeFiles, ext)
 
     # Get default
     ext = defaultPipeFile.fileType().extensions()[0]
@@ -32,18 +56,9 @@ def getExtension( step, defaultStep, defaultPipeFile, filters, defaultExtension 
     if ext.startswith('.'):
         ext  = ext[1:]
     if ext in filters:
-        return ext
+        return getPipeExtension( defaultPipeFile, pipeFiles, ext)
 
-    return defaultExtension
-
-def getFileInfo( filePath):
-    fileInfo = ram.RamFileManager.decomposeRamsesFilePath( filePath )
-    if fileInfo is None:
-        ram.log(ram.Log.MalformedName, ram.LogLevel.Fatal)
-        cmds.inViewMessage( msg=ram.Log.MalformedName, pos='midCenter', fade=True )
-        cmds.error( ram.Log.MalformedName )
-        return None
-    return fileInfo
+    return getPipeExtension( defaultPipeFile, pipeFiles, defaultExtension)
 
 def getPublishFolder( item, step):
     publishFolder = item.publishFolderPath( step )
@@ -55,14 +70,24 @@ def getPublishFolder( item, step):
     return publishFolder
 
 def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
-    pipes = step.outputPipes()
+    ps = step.outputPipes()
+    
+    pipes = []
+    
+    # Keep only pipes with pipefiles
+    for p in ps:
+        if len(p.pipeFiles()) != 0: pipes.append(p)
+
     if len( pipes ) == 0:
         for s in STEPS:
             if s == step:
+                print(s)
                 pipes = s.outputPipes()
+                print(pipes)
+                break
     
     if len( pipes ) == 0: # Let's ask!
-        pipeDialog = PipeDialog( maf.getMayaWindow(), mode )
+        pipeDialog = PipeDialog( maf.UI.getMayaWindow(), mode )
         if pipeDialog.exec_():
             pipes = pipeDialog.getPipes()
         return pipes
@@ -77,15 +102,16 @@ def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
     saveFilePath = ram.RamFileManager.getSaveFilePath( currentSceneFilePath )
 
     if saveFilePath != '':
-        saveFileInfo = ram.RamFileManager.decomposeRamsesFilePath( saveFilePath )
-        if saveFileInfo is not None:
-            currentProject = ramses.project( saveFileInfo['project'] )
+        nm = ram.RamFileInfo()
+        nm.setFilePath( saveFilePath )
+        if nm.project != '':
+            currentProject = ramses.project( nm.project )
             if currentProject is None:
                 currentProject = ramses.currentProject()
             else:
                 ramses.setCurrentProject( currentProject )
             if currentProject is not None:
-                currentStep = currentProject.step( saveFileInfo['step'] )
+                currentStep = currentProject.step( nm.step )
                 currentStepShortName = currentStep.shortName()
 
     # Check the pipes

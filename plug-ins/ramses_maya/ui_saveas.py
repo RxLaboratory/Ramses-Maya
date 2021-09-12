@@ -203,20 +203,15 @@ class SaveAsDialog( QDialog ):
 
             assetsPath = self.__currentProject.assetsPath( assetGroup )
 
-            assetFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                '',
-                '',
-                ram.ItemType.ASSET,
-                assetShortName
-            )
-            assetStepFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                '',
-                ram.ItemType.ASSET,
-                assetShortName
-            )
+            nm = ram.RamFileInfo()
+            nm.project = self.__currentProject.shortName()
+            nm.ramType = ram.ItemType.ASSET
+            nm.shortName = assetShortName
+            assetFolderName = nm.fileName()
+
+            nm.step = self.__currentStep.shortName()
+            assetStepFolderName = nm.fileName()
+
             # The folder
             assetFolder = ram.RamFileManager.buildPath((
                 assetsPath,
@@ -227,14 +222,9 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(assetFolder)
 
             # The filename
-            assetFileName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                self.extensionBox.currentData(),
-                ram.ItemType.ASSET,
-                assetShortName,
-                self.resourceEdit.text()
-            )
+            nm.extension = self.extensionBox.currentData()
+            nm.resource = self.resourceEdit.text()
+            assetFileName = nm.fileName()
 
             self.fileNameLabel.setText(assetFileName)
                 
@@ -245,21 +235,15 @@ class SaveAsDialog( QDialog ):
                 return
 
             shotsPath = self.__currentProject.shotsPath()
-            shotFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                '',
-                '',
-                ram.ItemType.SHOT,
-                shotShortName
-            )
 
-            shotStepFolderName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                '',
-                ram.ItemType.SHOT,
-                shotShortName
-            )
+            nm = ram.RamFileInfo()
+            nm.project = self.__currentProject.shortName()
+            nm.ramType = ram.ItemType.SHOT
+            nm.shortName = shotShortName
+            shotFolderName = nm.fileName()
+
+            nm.step = self.__currentStep.shortName()
+            shotStepFolderName = nm.fileName()
 
             shotFolder = ram.RamFileManager.buildPath((
                 shotsPath,
@@ -270,14 +254,9 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(shotFolder)
 
             # The filename
-            shotFileName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                self.extensionBox.currentData(),
-                ram.ItemType.SHOT,
-                shotShortName,
-                self.resourceEdit.text()
-            )
+            nm.extension = self.extensionBox.currentData()
+            nm.resource = self.resourceEdit.text()
+            shotFileName = nm.fileName()
 
             self.fileNameLabel.setText(shotFileName)
         
@@ -289,14 +268,14 @@ class SaveAsDialog( QDialog ):
             self.locationEdit.setText(stepPath)
 
             # The filename
-            itemFileName = ram.RamFileManager.buildRamsesFileName(
-                self.__currentProject.shortName(),
-                self.__currentStep.shortName(),
-                self.extensionBox.currentData(),
-                ram.ItemType.GENERAL,
-                itemShortName,
-                self.resourceEdit.text()
-            )
+            nm = ram.RamFileInfo()
+            nm.project = self.__currentProject.shortName()
+            nm.ramType = ram.ItemType.SHOT
+            nm.step = self.__currentStep.shortName()
+            nm.shortName = itemShortName
+            nm.extension = self.extensionBox.currentData()
+            nm.resource = self.resourceEdit.text()
+            itemFileName = nm.fileName()
 
             self.fileNameLabel.setText( itemFileName )
 

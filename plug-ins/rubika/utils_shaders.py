@@ -6,9 +6,11 @@ import dumaf as maf
 import ramses as ram # pylint: disable=import-error
 from .utils_attributes import * # pylint: disable=import-error
 from .utils_constants import *
+from .utils_general import *
+from .utils_publish import *
 
 # mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
-def exportShaders(node, folderPath, fileNameBlocks, mode = ''): 
+def exportShaders(node, publishFileInfo, mode = ''): 
     # List all nodes containing shaders
     nodes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
     # If there are Yeti nodes
@@ -60,27 +62,10 @@ def exportShaders(node, folderPath, fileNameBlocks, mode = ''):
         allShadingEngines.append(shadingEngine)
 
     # Select and export shadingEngines
-    cmds.select(allShadingEngines, noExpand=True, r=True)
-    nodeName = maf.getNodeBaseName( node )
-
-    # extension
-    fileNameBlocks['extension'] = 'mb'
-    # resource
-    if fileNameBlocks['resource'] != '':
-        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + nodeName
-    else:
-        fileNameBlocks['resource'] = nodeName
-    if mode != '':
-        fileNameBlocks['resource'] = fileNameBlocks['resource'] + '-' + mode
-    # path
-    filePath = ram.RamFileManager.buildPath((
-        folderPath,
-        ram.RamFileManager.composeRamsesFileName(fileNameBlocks)
-    ))
-    cmds.file( filePath, exportSelected=True, type='mayaBinary', force=True )
-    cmds.select(cl=True)
-   
-    return filePath
+    nodeName = maf.Path.baseName( node )
+    savePath = publishNodesAsMayaScene( publishFileInfo, allShadingEngines, nodeName.replace('_', ' ') + '-' + mode, 'mb')
+       
+    return savePath
 
 # mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME
 def referenceShaders(nodes, mode, filePath, itemShortName=''):
@@ -100,10 +85,9 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
 
     if shaderNodes is None or len(shaderNodes) == 0:
         ram.log( "I did not find any shader to import, sorry." )
-        return
+        return []
 
     for node in nodes:
-
         # For all mesh
         meshes = cmds.listRelatives( node, ad=True, type='mesh', f=True)
         if meshes is None:
@@ -115,7 +99,7 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
         for mesh in meshes:
             # Get the transform node (which has the name we're looking for)
             transformNode = cmds.listRelatives(mesh, p=True, type='transform')[0]
-            nodeName = maf.getNodeBaseName( transformNode )
+            nodeName = maf.Path.baseName( transformNode )
             # Apply
             cmds.select(mesh, r=True)
             for shaderNode in shaderNodes:
@@ -132,9 +116,7 @@ def referenceShaders(nodes, mode, filePath, itemShortName=''):
 
         if found:
             # Shading Data
-            timestamp = os.path.getmtime( filePath )
             setRamsesManaged( node )
             setRamsesAttr( node, RamsesAttribute.SHADING_TYPE, mode, 'string')
-            setRamsesAttr( node, RamsesAttribute.SHADING_FILE, filePath, 'string')
-            setRamsesAttr( node, RamsesAttribute.SHADING_TIME, timestamp, 'long')
 
+    return shaderNodes

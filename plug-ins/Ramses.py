@@ -3,7 +3,7 @@ import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
 vendor = "RxLaboratory"
-version = "0.1.3-alpha"
+version = "0.2.0-alpha"
 
 def maya_useNewAPI():
     """
@@ -42,7 +42,7 @@ if not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramSave()
 """
-        cm = ram.maf.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
+        cm = ram.maf.NameCmd.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
         cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
         cmds.savePrefs(hotkeys=True)
 
@@ -54,7 +54,7 @@ if not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramOpen()
 """
-        cm = ram.maf.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
+        cm = ram.maf.NameCmd.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
         cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
         cmds.savePrefs(hotkeys=True)
 
@@ -66,7 +66,7 @@ if not ok:
     cmds.loadPlugin('Ramses')
 cmds.ramSaveAs()
 """
-        cm = ram.maf.createNameCommand('RamSaveSceneAs', "Ramses Save Scene As", pyCommand)
+        cm = ram.maf.NameCmd.createNameCommand('RamSaveSceneAs', "Ramses Save Scene As", pyCommand)
         cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
         cmds.savePrefs(hotkeys=True)
 
@@ -76,9 +76,9 @@ def uninitializePlugin( obj ):
     plugin = om.MFnPlugin(obj, vendor, version)
 
     # Rstore hotkeys
-    ram.maf.restoreSaveSceneHotkey()
-    ram.maf.restoreOpenSceneHotkey()
-    ram.maf.restoreSaveSceneAsHotkey()
+    ram.maf.NameCmd.restoreSaveSceneHotkey()
+    ram.maf.NameCmd.restoreOpenSceneHotkey()
+    ram.maf.NameCmd.restoreSaveSceneAsHotkey()
 
     for c in reversed( ram.cmds_classes ):
         try:

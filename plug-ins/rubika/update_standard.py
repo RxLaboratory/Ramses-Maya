@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from .utils_update import update
-from .import_geo import importGeo
 import maya.cmds as cmds # pylint: disable=import-error
+from .utils_update import update
+from .import_standard import importStandard
 
-def updateGeo( node, filePath, item, step):
+def updateStandard( node, filePath, item, step):
 
     # Re-import
-    newRootCtrls = importGeo( item, filePath, step )
+    newRootCtrls = importStandard( item, filePath, step )
 
     # Snap and re-apply sets
     newRootCtrls = update(node, newRootCtrls)

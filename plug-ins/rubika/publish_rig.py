@@ -11,19 +11,20 @@ from .utils_constants import *
 from .utils_general import *
 from .utils_items import *
 from .ui_publish_rig import PublishRigDialog
+from .utils_publish import *
 
-def publishRig( item, filePath, step, vpShaders = True ):
+def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
 
     # Options
-    publishDialog = PublishRigDialog(maf.getMayaWindow())
+    publishDialog = PublishRigDialog(maf.UI.getMayaWindow())
     if not publishDialog.exec_():
         return
 
     hideJointsMode = publishDialog.hideJointsMode()
     lockHiddenVisibility = publishDialog.lockHidden()
     removeAnim = publishDialog.removeAnim()
-    deformerSetsToDelete = publishDialog.getDeformerSets()
-    renderingSetsToDelete = publishDialog.getRenderingSets()
+    """deformerSetsToDelete = publishDialog.getDeformerSets()
+    renderingSetsToDelete = publishDialog.getRenderingSets()"""
 
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
@@ -32,65 +33,38 @@ def publishRig( item, filePath, step, vpShaders = True ):
     progressDialog.increment()
 
     # rename scene (cleanscene)
-    tempData = maf.cleanScene( removeAnim, lockHiddenVisibility )
-
-    # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
-        endProcess(tempData, progressDialog)
-        return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
-
-    # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        endProcess(tempData, progressDialog)
-        return
-    ram.log( "I'm publishing geometry in " + publishFolder )
+    tempData = maf.Scene.createTempScene()
+    maf.Reference.importAll()
+    maf.Namespace.removeAll()
+    if removeAnim: maf.Animation.removeAll()
+    if lockHiddenVisibility: maf.Node.lockHiddenVisibility()
 
     # get Nodes
-    ns = getPublishNodes()
-    nodes = []
-    # move them to the root
-    for node in ns:
-        p = cmds.listRelatives(node, p=True)
-        # already in the world
-        if p is None:
-            nodes.append('|' + node)
-            continue
-        n = maf.parentNodeTo(node, '|')
-        nodes.append(n)
+    nodes = getPublishNodes()
+    progressDialog.setMaximum( len(nodes) )
 
-    # Delete the nodes we're not publishing
-    allRootNodes = cmds.ls( '|*', r=True, long=True )
-    for rootNode in reversed(allRootNodes):
-        if rootNode in nodes:
-            continue
-        cmds.delete( rootNode )
+    publishedNodes = []
+    for node in nodes:
+        # Full path node
+        node = maf.Path.absolutePath( node )
 
-    # Delete objects in sets if option
-    for deformerSet in deformerSetsToDelete:
-        objects = cmds.sets( deformerSet, q=True)
-        if objects is None:
-            continue
-        for obj in objects:
-            try:
-                cmds.delete( obj )
-            except:
-                pass
+        # Move to origin
+        maf.Node.moveToZero(node)
+        nodeName = maf.Path.baseName(node, True)
 
-    for renderingSet in renderingSetsToDelete:
-        objects = cmds.sets( renderingSet, q=True)
-        if objects is None:
-            continue
-        for obj in objects:
-            if obj in maf.nonDeletableObjects:
-                continue
-            try:
-                cmds.delete( obj )
-            except:
-                pass
+        # Export viewport shaders
+        if vpShaders:
+            exportShaders( node, publishFileInfo, VPSHADERS_PIPE_NAME )
+            # Assign initialshadinggroup to all geo
+            cmds.sets(node,e=True,forceElement='initialShadingGroup')
+            # delete all user shaders
+            mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteShadingGroupsAndMaterials")')
+
+        # Create a root controller
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + RIG_PIPE_NAME )
+        node = r[0]
+        controller = r[1]
+        publishedNodes.append(controller)
 
     # hide joints if option (using drawstyle or visibility)
     if hideJointsMode > 0:
@@ -100,51 +74,16 @@ def publishRig( item, filePath, step, vpShaders = True ):
                 if hideJointsMode == 1:
                     cmds.setAttr( joint + '.visibility', False )
                 else:
-                    cmds.setAttr( joint + '.drawStyle', 0 )
-
-    progressDialog.setText("Exporting viewport shaders")
-    progressDialog.increment()
-
-    # We need to build the future file path where we'll save the scene
-    sceneFileInfo = fileInfo.copy()
-    sceneFileInfo['extension'] = getExtension( step, RIG_STEP, RIG_PIPE_FILE, ['ma','mb'], 'ma' )
-    # resource
-    if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + RIG_PIPE_NAME
-    else:
-        sceneFileInfo['resource'] = RIG_PIPE_NAME
-    # path
-    sceneFilePath = ram.RamFileManager.buildPath((
-        publishFolder,
-        ram.RamFileManager.composeRamsesFileName( sceneFileInfo )
-    ))
-
-    # export viewport shaders
-    if vpShaders:
-        for node in nodes:
-            shaderFilePath = exportShaders( node, publishFolder, fileInfo.copy(), VPSHADERS_PIPE_NAME )
-            # Update Ramses Metadata (version)
-            ram.RamMetaDataManager.setPipeType( shaderFilePath, VPSHADERS_PIPE_NAME )
-            ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
-            ram.RamMetaDataManager.setVersion( shaderFilePath, version )
-            # Assign initialshadinggroup to all geo
-            cmds.sets(node,e=True,forceElement='initialShadingGroup')
-
-    # delete all user shaders
-    mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteShadingGroupsAndMaterials")')
+                    cmds.setAttr( joint + '.drawStyle', 2 )
 
     progressDialog.setText("Saving")
     progressDialog.increment()
-    
-    # save as publish
-    cmds.file( rename=sceneFilePath )
-    cmds.file( save=True, options="v=1;" )
-    # Update Ramses Metadata (version)
-    ram.RamMetaDataManager.setPipeType( sceneFilePath, RIG_PIPE_NAME )
-    ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, version )
 
-    #reopen scene, etc
+    # export
+    extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, pipeFiles, ['ma','mb'], 'ma' )
+    publishNodesAsMayaScene( publishFileInfo, publishedNodes, RIG_PIPE_NAME, extension)
+   
+    # reopen scene, etc
     endProcess(tempData, progressDialog)
 
     ram.log("I've published the rig.")

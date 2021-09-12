@@ -90,6 +90,10 @@ class PublishAnimDialog( QDialog ):
         self.keepSurfacesBox = QCheckBox("Keep NURBS Surfaces")
         topLayout.addRow("Surfaces:", self.keepSurfacesBox)
 
+        self.keepDeformersBox = QCheckBox("Keep Deformers animation")
+        topLayout.addRow("Deformers:", self.keepDeformersBox)
+        self.keepDeformersBox.setChecked(True)
+
         mainLayout.addLayout(topLayout)
 
         buttonsLayout = QHBoxLayout()
@@ -103,7 +107,6 @@ class PublishAnimDialog( QDialog ):
         mainLayout.addLayout( buttonsLayout )
 
         self.setLayout( mainLayout )
-
 
     def __connectEvents(self):
         self._publishButton.clicked.connect( self.accept )
@@ -128,6 +131,9 @@ class PublishAnimDialog( QDialog ):
 
     def surfaces(self):
         return self.keepSurfacesBox.isChecked()
+
+    def deformers(self):
+        return self.keepDeformersBox.isChecked()
 
     def removeHidden(self):
         return self.removeHiddenBox.isChecked()

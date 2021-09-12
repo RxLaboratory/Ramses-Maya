@@ -7,11 +7,12 @@ import dumaf as maf # pylint: disable=import-error
 from .utils_nodes import getPublishNodes
 from .utils_items import * # pylint: disable=import-error
 from .utils_general import * # pylint: disable=import-error
+from .utils_publish import * # pylint: disable=import-error
 
-def publishAnim( item, filePath, step ):
+def publishAnim( item, step, publishFileInfo, pipeFiles ):
     
     # Options
-    dialog = PublishAnimDialog(maf.getMayaWindow())
+    dialog = PublishAnimDialog(maf.UI.getMayaWindow())
     if not dialog.exec_():
         return
 
@@ -20,12 +21,9 @@ def publishAnim( item, filePath, step ):
     frameStep = dialog.getFrameStep()
     frameIn = frameRange[1] - frameRange[0]
     frameOut = frameRange[2] + frameRange[3]
-    if filterEuler:
-        filterEuler = '-eulerFilter'
-    else:
-        filterEuler = ''
     keepCurves = dialog.curves()
     keepSurfaces = dialog.surfaces()
+    keepDeformers = dialog.deformers()
     removeHidden = dialog.removeHidden()
 
     # Progress
@@ -35,9 +33,12 @@ def publishAnim( item, filePath, step ):
     progressDialog.setMaximum(2)
     progressDialog.increment()
 
-    tempData = maf.cleanScene(False, False)
+    # Prepare the scene
+    tempData = maf.Scene.createTempScene()
+    maf.Reference.importAll()
+    maf.Namespace.removeAll()
 
-    # For all nodes in the publish set or proxy set
+    # For all nodes in the publish set
     nodes = getPublishNodes()
 
     if len(nodes) == 0:
@@ -45,38 +46,22 @@ def publishAnim( item, filePath, step ):
         return
 
     numNodes = len(nodes)
-    progressDialog.setMaximum(numNodes + 2)
+    progressDialog.setMaximum( numNodes )
     progressDialog.setText("Preparing")
     progressDialog.increment()
 
-    # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
-        endProcess(tempData, progressDialog)
-        return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
+    ram.log( "I'm publishing animation in " + os.path.dirname( publishFileInfo.filePath() ) )
 
-    # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        endProcess(tempData, progressDialog)
-        return
-
-    ram.log( "I'm publishing animation in " + publishFolder )
+    extension = getExtension( step, ANIM_STEP, ANIM_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc')
     
-    # We need to use alembic
-    if maf.safeLoadPlugin("AbcExport"):
-        ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
-
     # Let's count how many objects are published
     publishedNodes = []
 
-    for node in nodes:
+    for node in reversed(nodes):
         # Full path node
-        node = maf.getNodeAbsolutePath( node )
-        nodeName = maf.getNodeBaseName( node )
-        progressDialog.setText("Baking: " + nodeName)
+        node = maf.Path.absolutePath( node )
+        nodeName = maf.Path.baseName( node )
+        progressDialog.setText("Publishing: " + nodeName)
         progressDialog.increment()
 
         # Get all children
@@ -86,108 +71,69 @@ def publishAnim( item, filePath, step ):
         childNodes.append(node)
 
         # Empty group, nothing to do
-        if childNodes is None and maf.isGroup(node):
+        if childNodes is None and maf.Node.isGroup(node):
             cmds.delete(node)
             continue
 
         # Clean (remove what we don't want to publish)
-        for childNode in childNodes:
+        for childNode in reversed(childNodes):
 
             # Remove hidden
             if removeHidden and cmds.getAttr(childNode + '.v') == 0:
                 cmds.delete(childNode)
                 continue
 
-            typesToKeep = ['mesh']
-            if keepCurves:
-                typesToKeep.append('bezierCurve')
-                typesToKeep.append('nurbsCurve')
-            if keepSurfaces:
-                typesToKeep.append('nurbsSurface')
+            # Check and clean
 
-            maf.cleanNode(childNode, True, typesToKeep, False, False)
+            typesToKeep = []
+            if not keepDeformers:
+                typesToKeep = ['mesh']
+                if keepCurves:
+                    typesToKeep.append('bezierCurve')
+                    typesToKeep.append('nurbsCurve')
+                if keepSurfaces:
+                    typesToKeep.append('nurbsSurface')
+            
+            if not maf.Node.check( childNode, True, typesToKeep ):
+                continue
+            
+            if not keepDeformers:
+                maf.Node.removeExtraShapes( childNode )
+                maf.Node.deleteHistory( childNode )
+                maf.Node.renameShapes( childNode )        
 
         # the main node may have been removed (if hidden for example)
         if not cmds.objExists(node):
             continue
 
         # Create a root controller
-        r = maf.createRootCtrl( node, nodeName + '_' + ANIM_PIPE_NAME )
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + ANIM_PIPE_NAME )
         node = r[0]
         controller = r[1]
 
-        # Generate file path
-        abcFileInfo = fileInfo.copy()
-        # extension
-        abcFileInfo['extension'] = 'abc'
-        # Type
-        pipeType = ANIM_PIPE_NAME
-        # resource
-        if abcFileInfo['resource'] != '':
-            abcFileInfo['resource'] = abcFileInfo['resource'] + '-' + nodeName + '-' + pipeType
-        else:
-            abcFileInfo['resource'] = nodeName + '-' + pipeType
-        # path
-        abcFilePath = ram.RamFileManager.buildPath((
-            publishFolder,
-            ram.RamFileManager.composeRamsesFileName( abcFileInfo )
-        ))
+        ext = extension
+        if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'abc'): ext = 'abc'
 
-        # Build the ABC command
-        abcOptions = ' '.join([
-            '-frameRange ' + str(frameIn) + ' ' + str(frameOut),
-            filterEuler,
-            '-step ' + str(frameStep),
-            '-root ' + controller,
-            '-autoSubd', # crease
-            '-uvWrite',
-            '-writeUVSets',
-            '-worldSpace',
-            '-writeVisibility',
-            '-dataFormat hdf',
-            '-renderableOnly',
-            '-file "' + abcFilePath + '"',
-        ])
-        print(abcFilePath)
-        # Export
-        cmds.AbcExport(j=abcOptions)
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setPipeType( abcFilePath, pipeType )
-        ram.RamMetaDataManager.setVersionFilePath( abcFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( abcFilePath, version )
+        if ext == 'abc':
+            publishNodeAsABC( publishFileInfo, controller, ANIM_PIPE_NAME, (frameIn, frameOut), frameStep, filterEuler)
 
-        publishedNodes.append(nodeName)
+        publishedNodes.append(controller)
 
     progressDialog.setText("Cleaning...")
     progressDialog.increment()
 
-    # Copy published scene to publish
-    sceneFileInfo = fileInfo.copy()
+    # Publish as ma/mb
+    ext = extension
+    if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'ma'): ext = 'ma'
+    if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
 
-    sceneFileInfo['extension'] = 'mb'
-    # resource
-    if sceneFileInfo['resource'] != '':
-        sceneFileInfo['resource'] = sceneFileInfo['resource'] + '-' + pipeType
-    else:
-        sceneFileInfo['resource'] = pipeType
-    # path
-    sceneFilePath = ram.RamFileManager.buildPath((
-        publishFolder,
-        ram.RamFileManager.composeRamsesFileName( sceneFileInfo )
-    ))
-    # Save
-    cmds.file( rename=sceneFilePath )
-    cmds.file( save=True, options="v=1;" )
-    ram.RamMetaDataManager.setPipeType( sceneFilePath, pipeType )
-    ram.RamMetaDataManager.setVersionFilePath( sceneFilePath, versionFilePath )
-    ram.RamMetaDataManager.setVersion( sceneFilePath, version )
+    if ext in ('ma', 'mb'):
+        publishNodesAsMayaScene( publishFileInfo, publishedNodes, ANIM_PIPE_NAME, ext)
 
-
+    # End and log
     endProcess(tempData, progressDialog)
 
-    ram.log("I've published these animations:")
-    for publishedNode in publishedNodes:
-        ram.log(" > " + publishedNode)
-    cmds.inViewMessage(  msg="Assets published: <hl>" + '</hl>,<hl>'.join(publishedNodes) + "</hl>.", pos='midCenterBot', fade=True )
+    ram.log("I've published the animation.")
+    cmds.inViewMessage(  msg="Animation has been published.", pos='midCenterBot', fade=True )
 
 

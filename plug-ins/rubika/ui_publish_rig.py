@@ -24,7 +24,7 @@ class PublishRigDialog( QDialog ):
     def __init__(self, parent=None):
         super(PublishRigDialog, self).__init__(parent)
         self.__setupUi()
-        self.__loadSets()
+        # self.__loadSets()
         self.__connectEvents()
 
     def __setupUi(self):
@@ -42,11 +42,11 @@ class PublishRigDialog( QDialog ):
         hideJointsLayout = QVBoxLayout()
         hideJointsLayout.setContentsMargins(0,0,0,0)
         hideJointsLayout.setSpacing(3)
-        self.hideJointsBox = QRadioButton("Hide.")
-        self.hideJointsBox.setChecked(True)
-        hideJointsLayout.addWidget(self.hideJointsBox)
         self.drawJointsBox = QRadioButton("Disbale draw.")
+        self.drawJointsBox.setChecked(True)
         hideJointsLayout.addWidget(self.drawJointsBox)
+        self.hideJointsBox = QRadioButton("Hide.")
+        hideJointsLayout.addWidget(self.hideJointsBox)
         self.keepJointsBox = QRadioButton("Keep as is.")
         hideJointsLayout.addWidget(self.keepJointsBox)
         hideJointsWidget.setLayout(hideJointsLayout)
@@ -60,13 +60,13 @@ class PublishRigDialog( QDialog ):
         self.deleteKeyframesBox.setChecked(True)
         topLayout.addRow("Animation:", self.deleteKeyframesBox)
 
-        self.deformerSetList = QListWidget()
+        """self.deformerSetList = QListWidget()
         self.deformerSetList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         topLayout.addRow("Deformer Sets to remove:", self.deformerSetList)
 
         self.renderingSetList = QListWidget()
         self.renderingSetList.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        topLayout.addRow("Rendering Sets to remove:", self.renderingSetList)
+        topLayout.addRow("Rendering Sets to remove:", self.renderingSetList)"""
 
         mainLayout.addLayout(topLayout)
 
@@ -86,7 +86,7 @@ class PublishRigDialog( QDialog ):
         self._publishButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
 
-    def __loadSets(self):
+    """def __loadSets(self):
         renderingSets = cmds.listSets(t=1)
         deformerSets = cmds.listSets(t=2)
 
@@ -98,7 +98,7 @@ class PublishRigDialog( QDialog ):
         if deformerSets is not None:
             self.deformerSetList.addItem("None")
             for set in deformerSets:
-                self.deformerSetList.addItem( set )
+                self.deformerSetList.addItem( set )"""
 
     def hideJointsMode(self):
         if self.keepJointsBox.isChecked():
@@ -113,7 +113,7 @@ class PublishRigDialog( QDialog ):
     def removeAnim(self):
         return self.deleteKeyframesBox.isChecked()
 
-    def getDeformerSets(self):
+    """def getDeformerSets(self):
         sets = []
         if self.deformerSetList.count() == 0:
             return sets
@@ -123,9 +123,9 @@ class PublishRigDialog( QDialog ):
             item = self.deformerSetList.item(i)
             if item.isSelected():
                 sets.append(item.data(Qt.UserRole))
-        return sets
+        return sets"""
 
-    def getRenderingSets(self):
+    """def getRenderingSets(self):
         sets = []
         if self.renderingSetList.count() == 0:
             return sets
@@ -135,4 +135,4 @@ class PublishRigDialog( QDialog ):
             item = self.renderingSetList.item(i)
             if item.isSelected():
                 sets.append(item.data(Qt.UserRole))
-        return sets
+        return sets"""

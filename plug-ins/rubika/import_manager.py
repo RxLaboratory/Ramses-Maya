@@ -58,7 +58,7 @@ def importer(item, filePaths, step):
                     rig = True
                 elif pipeFile == SET_PIPE_FILE:
                     sets = True
-                elif pipeFile == STANDARDA_PIPE_FILE or pipeFile == STANDARDB_PIPE_FILE:
+                elif pipeFile == STANDARD_PIPE_FILE:
                     standard = True
                 elif pipeFile == ANIM_PIPE_FILE:
                     anim = True
@@ -81,8 +81,7 @@ def importer(item, filePaths, step):
         if sets:
             setFiles = SET_PIPE_FILE.getFiles( publishFolder )
         if standard:
-            standardFiles = STANDARDB_PIPE_FILE.getFiles( publishFolder )
-            standardFiles = standardFiles + STANDARDA_PIPE_FILE.getFiles( publishFolder )
+            standardFiles = STANDARD_PIPE_FILE.getFiles( publishFolder )
         if anim:
             animFiles = ANIM_PIPE_FILE.getFiles( publishFolder )
  
@@ -102,9 +101,7 @@ def importer(item, filePaths, step):
                 rigFiles.append( file )
             if SET_PIPE_FILE.check( file ):
                 setFiles.append( file )
-            if STANDARDA_PIPE_FILE.check( file ):
-                standardFiles.append( file )
-            if STANDARDB_PIPE_FILE.check( file ):
+            if STANDARD_PIPE_FILE.check( file ):
                 standardFiles.append( file )
             if ANIM_PIPE_FILE.check( file ):
                 animFiles.append( file )
@@ -117,6 +114,11 @@ def importer(item, filePaths, step):
     if len(geoFiles) > 0:
         ram.log( "I'm importing the geometry." )
         for geoFile in geoFiles:
+            geoNodes = geoNodes + importGeo( item, geoFile, step )
+
+    if len(proxyGeoFiles):
+        ram.log( "I'm importing the proxy geometry." )
+        for geoFile in proxyGeoFiles:
             geoNodes = geoNodes + importGeo( item, geoFile, step )
     
     if len(setFiles) > 0:
@@ -137,12 +139,12 @@ def importer(item, filePaths, step):
     if len(vpShaderFiles) > 0:
         ram.log( "I'm importing the viewport shaders." )
         for vpShaderFile in vpShaderFiles:
-            importShaders( item, vpShaderFile, VPSHADERS_PIPE_NAME, geoNodes )
+            importShaders( item, vpShaderFile, VPSHADERS_PIPE_NAME, step, geoNodes )
 
     if len(rdrShaderFiles) > 0:
         ram.log( "I'm importing the render shaders." )
         for rdrShaderFile in rdrShaderFiles:
-            importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, geoNodes )
+            importShaders( item, rdrShaderFile, RDRSHADERS_PIPE_NAME, step, geoNodes )
 
     if len(standardFiles) > 0:
         ram.log( "I'm importing " + item.shortName() )

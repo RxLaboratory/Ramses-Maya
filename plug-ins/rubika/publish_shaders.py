@@ -4,22 +4,26 @@ import os
 
 from .utils_shaders import exportShaders
 from .utils_nodes import getPublishNodes, getProxyNodes
-from .utils_items import getFileInfo, getPublishFolder
+from .utils_items import getPublishFolder
 from .ui_publish_shaders import PublishShaderDialog
 from .utils_general import *
 import dumaf as maf # pylint: disable=import-error
 import ramses as ram # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 from .utils_constants import *
+from .utils_publish import *
 
 
-def publishProxyShaders( item, filePath, step ):
+def publishProxyShaders( item, step, publishFileInfo ):
     # Progress
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
     progressDialog.setText("Publishing Arnold Scene Source")
 
-    tempData = maf.cleanScene()
+    tempData = maf.Scene.createTempScene()
+    maf.Reference.importAll()
+    maf.Namespace.removeAll()
+    maf.Animation.removeAll()
 
     # For all nodes in the proxy set
     nodes = getProxyNodes( False )
@@ -32,59 +36,45 @@ def publishProxyShaders( item, filePath, step ):
     progressDialog.setText("Preparing")
     progressDialog.increment()
 
-    # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
-        endProcess(tempData, progressDialog)
-        return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
-
-    # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        endProcess(tempData, progressDialog)
-        return
-    ram.log( "I'm publishing the shaders in " + publishFolder )
+    ram.log( "I'm publishing the shaders in " + os.path.dirname( publishFileInfo.filePath() ) )
 
     # We need Arnold, of course
-    maf.safeLoadPlugin('mtoa')
+    maf.Plugin.load('mtoa')
 
     for node in nodes:
         progressDialog.setText("Publishing proxy: " + node)
         progressDialog.increment()
 
         cmds.select(node,r=True)
-        nodeName = maf.getNodeBaseName( node )
+        nodeName = maf.Path.baseName( node )
         if nodeName.lower().startswith( 'proxy_' ):
             nodeName = nodeName[6:]
+
+        saveInfo = publishFileInfo.copy()
+        saveInfo.version = -1
+        saveInfo.state  =''
         # extension
-        fileInfo['extension'] = 'ass'
+        saveInfo.extension = 'ass'
         # resource
-        if fileInfo['resource'] != '':
-            fileInfo['resource'] = fileInfo['resource'] + '-' + nodeName + '-proxyShade'
+        if saveInfo.resource != '':
+            saveInfo.resource = saveInfo.resource + '-' + nodeName + '-proxyShade'
         else:
-            fileInfo['resource'] = nodeName + '-proxyShade'
+            saveInfo.resource = nodeName + '-proxyShade'
         # path
-        assFilePath = ram.RamFileManager.buildPath((
-            publishFolder,
-            ram.RamFileManager.composeRamsesFileName(fileInfo)
-        ))
+        assFilePath = saveInfo.filePath()
 
         cmds.arnoldExportAss(f=assFilePath, s=True, mask=223, lightLinks=0, shadowLinks=0, cam="perspShape" )
-        ram.RamMetaDataManager.setPipeType( assFilePath, PROXYSHADE_PIPE_NAME )
-        ram.RamMetaDataManager.setVersionFilePath( assFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( assFilePath, version )
+        setExportMetaData( assFilePath, PROXYSHADE_PIPE_NAME, publishFileInfo )
 
     progressDialog.setText( "Cleaning" )
     progressDialog.increment()
 
     endProcess(tempData, progressDialog)
 
-def publishShaders( item, filePath, step, mode):
+def publishShaders( item, step, publishFileInfo, mode):
     
     # Show dialog
-    publishShaderDialog = PublishShaderDialog( maf.getMayaWindow() )
+    publishShaderDialog = PublishShaderDialog( maf.UI.getMayaWindow() )
     if not publishShaderDialog.exec_():
         return
 
@@ -96,7 +86,10 @@ def publishShaders( item, filePath, step, mode):
     # Options
     removeHidden = publishShaderDialog.removeHidden()
 
-    tempData = maf.cleanScene()
+    tempData = maf.Scene.createTempScene()
+    maf.Reference.importAll()
+    maf.Namespace.removeAll()
+    maf.Animation.removeAll()
 
     # For all nodes in the publish set
     nodes = getPublishNodes()
@@ -109,22 +102,10 @@ def publishShaders( item, filePath, step, mode):
     progressDialog.setText("Preparing")
     progressDialog.increment()
 
-    # Item info
-    fileInfo = getFileInfo( filePath )
-    if fileInfo is None:
-        progressDialog.hide()
-        return
-    version = item.latestVersion( fileInfo['resource'], '', step )
-    versionFilePath = item.latestVersionFilePath( fileInfo['resource'], '', step )
-
     # Publish folder
-    publishFolder = getPublishFolder(item, step)
-    if publishFolder == '':
-        progressDialog.hide()
-        return
-    ram.log( "I'm publishing the shaders in " + publishFolder )
+    ram.log( "I'm publishing the shaders in " + os.path.dirname( publishFileInfo.filePath() ) )
 
-    for node in nodes:
+    for node in reversed(nodes):
         progressDialog.setText("Publishing: " + node)
         progressDialog.increment()
 
@@ -140,24 +121,22 @@ def publishShaders( item, filePath, step, mode):
         childNodes.append(node)
 
         # Clean (remove what we don't want to publish)
-        for childNode in childNodes:
+        for childNode in reversed(childNodes):
 
             # Remove hidden
             if removeHidden and cmds.getAttr(childNode + '.v') == 0:
                 cmds.delete(childNode)
                 continue
 
-            maf.cleanNode( childNode, True, ('mesh'), False, False)
+            maf.Node.check( True, ('mesh') )
+            maf.Node.removeExtraShapes( childNode )
+            maf.Node.deleteHistory( childNode )
         
         # Remove remaining empty groups
-        maf.removeEmptyGroups(node)
+        maf.Node.removeEmptyGroups(node)
 
         # Export
-        shaderFilePath = exportShaders(node, publishFolder, fileInfo.copy(), mode )
-        # Update Ramses Metadata (version)
-        ram.RamMetaDataManager.setPipeType( shaderFilePath, mode )
-        ram.RamMetaDataManager.setVersionFilePath( shaderFilePath, versionFilePath )
-        ram.RamMetaDataManager.setVersion( shaderFilePath, version )
+        exportShaders(node, publishFileInfo, mode )
 
     progressDialog.setText("Cleaning...")
 

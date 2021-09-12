@@ -47,5 +47,5 @@ def getDelOnPubNodes( ):
 
     if nodes is None:
         return []
-    print(nodes)
+
     return nodes
