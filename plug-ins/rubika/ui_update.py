@@ -150,6 +150,8 @@ class UpdateDialog( QDialog ):
 
                 itemName = ' | '.join(splitName)
                 updateItem.setText( itemName )
+                updateFile = ram.RamFileManager.buildPath((f, sourceFileName))
+                updateItem.setData(Qt.UserRole, updateFile)
 
             self.updateList.setCurrentItem( self.updateList.item(0) )
                             
@@ -216,6 +218,7 @@ class UpdateDialog( QDialog ):
                 updateState = ram.Ramses.instance().state(updateState)
                 listItem.setData(Qt.UserRole + 7, updateVersion)
                 listItem.setData(Qt.UserRole + 8, updateState)
+                listItem.setData(Qt.UserRole + 9, latestFile )
             if updated:
                 itemText = 'New: ' + itemText 
 
@@ -229,16 +232,24 @@ class UpdateDialog( QDialog ):
         for i in range(0, self.itemList.count()):
             item = self.itemList.item(i)
             if item.text().startswith('New: '):
-                nodes.append( self.itemList.item(i).data(Qt.UserRole) )
+
+                nodes.append( ( item.data(Qt.UserRole), item.data(Qt.UserRole + 9)) )
         return nodes
 
     def getSelectedNodes(self):
+        updateItem = self.updateList.currentItem()
+        currentItem = self.itemList.currentItem()
+        if updateItem is not None and currentItem is not None:
+            return (( currentItem.data(Qt.UserRole), updateItem.data(Qt.UserRole) ))
+
         nodes = []
         for item in self.itemList.selectedItems():
-            nodes.append( item.data(Qt.UserRole) )
+            nodes.append( ( item.data(Qt.UserRole), item.data(Qt.UserRole + 9) ) )
         return nodes
-
 
 if __name__ == '__main__':
     updateDialog = UpdateDialog()
     ok = updateDialog.exec_()
+    print(ok)
+    if ok == 1: print( updateDialog.getAllNodes() )
+    elif ok == 2: print( updateDialog.getSelectedNodes() )
