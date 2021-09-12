@@ -54,7 +54,7 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
         progressDialog.increment()
 
         # Create a root controller
-        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + ANIM_PIPE_NAME )
+        r = maf.Node.createRootCtrl( node, nodeName + '_root_' + step.shortName() )
         node = r[0]
         controller = r[1]
 
@@ -64,7 +64,7 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
         if ext == 'abc':
             frameIn = int(cmds.playbackOptions(q=True,ast=True))
             frameOut = int(cmds.playbackOptions(q=True,aet=True))
-            abcPath = publishNodeAsABC( publishFileInfo, controller, ANIM_PIPE_NAME, (frameIn, frameOut))
+            abcPath = publishNodeAsABC( publishFileInfo, controller, nodeName.replace('_', ' ') + '-' + STANDARD_PIPE_NAME, (frameIn, frameOut))
         
         # Export shaders
         shaderMode = ''
@@ -91,7 +91,7 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
     if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
 
     if ext in ('ma', 'mb'):
-        publishNodesAsMayaScene( publishFileInfo, publishedNodes, STANDARD_PIPE_FILE, ext)
+        publishNodesAsMayaScene( publishFileInfo, publishedNodes, STANDARD_PIPE_NAME, ext)
 
     # End and log
     endProcess(tempData, progressDialog)

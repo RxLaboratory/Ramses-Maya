@@ -118,7 +118,6 @@ def importFile(item, filePath, step, progressDialog=maf.ProgressDialog(), refere
             # Adjust root appearance
             cmds.setAttr(rootCtrlShape+'.overrideEnabled', 1)
             cmds.setAttr(rootCtrlShape+'.overrideColor', 18)
-            cmds.rename(rootCtrlShape,rootCtrl + 'Shape')
 
         # Adjust root object
         cmds.setAttr(rootCtrl+'.useOutlinerColor',1)
@@ -129,10 +128,11 @@ def importFile(item, filePath, step, progressDialog=maf.ProgressDialog(), refere
         setImportAttributes( rootCtrl, item, step, filePath )
 
         # Lock transform except ramses managed children
-        children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
-        for child in children:
-            if not isRamsesManaged(child):
-                maf.Node.lockTransform(child)
+        if lockTransform:
+            children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
+            for child in children:
+                if not isRamsesManaged(child):
+                    maf.Node.lockTransform(child)
 
         rootNodes.append( rootCtrl )
 

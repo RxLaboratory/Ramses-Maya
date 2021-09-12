@@ -47,7 +47,7 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
     for node in nodes:
         # Full path node
         node = maf.Path.absolutePath( node )
-        
+
         # Move to origin
         maf.Node.moveToZero(node)
         nodeName = maf.Path.baseName(node, True)
@@ -81,7 +81,7 @@ def publishRig( item, step, publishFileInfo, pipeFiles, vpShaders = True ):
 
     # export
     extension = getExtension( step, RIG_STEP, RIG_PIPE_FILE, pipeFiles, ['ma','mb'], 'ma' )
-    publishNodesAsMayaScene( publishFileInfo, nodes, RIG_PIPE_NAME, extension)
+    publishNodesAsMayaScene( publishFileInfo, publishedNodes, RIG_PIPE_NAME, extension)
    
     # reopen scene, etc
     endProcess(tempData, progressDialog)

@@ -36,10 +36,13 @@ def importAnim( item, filePath, step ):
             for node in ramsesNodes:
                 if not cmds.objExists(node): continue
                 newRootCtrls.append(rootCtrl)
+                # Ramses info
                 step = getRamsesAttr(node, RamsesAttribute.STEP)
+                step = step.split(' | ')[0]
                 if not step: continue
                 if step != RIG_STEP.shortName():  continue
                 itemName = getRamsesAttr(node, RamsesAttribute.ITEM)
+                itemName = itemName.split(' | ')[0]
                 if not itemName: continue
                 if itemName == currentAssetName:
                     # Re-parent

@@ -63,7 +63,7 @@ def exportShaders(node, publishFileInfo, mode = ''):
 
     # Select and export shadingEngines
     nodeName = maf.Path.baseName( node )
-    savePath = publishNodesAsMayaScene( publishFileInfo, allShadingEngines, nodeName + '-' + mode, 'mb')
+    savePath = publishNodesAsMayaScene( publishFileInfo, allShadingEngines, nodeName.replace('_', ' ') + '-' + mode, 'mb')
        
     return savePath
 
