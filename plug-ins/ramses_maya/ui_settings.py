@@ -33,6 +33,30 @@ import maya.cmds as cmds # pylint: disable=import-error
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 
+saveCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSave()
+"""
+
+openCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramOpen()
+"""
+
+saveAsCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSaveAs()
+"""
+
 class SettingsDialog( QMainWindow ):
 
     def __init__( self, parent=None ):
@@ -212,43 +236,17 @@ class SettingsDialog( QMainWindow ):
 
         # Update the hotkeys
         if self._saveHotkeyBox.isChecked():
-            pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramSave()
-"""
-            cm = maf.HotKey.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
-            cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
-            cmds.savePrefs(hotkeys=True)
+            maf.HotKey.createHotkey(saveCmd, 'ctrl+s', 'RamSaveScene', "Ramses Save Scene", "Ramses" )
         else:
             maf.HotKey.restoreSaveSceneHotkey()
 
         if self._openHotkeyBox.isChecked():
-            pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramOpen()
-"""
-            cm = maf.HotKey.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
-            cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
-            cmds.savePrefs(hotkeys=True)
+            maf.HotKey.createHotkey(openCmd, 'ctrl+o', 'RamOpenScene', "Ramses Open Scene", "Ramses" )
         else:
             maf.HotKey.restoreOpenSceneHotkey()
 
         if self._saveAsHotkeyBox.isChecked():
-            pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramSaveAs()
-"""
-            cm = maf.HotKey.createNameCommand('RamSaveSceneAsma', "Ramses Save Scene As", pyCommand)
-            cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
-            cmds.savePrefs(hotkeys=True)
+            maf.HotKey.createHotkey(saveAsCmd, 'ctrl+shift+s', 'RamSaveSceneAs', "Ramses Save Scene As", "Ramses" )
         else:
             maf.HotKey.restoreSaveSceneAsHotkey()
 
