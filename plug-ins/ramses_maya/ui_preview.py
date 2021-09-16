@@ -160,9 +160,19 @@ class PreviewDialog( QDialog ):
 
     def showRenderer(self):
         # Get/Create window
-        if not cmds.window(self.pbWin, exists=True, query=True):
-            cmds.window(self.pbWin)
-            cmds.paneLayout(self.pbLayout)
+        if not cmds.window( self.pbWin, exists=True, query=True):
+            cmds.window( self.pbWin )
+            # Workaround to make windowPref available later: show and delete and recreate the window
+            # show
+            cmds.showWindow( self.pbWin )
+            # and delete :)
+            cmds.deleteUI( self.pbWin )
+            # and get it back
+            cmds.window( self.pbWin )
+            # add the layout
+            cmds.paneLayout( self.pbLayout )
+
+        # Set window title
         cmds.window(self.pbWin, title= 'Ramses Playblaster', edit=True)
 
         # Set window size to the renderer size
