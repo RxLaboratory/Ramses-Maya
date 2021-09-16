@@ -12,16 +12,31 @@ def maya_useNewAPI():
     """
     pass
 
-def initializePlugin( obj ):
-    plugin = om.MFnPlugin(obj, vendor, version)
+saveCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSave()
+"""
 
-    for c in ram.cmds_classes:
-        try:
-            plugin.registerCommand( c.name, c.createCommand, c.createSyntax )
-        except Exception as e:
-            print(e)
-            ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
+openCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramOpen()
+"""
 
+saveAsCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSaveAs()
+"""
+
+def installHotkeys():
     # Register hotkeys
     settings = ram.RamSettings.instance()
     save = True
@@ -33,42 +48,29 @@ def initializePlugin( obj ):
     saveas = True
     if 'useRamSaveAsHotkey' in settings.userSettings:
         saveas = settings.userSettings['useRamSaveAsHotkey']
-        
+       
     if save:
-        pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramSave()
-"""
-        cm = ram.maf.NameCmd.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
-        cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
-        cmds.savePrefs(hotkeys=True)
+        ram.maf.HotKey.createHotkey(saveCmd, 'ctrl+s', 'RamSaveScene', "Ramses Save Scene", "Ramses" )
 
     if open:
-        pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramOpen()
-"""
-        cm = ram.maf.NameCmd.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
-        cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
-        cmds.savePrefs(hotkeys=True)
+        ram.maf.HotKey.createHotkey(openCmd, 'ctrl+o', 'RamOpenScene', "Ramses Open Scene", "Ramses" )
 
     if saveas:
-        pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramSaveAs()
-"""
-        cm = ram.maf.NameCmd.createNameCommand('RamSaveSceneAs', "Ramses Save Scene As", pyCommand)
-        cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
-        cmds.savePrefs(hotkeys=True)
+        ram.maf.HotKey.createHotkey(saveAsCmd, 'ctrl+shift+s', 'RamSaveSceneAs', "Ramses Save Scene As", "Ramses" )
+
+def initializePlugin( obj ):
+    plugin = om.MFnPlugin(obj, vendor, version)
+
+    ram.log( "Hi, I'm Ramses, the Rx Asset Management System... I'm loading!" )
+
+    for c in ram.cmds_classes:
+        try:
+            plugin.registerCommand( c.name, c.createCommand, c.createSyntax )
+        except Exception as e:
+            print(e)
+            ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
+
+    installHotkeys()
 
     ram.log( "I'm ready!" )
 
@@ -76,9 +78,9 @@ def uninitializePlugin( obj ):
     plugin = om.MFnPlugin(obj, vendor, version)
 
     # Rstore hotkeys
-    ram.maf.NameCmd.restoreSaveSceneHotkey()
-    ram.maf.NameCmd.restoreOpenSceneHotkey()
-    ram.maf.NameCmd.restoreSaveSceneAsHotkey()
+    ram.maf.HotKey.restoreSaveSceneHotkey()
+    ram.maf.HotKey.restoreOpenSceneHotkey()
+    ram.maf.HotKey.restoreSaveSceneAsHotkey()
 
     for c in reversed( ram.cmds_classes ):
         try:

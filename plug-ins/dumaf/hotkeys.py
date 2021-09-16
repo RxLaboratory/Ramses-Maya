@@ -4,7 +4,7 @@
 
 import maya.cmds as cmds # pylint: disable=import-error
 
-class NameCmd():
+class HotKey():
     
     @staticmethod
     def createNameCommand( name, annotation, pyCommand):
@@ -15,7 +15,7 @@ class NameCmd():
         if cmds.runTimeCommand(name, q=True, exists=True):
             cmds.runTimeCommand(name, e=True, delete=True)
         # Now, re-create it
-        cmds.runTimeCommand(
+        cmd = cmds.runTimeCommand(
             name, 
             ann=annotation, 
             category='User', 
@@ -24,9 +24,40 @@ class NameCmd():
             )
 
         # Create the command
-        nc = cmds.nameCommand( name, ann=annotation, command=name)
+        nc = cmds.nameCommand( name + "NameCommand", ann=annotation, command=cmd)
 
         return nc
+
+    @staticmethod
+    def createHotkey( pyCommand, shortcut, name, annotation = None, hotkeySetName='DuMAF' ):
+        # We need a custom hotkeySet
+        if not cmds.hotkeySet(hotkeySetName, exists=True):
+            cmds.hotkeySet( hotkeySetName )
+        # Set it as currrent
+        cmds.hotkeySet( hotkeySetName, current=True, e=True )
+
+        if not annotation: annotation = name
+
+        shortcut = shortcut.lower()
+        
+        ctrl = False
+        if 'ctrl+' in shortcut:
+            ctrl = True
+            shortcut = shortcut.replace('ctrl+', '')
+        alt = False
+        if 'alt+' in shortcut:
+            alt = True
+            shortcut = shortcut.replace('alt+', '')
+        shift = False
+        if 'shift+' in shortcut:
+            shift = True
+            shortcut = shortcut.replace('shift+', '')
+
+        # Now we can create hotkeys
+        cmd = HotKey.createNameCommand( name, annotation, pyCommand )
+        cmds.hotkey(keyShortcut=shortcut, ctrlModifier=ctrl, altModifier=alt, shiftModifier=shift, name=cmd )
+        cmds.savePrefs(hotkeys=True)
+
 
     @staticmethod
     def restoreOpenSceneHotkey():
