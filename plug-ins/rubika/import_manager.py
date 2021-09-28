@@ -89,22 +89,24 @@ def importer(item, filePaths, step):
         for file in filePaths:
             if GEO_PIPE_FILE.check(file):
                 geoFiles.append( file )
-            if VPSHADERS_PIPE_FILE.check(file):
+            elif VPSHADERS_PIPE_FILE.check(file):
                 vpShaderFiles.append( file )
-            if RDRSHADERS_PIPE_FILE.check(file):
+            elif RDRSHADERS_PIPE_FILE.check(file):
                 rdrShaderFiles.append( file )
-            if PROXYSHADE_PIPE_FILE.check(file):
+            elif PROXYSHADE_PIPE_FILE.check(file):
                 proxyShadeFiles.append( file )
-            if PROXYGEO_PIPE_FILE.check(file):
+            elif PROXYGEO_PIPE_FILE.check(file):
                 proxyGeoFiles.append( file )
-            if RIG_PIPE_FILE.check( file ):
+            elif RIG_PIPE_FILE.check( file ):
                 rigFiles.append( file )
-            if SET_PIPE_FILE.check( file ):
+            elif SET_PIPE_FILE.check( file ):
                 setFiles.append( file )
-            if STANDARD_PIPE_FILE.check( file ):
-                standardFiles.append( file )
-            if ANIM_PIPE_FILE.check( file ):
+            elif ANIM_PIPE_FILE.check( file ):
                 animFiles.append( file )
+            elif STANDARD_PIPE_FILE.check( file ):
+                standardFiles.append( file )
+            elif MA_FILE.check(file) or MB_FILE.check(file) or ABC_FILE.check(file):
+                standardFiles.append(file)
 
     # Import
 
