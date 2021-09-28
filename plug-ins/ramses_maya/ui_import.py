@@ -203,12 +203,9 @@ class ImportDialog( QDialog ):
             self.itemLabel.show()
             self.itemList.show()
             self.itemSearchField.show()
-            if asset:
-                self.itemLabel.setText("Asset:")
-                self.groupBox.show()
-            else:
-                self.itemLabel.setText("Shot:")
-                self.groupBox.hide()
+            self.groupBox.show()
+            if asset: self.itemLabel.setText("Asset:")
+            else: self.itemLabel.setText("Shot:")
         else:
             self.itemLabel.hide()
             self.itemList.hide()
@@ -240,9 +237,16 @@ class ImportDialog( QDialog ):
             self.groupBox.setCurrentIndex(-1)
             self.groupBox.blockSignals(False)
             steps = project.steps( ram.StepType.ASSET_PRODUCTION )
-        # Load shots and shot steps
+        # Load sequences, shots and shot steps
         elif shot:
-            self.__updateItems()
+            groups = project.sequences()
+            self.groupBox.blockSignals(True)
+            self.groupBox.addItem("All", "")
+            # Add sequences
+            for group in groups:
+                self.groupBox.addItem(group, group)
+            self.groupBox.setCurrentIndex(-1)
+            self.groupBox.blockSignals(False)
             steps = project.steps( ram.StepType.SHOT_PRODUCTION )
         # Load steps for templates
         elif template:
@@ -262,7 +266,7 @@ class ImportDialog( QDialog ):
         if not project: return
 
         items = ()
-        if self.shotButton.isChecked(): items = project.shots()
+        if self.shotButton.isChecked(): items = project.shots( sequence = self.groupBox.currentData() )
         elif self.assetButton.isChecked(): items = project.assets( self.groupBox.currentData() )
         else: return
 
