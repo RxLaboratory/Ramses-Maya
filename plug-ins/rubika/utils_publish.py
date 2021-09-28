@@ -31,7 +31,14 @@ def publishNodesAsMayaScene( publishFileInfo, nodes, pipeName='Published', exten
     maf.Node.removeEmptyGroups()
 
     # Select the nodes to publish
-    cmds.select( nodes, noExpand=True, r=True)
+    # in a loop just to try to select them all
+    replace = True
+    for n in nodes:
+        try:
+            cmds.select(n, noExpand=True, r=replace)
+            replace = False
+        except:
+            pass
     # Save file
     cmds.file( rename=filePath )
     cmds.file( exportSelected=True, options="v=1;" )

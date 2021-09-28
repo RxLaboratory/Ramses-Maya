@@ -26,7 +26,6 @@ def exportShaders(node, publishFileInfo, mode = ''):
     for meshNode in nodes:
         nodeHistory = cmds.listHistory( meshNode, f=True )
         shadingEngines = cmds.listConnections( nodeHistory, type='shadingEngine')
-        shadingEngine = 'initialShadingGroup'
 
         # Get the name from parent (transform node for this mesh)
         objectName = cmds.listRelatives(meshNode, p=True)[0]
@@ -35,31 +34,33 @@ def exportShaders(node, publishFileInfo, mode = ''):
 
         if shadingEngines is not None:
             for shadingEngine in shadingEngines:
-
                 # Get the first surface shader to rename the engine
-                surfaceShaders = cmds.listConnections(shadingEngine + '.surfaceShader')
-                if surfaceShaders is not None:
-                    surfaceShader = surfaceShaders[0]
-                    surfaceShaderName = surfaceShader.split(':')[-1]
-                    # Remove all what's before the first '_'
-                    i = surfaceShaderName.find('_')
-                    if i >= 0:
-                        surfaceShaderName = surfaceShaderName[i+1:]
-                    # And rename
-                    if shadingEngine != 'initialShadingGroup':
-                        shadingEngine = cmds.rename( shadingEngine, surfaceShaderName)
-            
-                    # List the objects this engine is shading
-                    setRamsesManaged( shadingEngine )
-                    objectNames = getRamsesAttr( shadingEngine, RamsesAttribute.SHADED_OBJECTS )
-                    if objectNames is None:
-                        objectNames = ''
-                    else:
-                        objectNames = objectNames + ','
-                    objectNames = objectNames + objectName
-                    setRamsesAttr( shadingEngine, RamsesAttribute.SHADED_OBJECTS, objectNames, 'string')
-        
-        allShadingEngines.append(shadingEngine)
+                try:
+                    surfaceShaders = cmds.listConnections(shadingEngine + '.surfaceShader')
+                    if surfaceShaders:
+                        surfaceShader = surfaceShaders[0]
+                        surfaceShaderName = surfaceShader.split(':')[-1]
+                        # Remove all what's before the first '_'
+                        i = surfaceShaderName.find('_')
+                        if i >= 0:
+                            surfaceShaderName = surfaceShaderName[i+1:]
+                        # And rename
+                        if shadingEngine != 'initialShadingGroup':
+                            shadingEngine = cmds.rename( shadingEngine, surfaceShaderName)
+                
+                        # List the objects this engine is shading
+                        setRamsesManaged( shadingEngine )
+                        objectNames = getRamsesAttr( shadingEngine, RamsesAttribute.SHADED_OBJECTS )
+                        if objectNames is None:
+                            objectNames = ''
+                        else:
+                            objectNames = objectNames + ','
+                        objectNames = objectNames + objectName
+                        setRamsesAttr( shadingEngine, RamsesAttribute.SHADED_OBJECTS, objectNames, 'string')
+                except:
+                    pass
+                    
+            allShadingEngines.append(shadingEngine)
 
     # Select and export shadingEngines
     nodeName = maf.Path.baseName( node )
