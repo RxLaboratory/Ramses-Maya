@@ -154,7 +154,6 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         # Remove remaining empty groups
         maf.Node.removeEmptyGroups(node)
 
-
         isProxy  = getRamsesAttr( node, RamsesAttribute.IS_PROXY )
 
         # Create a root controller
