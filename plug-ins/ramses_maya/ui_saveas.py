@@ -24,10 +24,6 @@ class SaveAsDialog( QDialog ):
     def __init__(self, parent=None):
         super(SaveAsDialog, self).__init__(parent)
 
-        self.__currentProject = None
-        self.__currentStep = None
-        self.__currentItem = None
-
         self.__setupUi()
         self.__loadProjects()
         self.__connectEvents()
@@ -139,51 +135,39 @@ class SaveAsDialog( QDialog ):
             self.__loadSteps( )
             return
         for project in ramses.projects():
-            n = project.name()
-            if n == "":
-                n = project.shortName()
-            self.projectBox.addItem(n, project.shortName())
+            self.projectBox.addItem(str(project), project)
         self.__loadSteps( )
-
-    def __getCurrentShortName(self, comboBox):
-        currentIndex = comboBox.currentIndex()
-        currentText = comboBox.currentText()
-        itemText = comboBox.itemText( currentIndex )
-        if currentIndex == -1:
-            return currentText
-        if currentText == itemText:
-            return comboBox.itemData( currentIndex )
-        return currentText
 
     @Slot()
     def __loadSteps(self):
-        projectShortName = self.__getCurrentShortName( self.projectBox )
-        self.__currentProject = ramses.project( projectShortName )
         self.stepBox.clear()
-        if self.__currentProject is None:
-            return
+        project = self.getProject()
+        if not project: return
+
         steps = []
         if self.assetButton.isChecked():
-            steps = self.__currentProject.steps( ram.StepType.ASSET_PRODUCTION )
+            steps = project.steps( ram.StepType.ASSET_PRODUCTION )
         elif self.shotButton.isChecked():
-            steps = self.__currentProject.steps( ram.StepType.SHOT_PRODUCTION )
+            steps = project.steps( ram.StepType.SHOT_PRODUCTION )
         else:
-            steps = self.__currentProject.steps( )
+            steps = project.steps( )
         for step in steps:
-            n = step.name()
-            if n == "":
-                n = step.shortName()
-            self.stepBox.addItem(n, step.shortName())
+            self.stepBox.addItem(str(step), step)
+
         self.__loadItems()
 
     def __buildPath(self):
         self.locationEdit.setText('')
         self.fileNameLabel.setText('')
         self._saveButton.setEnabled(False)
-        if self.__currentProject is None:
+
+        project = self.getProject()
+        if not project:
             self.locationEdit.setPlaceholderText('Sorry, invalid project...')
             return
-        if self.__currentStep is None:
+
+        step = self.getStep()
+        if not step:
             self.locationEdit.setPlaceholderText('Sorry, invalid step...')
             return
         
@@ -196,20 +180,20 @@ class SaveAsDialog( QDialog ):
                 return
 
             # Let's get the step/asset location
-            assetShortName = self.__getCurrentShortName( self.itemBox )
-            if assetShortName == '':
+            asset = self.getItem()
+            if not asset:
                 self.locationEdit.setPlaceholderText("Sorry, invalid asset...")
-                return
+                return               
 
-            assetsPath = self.__currentProject.assetsPath( assetGroup )
+            assetsPath = project.assetsPath( assetGroup )
 
             nm = ram.RamFileInfo()
-            nm.project = self.__currentProject.shortName()
+            nm.project = project.shortName()
             nm.ramType = ram.ItemType.ASSET
-            nm.shortName = assetShortName
+            nm.shortName = asset.shortName()
             assetFolderName = nm.fileName()
 
-            nm.step = self.__currentStep.shortName()
+            nm.step = step.shortName()
             assetStepFolderName = nm.fileName()
 
             # The folder
@@ -229,20 +213,21 @@ class SaveAsDialog( QDialog ):
             self.fileNameLabel.setText(assetFileName)
                 
         elif self.shotButton.isChecked():
-            shotShortName = self.__getCurrentShortName( self.itemBox )
-            if shotShortName == '':
+
+            shot = self.getItem()
+            if not shot:
                 self.locationEdit.setPlaceholderText("Sorry, invalid shot...")
                 return
 
-            shotsPath = self.__currentProject.shotsPath()
+            shotsPath = project.shotsPath()
 
             nm = ram.RamFileInfo()
-            nm.project = self.__currentProject.shortName()
+            nm.project = project.shortName()
             nm.ramType = ram.ItemType.SHOT
-            nm.shortName = shotShortName
+            nm.shortName = shot.shortName()
             shotFolderName = nm.fileName()
 
-            nm.step = self.__currentStep.shortName()
+            nm.step = step.shortName()
             shotStepFolderName = nm.fileName()
 
             shotFolder = ram.RamFileManager.buildPath((
@@ -261,17 +246,20 @@ class SaveAsDialog( QDialog ):
             self.fileNameLabel.setText(shotFileName)
         
         else:
-            itemShortName = self.__getCurrentShortName( self.itemBox )
 
-            stepPath = self.__currentStep.folderPath()
+            itemShortName = self.itemBox.currentText()
+            item = self.getItem()
+            if item: itemShortName = item.shortName()
+
+            stepPath = step.folderPath()
 
             self.locationEdit.setText(stepPath)
 
             # The filename
             nm = ram.RamFileInfo()
-            nm.project = self.__currentProject.shortName()
+            nm.project = project.shortName()
             nm.ramType = ram.ItemType.SHOT
-            nm.step = self.__currentStep.shortName()
+            nm.step = step.shortName()
             nm.shortName = itemShortName
             nm.extension = self.extensionBox.currentData()
             nm.resource = self.resourceEdit.text()
@@ -296,63 +284,55 @@ class SaveAsDialog( QDialog ):
     def __loadItems(self):
         self.itemBox.clear()
         self.assetGroupBox.clear()
-        if self.__currentProject is None:
-            return
-        stepShortName = self.__getCurrentShortName( self.stepBox )
-        self.__currentStep = self.__currentProject.step( stepShortName )
-        if self.__currentStep is None:
-            return
+
+        project = self.getProject()
+        if not project: return
+        
+        step = self.getStep()
+        if not step: return
 
         if self.assetButton.isChecked():
             # Load asset groups
-            for ag in self.__currentProject.assetGroups():
+            for ag in project.assetGroups():
                 self.assetGroupBox.addItem(ag)
             self.__loadAssets()
         elif self.shotButton.isChecked():
             # Load shots
-            for shot in self.__currentProject.shots():
-                n = shot.name()
-                if n == "":
-                    n = shot.shortName()
-                self.itemBox.addItem(n, shot.shortName())
+            for shot in project.shots():
+                self.itemBox.addItem(str(shot), shot)
 
         self.__buildPath()
 
     @Slot()
     def __loadAssets(self):
         self.itemBox.clear()
-        if self.__currentProject is None:
-            return
+
+        project = self.getProject()
+        if not project: return
+
         ag = self.assetGroupBox.currentText() 
-        for asset in self.__currentProject.assets( ag ):
-            n = asset.name()
-            if n == "":
-                n = asset.shortName()
-            self.itemBox.addItem(n, asset.shortName())
+        for asset in project.assets( ag ):
+            self.itemBox.addItem(str(asset), asset)
 
     def setOffline(self): # TODO
         pass
 
     def setProject(self, project):
         for i in range(self.projectBox.count()):
-            if self.projectBox.itemData(i) == project.shortName():
+            if self.projectBox.itemData(i) == project:
                 self.projectBox.setCurrentIndex(i)
                 return
-        n = project.name()
-        if n == "":
-            n = project.shortName()
-        self.projectBox.addItem(n, project.shortName())
+
+        self.projectBox.addItem(str(project), project)
         self.projectBox.setCurrentIndex( self.projectBox.count() - 1)
 
     def setStep(self, step):
         for i in range( self.stepBox.count() ):
-            if self.stepBox.itemData(i) == step.shortName():
+            if self.stepBox.itemData(i) == step:
                 self.stepBox.setCurrentIndex(i)
                 return
-        n = step.name()
-        if n == "":
-            n = step.shortName()
-        self.stepBox.addItem(n, step.shortName())
+
+        self.stepBox.addItem(str(step), step)
         self.stepBox.setCurrentIndex( self.stepBox.count() - 1)
 
     def setItem(self, item):
@@ -366,21 +346,22 @@ class SaveAsDialog( QDialog ):
         self.__typeChanged()
 
         for i in range( self.itemBox.count() ):
-            if self.itemBox.itemData(i) == item.shortName():
+            if self.itemBox.itemData(i) == item:
                 self.itemBox.setCurrentIndex(i)
                 return
-        n = item.name()
-        if n == "":
-            n = item.shortName()
-        self.itemBox.addItem(n, item.shortName())
+
+        self.itemBox.addItem(str(item), item)
         self.itemBox.setCurrentIndex( self.itemBox.count() - 1)
 
     def setItemShortName(self, itemShortName):
         for i in range( self.itemBox.count() ):
-            if self.itemBox.itemData(i) == itemShortName:
+            item = self.itemBox.itemData(i)
+            if not item: continue
+            if item.shortName() == itemShortName:
                 self.itemBox.setCurrentIndex(i)
                 return
-        self.itemBox.addItem(itemShortName, itemShortName)
+
+        self.itemBox.addItem(itemShortName)
         self.itemBox.setCurrentIndex( self.itemBox.count() - 1)
 
     def getFilePath(self):
@@ -392,3 +373,23 @@ class SaveAsDialog( QDialog ):
             path,
             fileName
         ))
+
+    def getProject(self):
+        p = self.projectBox.currentData()
+        if not p:
+            pShortName = self.projectBox.currentText()
+            p = ramses.project( pShortName )
+        return p
+
+    def getStep(self):
+        s = self.stepBox.currentData()
+        if not s:
+            project = self.getProject()
+            if not project: return None
+            sShortName = self.stepBox.currentText()
+            s = project.step( sShortName )
+        return s
+
+    def getItem(self):
+        i = self.itemBox.currentData()
+        return i
