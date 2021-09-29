@@ -29,7 +29,7 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
     keepCurves = False
     keepSurfaces = False
 
-    if GEO_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or GEOREF_PIPE_FILE in pipeFiles:
         # Show dialog
         publishGeoDialog = PublishGeoDialog( maf.UI.getMayaWindow() )
         if not publishGeoDialog.exec_():
@@ -58,9 +58,9 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     # For all nodes in the publish set or proxy set
     nodes = []
-    if GEO_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
+    if GEO_PIPE_FILE in pipeFiles or GEOREF_PIPE_FILE in pipeFiles or VPSHADERS_PIPE_FILE in pipeFiles or RDRSHADERS_PIPE_FILE in pipeFiles:
         nodes = getPublishNodes()
-    if PROXYGEO_PIPE_FILE in pipeFiles:
+    if PROXYGEO_PIPE_FILE in pipeFiles or PROXYGEOREF_PIPE_FILE in pipeFiles:
         showAlert = GEO_PIPE_FILE not in pipeFiles
         nodes = nodes + getProxyNodes( showAlert )
     
@@ -154,36 +154,41 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         # Remove remaining empty groups
         maf.Node.removeEmptyGroups(node)
 
-        # Type and extension
-        pType = ''
-        extension = ''
-        if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
-            pType = PROXYGEO_PIPE_NAME
-            if hasExtension( PROXYGEO_PIPE_FILE, pipeFiles, 'abc'):
-                extension = 'abc'
-            else:
-                extension = getExtension( step, MOD_STEP, PROXYGEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
-        else:
-            pType = GEO_PIPE_NAME
-            if hasExtension( GEO_PIPE_FILE, pipeFiles, 'abc'):
-                extension = 'abc'
-            else:
-                extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+
+        isProxy  = getRamsesAttr( node, RamsesAttribute.IS_PROXY )
 
         # Create a root controller
+        pType = GEO_PIPE_NAME
+        if isProxy: pType = PROXYGEO_PIPE_NAME
         r = maf.Node.createRootCtrl( node, nodeName + '_root_' + pType )
         node = r[0]
         controller = r[1]
 
-        if extension == 'abc':
+        frameIn = 1
+        frameOut = 1
+        if keepAnimation:
+            frameIn = int(cmds.playbackOptions(q=True,ast=True))
+            frameOut = int(cmds.playbackOptions(q=True,aet=True))
 
-            frameIn = 1
-            frameOut = 1
-            if keepAnimation:
-                frameIn = int(cmds.playbackOptions(q=True,ast=True))
-                frameOut = int(cmds.playbackOptions(q=True,aet=True))
+        # Publish as all needed pipes
+        abcPaths = []
+        if PROXYGEO_PIPE_FILE in pipeFiles and isProxy:
+            if hasExtension( PROXYGEO_PIPE_FILE, pipeFiles, 'abc') or getExtension( step, MOD_STEP, PROXYGEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' ) == 'abc':
+                abcPath = publishNodeAsABC( publishFileInfo, controller, PROXYGEO_PIPE_NAME, (frameIn, frameOut))
+                abcPaths.append( abcPath )
+        if PROXYGEOREF_PIPE_FILE in pipeFiles and isProxy:
+            if hasExtension( PROXYGEOREF_PIPE_FILE, pipeFiles, 'abc') or getExtension( step, MOD_STEP, PROXYGEOREF_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' ) == 'abc':
+                abcPath = publishNodeAsABC( publishFileInfo, controller, PROXYGEOREF_PIPE_NAME, (frameIn, frameOut))
+                abcPaths.append( abcPath )
+        if GEO_PIPE_FILE in pipeFiles and not isProxy:
+            if hasExtension( GEO_PIPE_FILE, pipeFiles, 'abc') or getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' ) == 'abc':
+                abcPath = publishNodeAsABC( publishFileInfo, controller, GEO_PIPE_NAME, (frameIn, frameOut))
+                abcPaths.append( abcPath )
+        if GEOREF_PIPE_FILE in pipeFiles and not isProxy:
+            if hasExtension( GEOREF_PIPE_FILE, pipeFiles, 'abc') or getExtension( step, MOD_STEP, GEOREF_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' ) == 'abc':
+                abcPath = publishNodeAsABC( publishFileInfo, controller, GEOREF_PIPE_NAME, (frameIn, frameOut))
+                abcPaths.append( abcPath )
 
-            abcPath = publishNodeAsABC( publishFileInfo, controller, pType, (frameIn, frameOut))
 
         # Export shaders
         shaderMode = ''
@@ -192,10 +197,10 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         elif RDRSHADERS_PIPE_FILE in pipeFiles:
             shaderMode = RDRSHADERS_PIPE_NAME
         
-        if shaderMode != '' and not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+        if shaderMode != '' and not isProxy:
             shaderFilePath = exportShaders( node, publishFileInfo.copy(), shaderMode )
             # Update Ramses Metadata
-            if extension == 'abc':
+            for abcPath in abcPaths:
                 ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
 
         publishedNodes.append(controller)
@@ -205,19 +210,53 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
 
     # Publish ma or mb
 
-    # Get Type
-    pipeType = GEO_PIPE_NAME
-    pipe = GEO_PIPE_FILE
-    if PROXYGEO_PIPE_FILE in pipeFiles and not GEO_PIPE_FILE in pipeFiles:
-        pipeType = PROXYGEO_PIPE_NAME
-        pipe = PROXYGEO_PIPE_FILE
-    # Get extension
-    if hasExtension( pipe, pipeFiles, 'ma'): extension = 'ma'
-    elif hasExtension( pipe, pipeFiles, 'mb'): extension = 'mb'
-    else: extension = getExtension( step, MOD_STEP, pipe, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+    if GEO_PIPE_FILE in pipeFiles:
+        if hasExtension( GEO_PIPE_FILE, pipeFiles, 'ma'): extension = 'ma'
+        elif hasExtension( GEO_PIPE_FILE, pipeFiles, 'mb'): extension = 'mb'
+        else: extension = getExtension( step, MOD_STEP, GEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+        if extension in ('ma', 'mb'):
+            # Get all non proxy nodes
+            nodesToPub = []
+            for node in publishedNodes:
+                if not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+                    nodesToPub.append( node )
+            publishNodesAsMayaScene( publishFileInfo, nodesToPub, GEO_PIPE_NAME, extension)
 
-    if extension in ('ma', 'mb'):
-        publishNodesAsMayaScene( publishFileInfo, publishedNodes, pipeType, extension)
+    if GEOREF_PIPE_FILE in pipeFiles:
+        if hasExtension( GEOREF_PIPE_FILE, pipeFiles, 'ma'): extension = 'ma'
+        elif hasExtension( GEOREF_PIPE_FILE, pipeFiles, 'mb'): extension = 'mb'
+        else: extension = getExtension( step, MOD_STEP, GEOREF_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+        if extension in ('ma', 'mb'):
+            # Get all non proxy nodes
+            nodesToPub = []
+            for node in publishedNodes:
+                if not getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+                    nodesToPub.append( node )
+            publishNodesAsMayaScene( publishFileInfo, nodesToPub, GEOREF_PIPE_NAME, extension)
+
+    if PROXYGEO_PIPE_FILE in pipeFiles:
+        if hasExtension( PROXYGEO_PIPE_FILE, pipeFiles, 'ma'): extension = 'ma'
+        elif hasExtension( PROXYGEO_PIPE_FILE, pipeFiles, 'mb'): extension = 'mb'
+        else: extension = getExtension( step, MOD_STEP, PROXYGEO_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+        if extension in ('ma', 'mb'):
+            # Get all proxy nodes
+            nodesToPub = []
+            for node in publishedNodes:
+                if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+                    nodesToPub.append( node )
+            publishNodesAsMayaScene( publishFileInfo, nodesToPub, PROXYGEO_PIPE_NAME, extension)
+
+    if PROXYGEOREF_PIPE_FILE in pipeFiles:
+        if hasExtension( PROXYGEOREF_PIPE_FILE, pipeFiles, 'ma'): extension = 'ma'
+        elif hasExtension( PROXYGEOREF_PIPE_FILE, pipeFiles, 'mb'): extension = 'mb'
+        else: extension = getExtension( step, MOD_STEP, PROXYGEOREF_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc' )
+        if extension in ('ma', 'mb'):
+            # Get all proxy nodes
+            nodesToPub = []
+            for node in publishedNodes:
+                if getRamsesAttr( node, RamsesAttribute.IS_PROXY ):
+                    nodesToPub.append( node )
+            publishNodesAsMayaScene( publishFileInfo, nodesToPub, PROXYGEOREF_PIPE_NAME, extension)
 
     # End and log
     endProcess(tempData, progressDialog)

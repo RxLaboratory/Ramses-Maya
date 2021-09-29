@@ -16,37 +16,52 @@ ASS_FILE = ram.RamFileType( "Arnold Source File", 'ass', ['.ass'] )
 # Pipe Names - These are the names to use in the Ramses Pipeline Editor
 
 STANDARD_PIPE_NAME = 'Std' # used for layout, lighting, etc non-managed pipes
+STANDARDREF_PIPE_NAME = 'StdRef'
 GEO_PIPE_NAME = 'Geo'
+GEOREF_PIPE_NAME = 'GeoRef'
 VPSHADERS_PIPE_NAME = 'vpSha'
 RDRSHADERS_PIPE_NAME = 'rdrSha'
 PROXYSHADE_PIPE_NAME = 'pSha'
 PROXYGEO_PIPE_NAME = 'pGeo'
+PROXYGEOREF_PIPE_NAME = 'pGeoRef'
 RIG_PIPE_NAME = 'Rig'
 SET_PIPE_NAME = 'Set'
+SETREF_PIPE_NAME = 'SetRef'
 ANIM_PIPE_NAME = 'Anim'
+ANIMREF_PIPE_NAME = 'AnimRef'
 
 # PipeFiles - These associate the name with a file type (and a color space, ignored for now)
 
 STANDARD_PIPE_FILE = ram.RamPipeFile( STANDARD_PIPE_NAME, MB_FILE, "" )
+STANDARDREF_PIPE_FILE = ram.RamPipeFile( STANDARDREF_PIPE_NAME, MB_FILE, "" )
 GEO_PIPE_FILE = ram.RamPipeFile( GEO_PIPE_NAME, ABC_FILE, "" )
+GEOREF_PIPE_FILE = ram.RamPipeFile( GEOREF_PIPE_NAME, ABC_FILE, "" )
 VPSHADERS_PIPE_FILE = ram.RamPipeFile( VPSHADERS_PIPE_NAME, MB_FILE, "" )
 RDRSHADERS_PIPE_FILE = ram.RamPipeFile( RDRSHADERS_PIPE_NAME, MB_FILE, "" )
 PROXYSHADE_PIPE_FILE = ram.RamPipeFile( PROXYSHADE_PIPE_NAME, ASS_FILE, "" )
 PROXYGEO_PIPE_FILE = ram.RamPipeFile( PROXYGEO_PIPE_NAME, ABC_FILE, "" )
+PROXYGEOREF_PIPE_FILE = ram.RamPipeFile( PROXYGEOREF_PIPE_NAME, ABC_FILE, "" )
 RIG_PIPE_FILE = ram.RamPipeFile( RIG_PIPE_NAME, MA_FILE, "" )
 SET_PIPE_FILE = ram.RamPipeFile( SET_PIPE_NAME, MB_FILE, "" )
+SETREF_PIPE_FILE = ram.RamPipeFile( SETREF_PIPE_NAME, MB_FILE, "" )
 ANIM_PIPE_FILE = ram.RamPipeFile( ANIM_PIPE_NAME, ABC_FILE, "" )
+ANIMREF_PIPE_FILE = ram.RamPipeFile( ANIMREF_PIPE_NAME, ABC_FILE, "" )
 
 PIPE_FILES = ( # All previously configured pipe files have to be listed here
     STANDARD_PIPE_FILE,
+    STANDARDREF_PIPE_FILE,
     GEO_PIPE_FILE,
+    GEOREF_PIPE_FILE,
     VPSHADERS_PIPE_FILE,
     RDRSHADERS_PIPE_FILE,
     PROXYSHADE_PIPE_FILE,
     PROXYGEO_PIPE_FILE,
+    PROXYGEOREF_PIPE_FILE,
     RIG_PIPE_FILE,
     SET_PIPE_FILE,
+    SETREF_PIPE_FILE,
     ANIM_PIPE_FILE,
+    ANIMREF_PIPE_FILE,
 )
 
 # Default Steps - These are the steps to be used when the Daemon/Client Application is not available to give us the pipes we need

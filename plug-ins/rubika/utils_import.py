@@ -57,6 +57,8 @@ def importFile(item, filePath, step, progressDialog=maf.ProgressDialog(), refere
 
     progressDialog.show()
 
+    if reference: lockTransform = False
+
     itemGroup = getImportGroup( item )
 
     # Check the extension

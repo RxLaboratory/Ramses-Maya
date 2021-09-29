@@ -41,8 +41,6 @@ def updateRamsesItems():
     progressDialog.setMaximum(len(nodes))
     progressDialog.show()
 
-    print(nodes)
-
     for n in nodes:
 
         node = n[0]

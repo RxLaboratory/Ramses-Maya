@@ -8,7 +8,7 @@ from .utils_constants import *
 from .ui_import_anim import ImportAnimDialog
 from .import_geo import *
 
-def importAnim( item, filePath, step, showDialog=True ):
+def importAnim( item, filePath, step, showDialog=True, ref=False ):
     
     removeRigs = False
     if showDialog:
@@ -20,12 +20,15 @@ def importAnim( item, filePath, step, showDialog=True ):
     # Progress
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
-    progressDialog.setText("Importing Animation...")
+    if ref:
+        progressDialog.setText("Referencing Animation...")
+    else:
+        progressDialog.setText("Importing Animation...")
     progressDialog.setMaximum(2)
     progressDialog.increment()
 
     # Just import as any Geo
-    rootCtrls = importFile( item, filePath, step, progressDialog)
+    rootCtrls = importFile( item, filePath, step, progressDialog, reference=ref)
 
     progressDialog.setText("Removing corresponding rigs.")
 

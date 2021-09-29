@@ -7,15 +7,18 @@ import dumaf as maf # pylint: disable=import-error
 from .utils_attributes import * # pylint: disable=import-error
 from .utils_import import *
 
-def importGeo(item, filePath, step):
+def importGeo(item, filePath, step, ref=False):
     # Progress
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
-    progressDialog.setText("Importing Geometry...")
+    if ref:
+        progressDialog.setText("Referencing Geometry...")
+    else:
+        progressDialog.setText("Importing Geometry...")
     progressDialog.setMaximum(2)
     progressDialog.increment()
 
-    nodes = importFile( item, filePath, step, progressDialog)
+    nodes = importFile( item, filePath, step, progressDialog, reference=ref)
 
     progressDialog.close()
 
