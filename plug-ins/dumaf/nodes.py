@@ -168,6 +168,16 @@ class Node():
             cmds.setAttr(transformNode + a, lock=l )
 
     @staticmethod
+    def hasAttr( node, attr):
+        return cmds.attributeQuery( attr, n=node, exists=True )
+
+    @staticmethod
+    def isVisible(node):
+        if Node.hasAttr( node, 'visibility' ):
+            return cmds.getAttr(node + '.v') == 0
+        return True
+
+    @staticmethod
     def lockVisibility( node, l=True ):
         if not cmds.attributeQuery( 'visibility', n=node, exists=True ): return
         cmds.setAttr(node+'.visibility',lock=l)
