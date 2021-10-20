@@ -78,8 +78,11 @@ def updateNodes( oldNode, newNodes, rootLocator, nodeSets, nodeLocators ):
                     for newSet in newSets:
                         try:
                             cmds.sets( child, add=newSet )
-                        except: # Shaders have to be forced as an object can't be in to shader sets at once
-                            cmds.sets( child, forceElement=newSet )
+                        except: # Shaders have to be forced as an object can't be in two shader sets at once
+                            try: # There may still be special sets
+                                cmds.sets( child, forceElement=newSet )
+                            except:
+                                pass
                 # Snap to locator
                 if isRamsesManaged( child ):
                     for loc in nodeLocators:
