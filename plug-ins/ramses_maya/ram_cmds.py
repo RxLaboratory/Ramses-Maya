@@ -508,13 +508,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if self.publish:
             publishedFileInfo = ram.RamFileManager.getPublishInfo( saveFilePath )
-            print(publishedFileInfo.filePath())
             # Prepare the file for backup in the published folder
             backupInfo = publishedFileInfo.copy()
             backupInfo.version = -1
             backupInfo.state = ''
             # Save
-            print(backupInfo.filePath())
             publishedFilePath = backupInfo.filePath()
             cmds.file( rename = publishedFilePath )
             cmds.file( save=True, options="v=1;" )
