@@ -19,6 +19,10 @@ def exportShaders(node, publishFileInfo, mode = ''):
     except:
         pass
 
+    # Nothing to publish
+    if nodes is None:
+        return ""
+
     # Prepare the data info we're exporting
     allShadingEngines = []
 
@@ -65,7 +69,7 @@ def exportShaders(node, publishFileInfo, mode = ''):
     # Select and export shadingEngines
     nodeName = maf.Path.baseName( node )
     savePath = publishNodesAsMayaScene( publishFileInfo, allShadingEngines, nodeName.replace('_', ' ') + '-' + mode, 'mb')
-       
+   
     return savePath
 
 # mode is either VPSHADERS_PIPE_NAME or RDRSHADERS_PIPE_NAME

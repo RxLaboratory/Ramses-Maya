@@ -199,8 +199,9 @@ def publishGeo(item, step, publishFileInfo, pipeFiles = [GEO_PIPE_FILE]):
         if shaderMode != '' and not isProxy:
             shaderFilePath = exportShaders( node, publishFileInfo.copy(), shaderMode )
             # Update Ramses Metadata
-            for abcPath in abcPaths:
-                ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
+            if shaderFilePath != "":
+                for abcPath in abcPaths:
+                    ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
 
         publishedNodes.append(controller)
 
