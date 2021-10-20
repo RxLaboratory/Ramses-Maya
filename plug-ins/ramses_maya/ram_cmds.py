@@ -244,12 +244,20 @@ class RamSaveCmd( om.MPxCommand ):
         return True
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         ram.log("Saving file...")
 
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
         ram.log("Saving file: " + currentFilePath)
-        
+
         # We don't need the daemon to just save a file
         # if not checkDaemon():
         #     return
@@ -326,6 +334,14 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         return syntax
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
 
         # We need the daemon
         if not checkDaemon():
@@ -419,6 +435,14 @@ class RamSaveVersionCmd( om.MPxCommand ):
             self.preview = False
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
         ram.log("Saving file: " + currentFilePath)
@@ -549,6 +573,14 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
 
@@ -595,6 +627,14 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         ram.log("Saving as template...")
 
         # Check if the Daemon is available if Ramses is set to be used "online"
@@ -662,6 +702,14 @@ class RamOpenCmd( om.MPxCommand ):
             self.importMode = False
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         # Check if the Daemon is available if Ramses is set to be used "online"
         if not checkDaemon():
             return
@@ -794,6 +842,14 @@ class RamPreviewCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Get the save path 
@@ -933,6 +989,14 @@ class RamSettingsCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         ram.log("Opening settings...")  
         self.settingsDialog.show()
 
@@ -952,6 +1016,14 @@ class RamOpenRamsesCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if settings.debugMode:
+                raise
+
+    def run(self, args):
         ram.log("Opening the Ramses client...")
         ramses.showClient()
         

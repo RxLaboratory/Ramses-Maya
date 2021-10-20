@@ -166,6 +166,10 @@ class SettingsDialog( QMainWindow ):
         dL.addLayout(devLayout)
         dL.addStretch()
 
+        debugModeLabel = QLabel("Debug Mode:")
+        self._debugModeBox = QCheckBox("Enabled")
+        devLayout.addRow( debugModeLabel, self._debugModeBox )
+
         logLabel = QLabel("Log Level:")
 
         self._logLevelBox = QComboBox()
@@ -229,6 +233,7 @@ class SettingsDialog( QMainWindow ):
         settings.logLevel = self._logLevelBox.currentData()
         settings.autoIncrementTimeout = self._autoIncrementBox.value()
         settings.ramsesFolderPath = self._ramsesPathEdit.text()
+        settings.debugMode = self._debugModeBox.isChecked()
         settings.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
         settings.userSettings['useRamOpenceneHotkey'] = self._openHotkeyBox.isChecked()
         settings.userSettings['useRamSaveAsHotkey'] = self._saveAsHotkeyBox.isChecked()
@@ -259,6 +264,7 @@ class SettingsDialog( QMainWindow ):
         self._onlineBox.setChecked( settings.online )
         self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
         self._ramsesPathEdit.setText( settings.ramsesFolderPath )
+        self._debugModeBox.setChecked( settings.debugMode )
         save = True
         saveas = True
         open = True
@@ -286,6 +292,7 @@ class SettingsDialog( QMainWindow ):
         self._onlineBox.setChecked( settings.defaultOnline )
         self._autoIncrementBox.setValue( settings.defaultAutoIncrementTimeout )
         self._ramsesPathEdit.setText( settings.defaultRamsesFolderPath )
+        self._debugModeBox.setChecked( settings.defaultDebugMode )
         i=0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
