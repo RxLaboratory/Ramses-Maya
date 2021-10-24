@@ -211,6 +211,8 @@ class UpdateDialog( QDialog ):
             ramStep = getStep( node )
             ramState = getState( node )
 
+            if ramItem is None or ramStep is None: continue
+
             # Check source info
             sourceFile = getRamsesAttr( node, RamsesAttribute.SOURCE_FILE )
             version = getRamsesAttr( node, RamsesAttribute.VERSION )

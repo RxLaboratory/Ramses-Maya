@@ -81,9 +81,7 @@ def getPipes( step, currentSceneFilePath = '', mode='Publish' ):
     if len( pipes ) == 0:
         for s in STEPS:
             if s == step:
-                print(s)
                 pipes = s.outputPipes()
-                print(pipes)
                 break
     
     if len( pipes ) == 0: # Let's ask!

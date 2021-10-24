@@ -11,7 +11,14 @@ from .update_anim import updateAnim
 from .utils_attributes import *
 
 def updateRamsesItems():
+    try:
+        runUpdate()
+    except:
+        ram.printException()
+        if ram.RamSettings.instance().debugMode:
+            raise
 
+def runUpdate():
     # We need to check if the scene has been correctly saved first
     # The current maya file
     currentFilePath = cmds.file( q=True, sn=True )
@@ -40,8 +47,6 @@ def updateRamsesItems():
     progressDialog.setText("Updating items...")
     progressDialog.setMaximum(len(nodes))
     progressDialog.show()
-
-    print(nodes)
 
     for n in nodes:
 

@@ -31,7 +31,14 @@ def publishNodesAsMayaScene( publishFileInfo, nodes, pipeName='Published', exten
     maf.Node.removeEmptyGroups()
 
     # Select the nodes to publish
-    cmds.select( nodes, noExpand=True, r=True)
+    # in a loop just to try to select them all
+    replace = True
+    for n in nodes:
+        try:
+            cmds.select(n, noExpand=True, r=replace)
+            replace = False
+        except:
+            pass
     # Save file
     cmds.file( rename=filePath )
     cmds.file( exportSelected=True, options="v=1;" )
@@ -48,7 +55,7 @@ def publishNodeAsABC( publishFileInfo, node, pipeName, timeRange=(1,1), frameSte
         ram.log("I have loaded the Alembic Export plugin, needed for the current task.")
 
     nodeName = maf.Path.baseName( node )
-    nodeName = nodeName.replace('_root_', '').replace(pipeName, '')
+    nodeName = nodeName[0:nodeName.index('_root_')]
     filePath = getPublishFilePath( publishFileInfo, 'abc', nodeName + '-' + pipeName )
 
     eulerFilter = ''

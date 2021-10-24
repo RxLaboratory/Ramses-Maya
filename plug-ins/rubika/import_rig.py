@@ -11,7 +11,7 @@ def importRig( item, rigFile, step):
     # Progress
     progressDialog = maf.ProgressDialog()
     progressDialog.show()
-    progressDialog.setText("Importing Rig...")
+    progressDialog.setText("Referencing Rig...")
     progressDialog.setMaximum(2)
 
     rootNodes = importFile( item, rigFile, step, progressDialog, reference=True, lockTransform=False )

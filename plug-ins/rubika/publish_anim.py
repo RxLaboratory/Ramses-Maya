@@ -51,9 +51,7 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
     progressDialog.increment()
 
     ram.log( "I'm publishing animation in " + os.path.dirname( publishFileInfo.filePath() ) )
-
-    extension = getExtension( step, ANIM_STEP, ANIM_PIPE_FILE, pipeFiles, ['ma', 'mb', 'abc'], 'abc')
-    
+   
     # Let's count how many objects are published
     publishedNodes = []
 
@@ -111,11 +109,13 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
         node = r[0]
         controller = r[1]
 
-        ext = extension
-        if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'abc'): ext = 'abc'
+        if ANIM_PIPE_FILE in pipeFiles:
+            if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'abc'):
+                publishNodeAsABC( publishFileInfo, controller, ANIM_PIPE_NAME, (frameIn, frameOut), frameStep, filterEuler)
 
-        if ext == 'abc':
-            publishNodeAsABC( publishFileInfo, controller, ANIM_PIPE_NAME, (frameIn, frameOut), frameStep, filterEuler)
+        if ANIMREF_PIPE_FILE in pipeFiles:
+            if hasExtension( ANIMREF_PIPE_FILE, pipeFiles, 'abc'):
+                publishNodeAsABC( publishFileInfo, controller, ANIMREF_PIPE_NAME, (frameIn, frameOut), frameStep, filterEuler)
 
         publishedNodes.append(controller)
 
@@ -123,12 +123,19 @@ def publishAnim( item, step, publishFileInfo, pipeFiles ):
     progressDialog.increment()
 
     # Publish as ma/mb
-    ext = extension
-    if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'ma'): ext = 'ma'
-    if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
+    if ANIM_PIPE_FILE in pipeFiles:
+        if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'ma'): ext = 'ma'
+        if hasExtension( ANIM_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
 
-    if ext in ('ma', 'mb'):
-        publishNodesAsMayaScene( publishFileInfo, publishedNodes, ANIM_PIPE_NAME, ext)
+        if ext in ('ma', 'mb'):
+            publishNodesAsMayaScene( publishFileInfo, publishedNodes, ANIM_PIPE_NAME, ext)
+
+    if ANIMREF_PIPE_FILE in pipeFiles:
+        if hasExtension( ANIMREF_PIPE_FILE, pipeFiles, 'ma'): ext = 'ma'
+        if hasExtension( ANIMREF_PIPE_FILE, pipeFiles, 'mb'): ext = 'mb'
+
+        if ext in ('ma', 'mb'):
+            publishNodesAsMayaScene( publishFileInfo, publishedNodes, ANIMREF_PIPE_NAME, ext)
 
     # End and log
     endProcess(tempData, progressDialog)

@@ -58,13 +58,21 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
         node = r[0]
         controller = r[1]
 
-        ext = extension
-        if hasExtension( STANDARD_PIPE_FILE, pipeFiles, 'abc'): ext = 'abc'
+        abcPaths = []
 
-        if ext == 'abc':
-            frameIn = int(cmds.playbackOptions(q=True,ast=True))
-            frameOut = int(cmds.playbackOptions(q=True,aet=True))
-            abcPath = publishNodeAsABC( publishFileInfo, controller, nodeName.replace('_', ' ') + '-' + STANDARD_PIPE_NAME, (frameIn, frameOut))
+        if STANDARD_PIPE_FILE in pipeFiles:
+            if hasExtension( STANDARD_PIPE_FILE, pipeFiles, 'abc'):
+                frameIn = int(cmds.playbackOptions(q=True,ast=True))
+                frameOut = int(cmds.playbackOptions(q=True,aet=True))
+                abcPath = publishNodeAsABC( publishFileInfo, controller, nodeName.replace('_', ' ') + '-' + STANDARD_PIPE_NAME, (frameIn, frameOut))
+                abcPaths.append(abcPath)
+
+        if STANDARDREF_PIPE_FILE in pipeFiles:
+            if hasExtension( STANDARDREF_PIPE_FILE, pipeFiles, 'abc'):
+                frameIn = int(cmds.playbackOptions(q=True,ast=True))
+                frameOut = int(cmds.playbackOptions(q=True,aet=True))
+                abcPath = publishNodeAsABC( publishFileInfo, controller, nodeName.replace('_', ' ') + '-' + STANDARDREF_PIPE_NAME, (frameIn, frameOut))
+                abcPaths.append(abcPath)
         
         # Export shaders
         shaderMode = ''
@@ -76,8 +84,9 @@ def publishStandard( item, step, publishFileInfo, pipeFiles ):
         if shaderMode != '':
             shaderFilePath = exportShaders( node, publishFileInfo.copy(), shaderMode )
             # Update Ramses Metadata
-            if extension == 'abc':
-                ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
+            if shaderFilePath != "":
+                for abcPath in abcPaths:
+                    ram.RamMetaDataManager.setValue( abcPath, 'shaderFilePath', shaderFilePath )
 
         publishedNodes.append(controller)
 

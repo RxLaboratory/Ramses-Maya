@@ -36,7 +36,7 @@ def publisher(item, step, publishFileInfo):
     for pipe in pipes:
         for pipeFile in pipe.pipeFiles():
             pipeFiles.append(pipeFile)
-            if pipeFile == GEO_PIPE_FILE:
+            if pipeFile == GEO_PIPE_FILE or pipeFile == GEOREF_PIPE_FILE:
                 geo = True
             elif pipeFile == VPSHADERS_PIPE_FILE:
                 vpShaders = True
@@ -44,15 +44,15 @@ def publisher(item, step, publishFileInfo):
                 rdrShaders = True
             elif pipeFile == PROXYSHADE_PIPE_FILE:
                 proxyShade = True
-            elif pipeFile == PROXYGEO_PIPE_FILE:
+            elif pipeFile == PROXYGEO_PIPE_FILE or pipeFile == PROXYGEOREF_PIPE_FILE:
                 proxyGeo = True
             elif pipeFile == RIG_PIPE_FILE:
                 rig = True
-            elif pipeFile == SET_PIPE_FILE:
+            elif pipeFile == SET_PIPE_FILE or pipeFile == SETREF_PIPE_FILE:
                 sets = True
-            elif pipeFile == STANDARD_PIPE_FILE:
+            elif pipeFile == STANDARD_PIPE_FILE or pipeFile == STANDARDREF_PIPE_FILE:
                 standard = True
-            elif pipeFile == ANIM_PIPE_FILE:
+            elif pipeFile == ANIM_PIPE_FILE or  pipeFile == ANIMREF_PIPE_FILE:
                 anim = True
 
     # We're deleting everything in the "Ramses_DelOnPublish" set

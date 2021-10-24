@@ -14,12 +14,3 @@ The Rx Asset Management System (Ramses) Maya Plugin
     e.g. `C:\Users\User\Documents\Maya\modules`.  
     You may need to create the *modules* folder if it does not exist yet
 - Restart *Maya*.
-
-## TODO
-
-- Import:
-    - autoselect same asset/shot as selected in the viewport
-- rebuild update
-    - Check/test updates
-    - option to filter according to selection
-    

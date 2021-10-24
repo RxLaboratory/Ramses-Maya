@@ -162,8 +162,13 @@ def publishSet(item, step, publishFileInfo, pipeFiles):
     maf.Node.removeEmptyGroups()
 
     # Save scene
-    extension = getExtension( step, SET_STEP, SET_PIPE_FILE, pipeFiles, ['ma','mb'], 'mb' )
-    publishNodesAsMayaScene( publishFileInfo, publishedNodes, SET_PIPE_NAME, extension )
+    
+    if SET_PIPE_FILE in pipeFiles:
+        extension = getExtension( step, SET_STEP, SET_PIPE_FILE, pipeFiles, ['ma','mb'], 'mb' )
+        publishNodesAsMayaScene( publishFileInfo, publishedNodes, SET_PIPE_NAME, extension )
+    if SETREF_PIPE_FILE in pipeFiles:
+        extension = getExtension( step, SET_STEP, SETREF_PIPE_FILE, pipeFiles, ['ma','mb'], 'mb' )
+        publishNodesAsMayaScene( publishFileInfo, publishedNodes, SETREF_PIPE_FILE, extension )
     
     # End and log
     endProcess(tempData, progressDialog)

@@ -124,7 +124,7 @@ def publishShaders( item, step, publishFileInfo, mode):
         for childNode in reversed(childNodes):
 
             # Remove hidden
-            if removeHidden and cmds.getAttr(childNode + '.v') == 0:
+            if removeHidden and not maf.Node.isVisible( childNode ):
                 cmds.delete(childNode)
                 continue
 

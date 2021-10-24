@@ -57,6 +57,8 @@ def importFile(item, filePath, step, progressDialog=maf.ProgressDialog(), refere
 
     progressDialog.show()
 
+    if reference: lockTransform = False
+
     itemGroup = getImportGroup( item )
 
     # Check the extension
@@ -133,9 +135,10 @@ def importFile(item, filePath, step, progressDialog=maf.ProgressDialog(), refere
         # Lock transform except ramses managed children
         if lockTransform:
             children = cmds.listRelatives(rootCtrl, ad=True, f=True, type='transform')
-            for child in children:
-                if not isRamsesManaged(child):
-                    maf.Node.lockTransform(child)
+            if children:
+                for child in children:
+                    if not isRamsesManaged(child):
+                        maf.Node.lockTransform(child)
 
         rootNodes.append( rootCtrl )
 
