@@ -1,4 +1,4 @@
-from .nameCommands import NameCmd
+from .hotkeys import HotKey
 from .nodes import Node
 from .paths import Path
 from .scene import Scene

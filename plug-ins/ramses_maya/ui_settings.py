@@ -33,6 +33,30 @@ import maya.cmds as cmds # pylint: disable=import-error
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 
+saveCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSave()
+"""
+
+openCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramOpen()
+"""
+
+saveAsCmd = """
+import maya.cmds as cmds
+ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
+if not ok:
+    cmds.loadPlugin('Ramses')
+cmds.ramSaveAs()
+"""
+
 class SettingsDialog( QMainWindow ):
 
     def __init__( self, parent=None ):
@@ -142,6 +166,10 @@ class SettingsDialog( QMainWindow ):
         dL.addLayout(devLayout)
         dL.addStretch()
 
+        debugModeLabel = QLabel("Debug Mode:")
+        self._debugModeBox = QCheckBox("Enabled")
+        devLayout.addRow( debugModeLabel, self._debugModeBox )
+
         logLabel = QLabel("Log Level:")
 
         self._logLevelBox = QComboBox()
@@ -205,6 +233,7 @@ class SettingsDialog( QMainWindow ):
         settings.logLevel = self._logLevelBox.currentData()
         settings.autoIncrementTimeout = self._autoIncrementBox.value()
         settings.ramsesFolderPath = self._ramsesPathEdit.text()
+        settings.debugMode = self._debugModeBox.isChecked()
         settings.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
         settings.userSettings['useRamOpenceneHotkey'] = self._openHotkeyBox.isChecked()
         settings.userSettings['useRamSaveAsHotkey'] = self._saveAsHotkeyBox.isChecked()
@@ -212,45 +241,19 @@ class SettingsDialog( QMainWindow ):
 
         # Update the hotkeys
         if self._saveHotkeyBox.isChecked():
-            pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)\nif not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramSave()
-"""
-            cm = maf.NameCmd.createNameCommand('RamSaveScene', "Ramses Save Scene", pyCommand)
-            cmds.hotkey(keyShortcut='s', ctrlModifier = True, name=cm)
-            cmds.savePrefs(hotkeys=True)
+            maf.HotKey.createHotkey(saveCmd, 'ctrl+s', 'RamSaveScene', "Ramses Save Scene", "Ramses" )
         else:
-            maf.NameCmd.restoreSaveSceneHotkey()
+            maf.HotKey.restoreSaveSceneHotkey()
 
         if self._openHotkeyBox.isChecked():
-            pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramOpen()
-"""
-            cm = maf.NameCmd.createNameCommand('RamOpenScene', "Ramses Open Scene", pyCommand)
-            cmds.hotkey(keyShortcut='o', ctrlModifier = True, name=cm)
-            cmds.savePrefs(hotkeys=True)
+            maf.HotKey.createHotkey(openCmd, 'ctrl+o', 'RamOpenScene', "Ramses Open Scene", "Ramses" )
         else:
-            maf.NameCmd.restoreOpenSceneHotkey()
+            maf.HotKey.restoreOpenSceneHotkey()
 
         if self._saveAsHotkeyBox.isChecked():
-            pyCommand="""
-import maya.cmds as cmds
-ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
-if not ok:
-    cmds.loadPlugin('Ramses')
-cmds.ramSaveAs()
-"""
-            cm = maf.NameCmd.createNameCommand('RamSaveSceneAsma', "Ramses Save Scene As", pyCommand)
-            cmds.hotkey(keyShortcut='s', ctrlModifier = True, shiftModifier=True, name=cm)
-            cmds.savePrefs(hotkeys=True)
+            maf.HotKey.createHotkey(saveAsCmd, 'ctrl+shift+s', 'RamSaveSceneAs', "Ramses Save Scene As", "Ramses" )
         else:
-            maf.NameCmd.restoreSaveSceneAsHotkey()
+            maf.HotKey.restoreSaveSceneAsHotkey()
 
         self.close()
 
@@ -261,6 +264,7 @@ cmds.ramSaveAs()
         self._onlineBox.setChecked( settings.online )
         self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
         self._ramsesPathEdit.setText( settings.ramsesFolderPath )
+        self._debugModeBox.setChecked( settings.debugMode )
         save = True
         saveas = True
         open = True
@@ -288,6 +292,7 @@ cmds.ramSaveAs()
         self._onlineBox.setChecked( settings.defaultOnline )
         self._autoIncrementBox.setValue( settings.defaultAutoIncrementTimeout )
         self._ramsesPathEdit.setText( settings.defaultRamsesFolderPath )
+        self._debugModeBox.setChecked( settings.defaultDebugMode )
         i=0
         while i < self._logLevelBox.count():
             if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
