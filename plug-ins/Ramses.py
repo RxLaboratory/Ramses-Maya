@@ -3,7 +3,7 @@ import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
 vendor = "RxLaboratory"
-version = "0.2.2-alpha"
+version = "0.2.4-alpha"
 
 def maya_useNewAPI():
     """
