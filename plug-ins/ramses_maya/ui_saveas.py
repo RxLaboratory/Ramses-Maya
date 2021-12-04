@@ -136,6 +136,8 @@ class SaveAsDialog( QDialog ):
             return
         for project in ramses.projects():
             self.projectBox.addItem(str(project), project)
+        # No selection, to make things faster and load steps & items only once needed
+        self.projectBox.setCurrentIndex(-1)
         self.__loadSteps( )
 
     @Slot()
@@ -153,6 +155,8 @@ class SaveAsDialog( QDialog ):
             steps = project.steps( )
         for step in steps:
             self.stepBox.addItem(str(step), step)
+        # No selection, to make things faster and load steps & items only once needed
+        self.stepBox.setCurrentIndex(-1)
 
         self.__loadItems()
 
@@ -295,11 +299,15 @@ class SaveAsDialog( QDialog ):
             # Load asset groups
             for ag in project.assetGroups():
                 self.assetGroupBox.addItem(ag)
+            # No selection, to make things faster and load steps & items only once needed
+            self.assetGroupBox.setCurrentIndex(-1)
             self.__loadAssets()
         elif self.shotButton.isChecked():
             # Load shots
             for shot in project.shots():
                 self.itemBox.addItem(str(shot), shot)
+            # No selection, to make things faster and load steps & items only once needed
+            self.itemBox.setCurrentIndex(-1)
 
         self.__buildPath()
 
@@ -313,6 +321,8 @@ class SaveAsDialog( QDialog ):
         ag = self.assetGroupBox.currentText() 
         for asset in project.assets( ag ):
             self.itemBox.addItem(str(asset), asset)
+        # No selection, to make things faster and load steps & items only once needed
+        self.itemBox.setCurrentIndex(-1)
 
     def setOffline(self): # TODO
         pass
