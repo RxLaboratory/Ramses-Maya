@@ -358,10 +358,11 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         saveAsDialog = SaveAsDialog(maf.UI.getMayaWindow())
         if project is not None:
             saveAsDialog.setProject( project )
-        if item is not None:
-            saveAsDialog.setItem(item)
         if step is not None:
             saveAsDialog.setStep( step )
+        if item is not None:
+            saveAsDialog.setItem(item)
+            
         if not saveAsDialog.exec_():
             self.setResult( False )
             return
