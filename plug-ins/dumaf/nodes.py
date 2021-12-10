@@ -252,3 +252,11 @@ class Node():
             if not Node.hasChildren(node):
                 cmds.delete(node)
 
+    @staticmethod
+    def select(nodes):
+        cmds.select(cl=True)
+        for n in nodes:
+            try:
+                cmds.select(n, noExpand=True, toggle=True)
+            except:
+                pass
