@@ -42,13 +42,16 @@ class Node():
                 return False
             return True
 
-        if len(typesToKeep == 0): return True
+        if len(typesToKeep) == 0: return True
 
         # Check type
         shapeType = cmds.nodeType( shapes[0] )
         if not shapeType in typesToKeep:
-            cmds.delete(node)
-            return False
+            cmds.delete(shapes[0])
+            if not Node.hasChildren(node) and deleteIfEmpty:
+                cmds.delete(node)
+                # Finished
+                return False
             
         return True
 
@@ -153,11 +156,26 @@ class Node():
         return cmds.nodeType(node) == 'transform'
 
     @staticmethod
-    def lockTransform( transformNode, l=True ):
+    def lockTransform( transformNode, l=True, recursive=False ):
+        if recursive:
+            nodes = cmds.listRelatives(transformNode, ad=True, f=True, type='transform')
+            if nodes is None: nodes = []
+            nodes.append( transformNode )
+            for node in nodes: Node.lockTransform(node, l, False)
         if not Node.isTransform( transformNode) :
             return
         for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
             cmds.setAttr(transformNode + a, lock=l )
+            
+    @staticmethod
+    def hasAttr( node, attr):
+        return cmds.attributeQuery( attr, n=node, exists=True )
+
+    @staticmethod
+    def isVisible(node):
+        if Node.hasAttr( node, 'visibility' ):
+            return cmds.getAttr(node + '.v') == 1
+        return True
 
     @staticmethod
     def lockVisibility( node, l=True ):
@@ -191,6 +209,7 @@ class Node():
 
     @staticmethod
     def getCreateGroup( groupName, parentNode=None ):
+        groupName = groupName.replace(' ', '_')
         # Check if exists
         if parentNode is None:
             if not groupName.startswith('|'):
@@ -230,6 +249,7 @@ class Node():
 
     @staticmethod
     def moveToZero(node):
+        Node.lockTransform( node, False )
         cmds.setAttr(node + '.tx',0)
         cmds.setAttr(node + '.ty',0)
         cmds.setAttr(node + '.tz',0)
@@ -246,9 +266,17 @@ class Node():
         if nodes is None:
             return
 
-        for node in reversed(nodes):
+        for node in nodes:
             if not Node.isGroup(node):
                 continue
             if not Node.hasChildren(node):
                 cmds.delete(node)
 
+    @staticmethod
+    def select(nodes):
+        cmds.select(cl=True)
+        for n in nodes:
+            try:
+                cmds.select(n, noExpand=True, toggle=True)
+            except:
+                pass
