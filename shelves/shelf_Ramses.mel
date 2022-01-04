@@ -28,8 +28,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/ramses.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/ramses.png" 
+        -image "ramses.png" 
+        -image1 "ramses.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -75,8 +75,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/savefile_sl.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/savefile_sl.png" 
+        -image "ramsave.png" 
+        -image1 "ramsave.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -109,8 +109,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/savecomment.png" 
-        -image1 "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/savecomment.png" 
+        -image "ramcomment.png" 
+        -image1 "ramcomment.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -143,8 +143,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/saveincremental_sl.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/saveincremental_sl.png" 
+        -image "ramsaveincremental.png" 
+        -image1 "ramsaveincremental.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -177,8 +177,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/savestatus.png" 
-        -image1 "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/savestatus.png" 
+        -image "ramstatus.png" 
+        -image1 "ramstatus.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -224,8 +224,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/preview.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/preview.png" 
+        -image "rampreview.png" 
+        -image1 "rampreview.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -271,8 +271,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/saveas.png" 
-        -image1 "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/saveas.png" 
+        -image "ramsaveas.png" 
+        -image1 "ramsaveas.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -305,8 +305,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/publishtemplate.png" 
-        -image1 "D:/DEV SRC/RxOT/Ramses/Ramses-Maya/icons/publishtemplate.png" 
+        -image "ramtemplate.png" 
+        -image1 "ramtemplate.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -343,7 +343,7 @@ global proc shelf_Ramses () {
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "Open / Import item" 
+        -label "Open item" 
         -labelOffset 0
         -rotation 0
         -flipX 0
@@ -352,8 +352,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/openimport.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/openimport.png" 
+        -image "ramopen.png" 
+        -image1 "ramopen.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -377,7 +377,7 @@ global proc shelf_Ramses () {
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "Import / Open item" 
+        -label "Import item" 
         -labelOffset 0
         -rotation 0
         -flipX 0
@@ -386,8 +386,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/import.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/import.png" 
+        -image "ramimport.png" 
+        -image1 "ramimport.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -420,8 +420,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/retrieveversion.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/retrieveversion.png" 
+        -image "ramretrieve.png" 
+        -image1 "ramretrieve.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
@@ -467,8 +467,8 @@ global proc shelf_Ramses () {
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
-        -image "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/settings.png" 
-        -image1 "D:/DEV_SRC/RxOT/Ramses/Ramses-Maya/icons/settings.png" 
+        -image "ramsettings.png" 
+        -image1 "ramsettings.png" 
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
