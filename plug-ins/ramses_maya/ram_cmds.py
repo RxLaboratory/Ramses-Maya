@@ -842,7 +842,7 @@ class RamOpenCmd( om.MPxCommand ):
             if item is None:
                 return
             step = importDialog.getStep()
-            filePaths = importDialog.getFiles()
+            filePath = importDialog.getFile()
             itemShortName = item.shortName()
             resource = importDialog.getResource()
 
@@ -850,7 +850,7 @@ class RamOpenCmd( om.MPxCommand ):
             if len( RAMSES.replaceScripts ) > 0:
                 RAMSES.replaceItem(
                     item,
-                    filePaths,
+                    filePath,
                     step
                 )
                 return

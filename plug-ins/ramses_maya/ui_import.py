@@ -391,14 +391,15 @@ class ImportDialog( QDialog ):
             if self.replaceButton.isChecked():
                 self._replaceButton.show()
                 self._importButton.hide()
+                self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
             else:
                 self._replaceButton.hide()
                 self._importButton.show()
+                self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self._openButton.hide()
             self.versionsLabel.setText("File:")
             self.resourceList.hide()
             self.resourcesLabel.hide()
-            self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self.publishVersionBox.setVisible(True)
         self.__updateResources()
         self.__resourceChanged( self.resourceList.currentRow() )
