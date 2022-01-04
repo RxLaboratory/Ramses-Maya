@@ -835,6 +835,9 @@ class RamOpenCmd( om.MPxCommand ):
                     # only the root transform nodes
                     if node.isTransform() and not node.hasParent():
                         node.parentTo(itemGroup)
+        elif result == 3: # replace
+            #TODO Implement when the publish/import has been updated
+            pass
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"

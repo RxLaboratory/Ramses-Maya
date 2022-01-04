@@ -104,7 +104,7 @@ class ImportDialog( QDialog ):
         self.replaceButton.setText("Replace selected items")
         self.replaceButton.setIcon(icon("ramreplaceitem"))
         self.replaceButton.setCheckable(True)
-        # self.replaceButton.setVisible(False) # Not available yet
+        self.replaceButton.hide() # Not available yet
         actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
@@ -169,10 +169,14 @@ class ImportDialog( QDialog ):
         self._importButton = QPushButton("Import")
         self._importButton.hide()
         buttonsLayout.addWidget( self._importButton )
+        self._replaceButton = QPushButton("Replace")
+        self._replaceButton.hide()
+        buttonsLayout.addWidget( self._replaceButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         self._openButton.setEnabled(False)
+        self._replaceButton.setEnabled(False)
         self._importButton.setEnabled(False)
 
         mainLayout.addLayout( buttonsLayout )
@@ -191,12 +195,15 @@ class ImportDialog( QDialog ):
 
         self.openButton.clicked.connect( self.__openButtonClicked )
         self.importButton.clicked.connect( self.__importButtonClicked )
+        self.replaceButton.clicked.connect( self.__replaceButtonClicked )
         self.openButton.clicked.connect( self.__actionChanged )
         self.importButton.clicked.connect( self.__actionChanged )
+        self.replaceButton.clicked.connect( self.__actionChanged )
 
         self._cancelButton.clicked.connect( self.reject )
         self._openButton.clicked.connect( self.accept )
         self._importButton.clicked.connect( self.__import )
+        self._replaceButton.clicked.connect( self.__replace )
         self.itemList.currentRowChanged.connect( self.__updateResources )
         self.stepList.currentRowChanged.connect( self.__updateResources )
         self.resourceList.currentRowChanged.connect( self.__resourceChanged )
@@ -228,11 +235,19 @@ class ImportDialog( QDialog ):
     def __openButtonClicked(self):
         self.openButton.setChecked(True)
         self.importButton.setChecked(False)
+        self.replaceButton.setChecked(False)
 
     @Slot()
     def __importButtonClicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(True)
+        self.replaceButton.setChecked(False)
+
+    @Slot()
+    def __replaceButtonClicked(self):
+        self.openButton.setChecked(False)
+        self.importButton.setChecked(False)
+        self.replaceButton.setChecked(True)
 
     def __loadProjects(self):
         # Load projects
@@ -365,14 +380,20 @@ class ImportDialog( QDialog ):
     def __actionChanged(self):
         if self.openButton.isChecked():
             self._importButton.hide()
+            self._replaceButton.hide()
             self._openButton.show()
             self.versionsLabel.setText("Version:")
             self.resourceList.show()
             self.resourcesLabel.show()
             self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
             self.publishVersionBox.setVisible(False)
-        else: # Import
-            self._importButton.show()
+        else: # Import or replace
+            if self.replaceButton.isChecked():
+                self._replaceButton.show()
+                self._importButton.hide()
+            else:
+                self._replaceButton.hide()
+                self._importButton.show()
             self._openButton.hide()
             self.versionsLabel.setText("File:")
             self.resourceList.hide()
@@ -547,10 +568,15 @@ class ImportDialog( QDialog ):
     @Slot()
     def __versionChanged(self, row):
         self._importButton.setEnabled(row >= 0)
+        self._replaceButton.setEnabled(row >= 0)
 
     @Slot()
     def __import(self):
         self.done(2)
+
+    @Slot()
+    def __replace(self):
+        self.done(3)
 
     # <== PUBLIC METHODS ==>
 
