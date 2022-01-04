@@ -697,7 +697,8 @@ class RamOpenCmd( om.MPxCommand ):
     @staticmethod
     def createSyntax():
         syntax = om.MSyntax()
-        syntax.addFlag('-i', "-importMode", om.MSyntax.kBoolean )
+        syntax.addFlag('-i', "-import", om.MSyntax.kBoolean )
+        syntax.addFlag('-r', "-replace", om.MSyntax.kBoolean )
         return syntax
 
     def parseArgs(self, args):

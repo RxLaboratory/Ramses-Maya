@@ -584,6 +584,8 @@ class ImportDialog( QDialog ):
         """Sets the mode of the window, either open, import or replace"""
         if mode == "import":
             self.__importButtonClicked()
+        elif mode == "replace":
+            self.__replaceButtonClicked()
         else:
             self.__openButtonClicked()
         self.__actionChanged()
