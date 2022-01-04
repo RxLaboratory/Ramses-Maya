@@ -155,7 +155,7 @@ class DuMaNode():
             return False
 
         self.removeExtraShapes()
-        
+
         shapeType = self.shapeType()
 
         # no shape, remove if it is empty
@@ -163,7 +163,7 @@ class DuMaNode():
             if not self.hasChildren() and deleteIfEmpty:
                 self.remove()
                 return False
-        
+
         # if we keep everything
         if len(typesToKeep) == 0:
             return True
@@ -237,7 +237,7 @@ class DuMaNode():
         shapes = self.shapes()
         for shape in shapes:
             shape.deleteHistory()
-            
+
         nodePath = self.path()
         cmds.delete(nodePath, constructionHistory=True)
 
@@ -374,7 +374,7 @@ class DuMaNode():
             return
         cmds.setAttr(nodePath + '.visibility', lock=lockNode)
 
-    def moveToZero(self, lock=True):
+    def moveToZero(self):
         """Moves the node to the [0,0,0] coordinate (translation)"""
         if not self.exists():
             return
@@ -418,7 +418,6 @@ class DuMaNode():
                 parent = DuMaNode(parent)
                 parentPath = parent.path()
                 cmds.parent(nodePath, parentPath, relative=rel)
-
         except Exception:
             pass
 
@@ -433,7 +432,7 @@ class DuMaNode():
         """Gets the source file of the reference if this node is part of a reference"""
         if not self.exists():
             return
-        
+
         if not self.isReferenced:
             return None
 
@@ -469,7 +468,8 @@ class DuMaNode():
         # The shape(s) of this node
         shapes = self.shapes()
         # Remove supplementary shapes
-        # (Maya may store more than a single shape in transform nodes because of the dependency graph)
+        # (Maya may store more than a single shape in transform nodes
+        # because of the dependency graph)
         if len(shapes) > 1:
             for shape in shapes[1:]:
                 shape.remove()
@@ -485,7 +485,7 @@ class DuMaNode():
             return
 
         for shape in shapes:
-            cmds.rename(shape, self.name() + 'Shape') 
+            cmds.rename(shape, self.name() + 'Shape')
 
     def select(self):
         """Adds the node to the current selection"""
