@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from platform import version
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
+from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QDialog,
     QHBoxLayout,
     QVBoxLayout,
@@ -13,19 +12,23 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QLabel,
     QPushButton,
     QWidget,
-    QRadioButton,
     QLineEdit,
     QAbstractItemView
 )
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
+from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
     Slot,
     Qt
 )
 
 import ramses as ram
-ramses = ram.Ramses.instance()
+
+from .utils import icon
+
+RAMSES = ram.Ramses.instance()
 
 class ImportDialog( QDialog ):
+
+    # <== CONSTRUCTOR ==>
 
     def __init__(self, parent=None):
         super(ImportDialog,self).__init__(parent)
@@ -33,6 +36,8 @@ class ImportDialog( QDialog ):
         self.__setupUi()
         self.__loadProjects()
         self.__connectEvents()
+
+    # <== PRIVATE METHODS ==>
 
     def __setupUi(self):
         self.setWindowTitle( "Open / Import Item" )
@@ -58,11 +63,21 @@ class ImportDialog( QDialog ):
         self.typeWidget = QWidget()
         typeLayout = QVBoxLayout()
         typeLayout.setContentsMargins(0,0,0,0)
-        self.assetButton = QRadioButton("Asset")
+        typeLayout.setSpacing(3)
+        self.assetButton = QPushButton()
+        self.assetButton.setText("Asset")
+        self.assetButton.setIcon(icon("ramasset"))
+        self.assetButton.setCheckable(True)
         typeLayout.addWidget(self.assetButton)
-        self.shotButton = QRadioButton("Shot")
+        self.shotButton = QPushButton()
+        self.shotButton.setText("Shot")
+        self.shotButton.setIcon(icon("ramshot"))
+        self.shotButton.setCheckable(True)
         typeLayout.addWidget(self.shotButton)
-        self.templateButton = QRadioButton("Template")
+        self.templateButton = QPushButton()
+        self.templateButton.setText("Template")
+        self.templateButton.setIcon(icon("ramtemplateitem"))
+        self.templateButton.setCheckable(True)
         typeLayout.addWidget(self.templateButton)
         self.typeWidget.setLayout(typeLayout)
         self.typeWidget.setEnabled(False)
@@ -71,10 +86,17 @@ class ImportDialog( QDialog ):
         self.actionWidget = QWidget()
         actionLayout = QVBoxLayout()
         actionLayout.setContentsMargins(0,0,0,0)
-        self.openButton = QRadioButton("Open Item")
+        actionLayout.setSpacing(3)
+        self.openButton = QPushButton()
+        self.openButton.setText("Open Item")
+        self.openButton.setIcon(icon("ramopenscene"))
+        self.openButton.setCheckable(True)
         self.openButton.setChecked(True)
         actionLayout.addWidget(self.openButton)
-        self.importButton = QRadioButton("Import Item")
+        self.importButton = QPushButton()
+        self.importButton.setText("Import Item")
+        self.importButton.setIcon(icon("ramimportitem"))
+        self.importButton.setCheckable(True)
         actionLayout.addWidget(self.importButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
@@ -151,11 +173,19 @@ class ImportDialog( QDialog ):
 
     def __connectEvents(self):
         self.projectBox.currentIndexChanged.connect( self.__projectChanged )
+
+        self.assetButton.clicked.connect( self.__assetButtonClicked )
+        self.shotButton.clicked.connect( self.__shotButtonClicked )
+        self.templateButton.clicked.connect( self.__templateButtonClicked )
         self.assetButton.clicked.connect( self.__typeChanged )
         self.shotButton.clicked.connect( self.__typeChanged )
         self.templateButton.clicked.connect( self.__typeChanged )
+
+        self.openButton.clicked.connect( self.__openButtonClicked )
+        self.importButton.clicked.connect( self.__importButtonClicked )
         self.openButton.clicked.connect( self.__actionChanged )
         self.importButton.clicked.connect( self.__actionChanged )
+
         self._cancelButton.clicked.connect( self.reject )
         self._openButton.clicked.connect( self.accept )
         self._importButton.clicked.connect( self.__import )
@@ -168,9 +198,37 @@ class ImportDialog( QDialog ):
         self.versionSearchField.textChanged.connect( self.__searchVersion )
         self.publishVersionBox.currentIndexChanged.connect( self.__updatePublishedFiles )
 
+    @Slot()
+    def __assetButtonClicked(self):
+        self.assetButton.setChecked(True)
+        self.shotButton.setChecked(False)
+        self.templateButton.setChecked(False)
+
+    @Slot()
+    def __shotButtonClicked(self):
+        self.assetButton.setChecked(False)
+        self.shotButton.setChecked(True)
+        self.templateButton.setChecked(False)
+
+    @Slot()
+    def __templateButtonClicked(self):
+        self.assetButton.setChecked(False)
+        self.shotButton.setChecked(False)
+        self.templateButton.setChecked(True)
+
+    @Slot()
+    def __openButtonClicked(self):
+        self.openButton.setChecked(True)
+        self.importButton.setChecked(False)
+
+    @Slot()
+    def __importButtonClicked(self):
+        self.openButton.setChecked(False)
+        self.importButton.setChecked(True)
+
     def __loadProjects(self):
         # Load projects
-        projects = ramses.projects()
+        projects = RAMSES.projects()
         self.projectBox.clear()
 
         if projects is None:
@@ -179,7 +237,7 @@ class ImportDialog( QDialog ):
             self.templateButton.setChecked(False)
             return
 
-        for project in ramses.projects():
+        for project in RAMSES.projects():
             self.projectBox.addItem(str(project), project)
 
         self.projectBox.setCurrentIndex(-1)
@@ -486,8 +544,14 @@ class ImportDialog( QDialog ):
     def __import(self):
         self.done(2)
 
-    def setImportMode(self, importMode=True):
-        self.importButton.setChecked( importMode )
+    # <== PUBLIC METHODS ==>
+
+    def setMode(self, mode="open"):
+        """Sets the mode of the window, either open, import or replace"""
+        if mode == "import":
+            self.__importButtonClicked()
+        else:
+            self.__openButtonClicked()
         self.__actionChanged()
 
     def setProject(self, project):

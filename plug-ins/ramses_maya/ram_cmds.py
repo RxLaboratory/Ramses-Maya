@@ -755,6 +755,8 @@ class RamOpenCmd( om.MPxCommand ):
         elif result == 2: # import
             # Get Data
             item = importDialog.getItem()
+            if item is None:
+                return
             step = importDialog.getStep()
             filePaths = importDialog.getFiles()
             itemShortName = item.shortName()
