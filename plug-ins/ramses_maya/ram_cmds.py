@@ -700,9 +700,9 @@ class RamOpenCmd( om.MPxCommand ):
     def parseArgs(self, args):
         parser = om.MArgParser( self.syntax(), args)
         if parser.isFlagSet( '-i' ):
-            self.importMode = parser.flagArgumentBool('-i', 0)
+            self.mode = "import"
         else:
-            self.importMode = False
+            self.mode = "open"
 
     def doIt(self, args):
         try:
@@ -721,7 +721,7 @@ class RamOpenCmd( om.MPxCommand ):
 
         # Let's show the dialog
         importDialog = ImportDialog(maf.UI.getMayaWindow())
-        importDialog.setImportMode( self.importMode )
+        importDialog.setMode( self.mode )
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
         if currentFilePath != '':
