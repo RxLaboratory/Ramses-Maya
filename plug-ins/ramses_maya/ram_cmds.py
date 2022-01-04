@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Maya commands"""
 
 import os, re, platform, subprocess, tempfile, shutil
 from datetime import datetime, timedelta
@@ -8,6 +9,7 @@ import maya.cmds as cmds # pylint: disable=import-error
 import maya.mel as mel # pylint: disable=import-error
 
 import dumaf as maf
+
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
@@ -821,18 +823,18 @@ class RamOpenCmd( om.MPxCommand ):
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                groupName = maf.Node.getCreateGroup(groupName)
+                group = maf.DuMaNode.getCreateGroup(groupName)
+
                 # Import the file
-                newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
+                newNodes = maf.Scene.importFile(filePath, itemShortName)
+                
                 # Add a group for the imported asset
-                itemGroupName = maf.Node.getCreateGroup( itemShortName, groupName)
+                itemGroup = maf.DuMaNode.getCreateGroup( itemShortName, group)
+                # Parent the imported nodes
                 for node in newNodes:
-                    # When parenting the root, children won't exist anymore
-                    if not cmds.objExists(node):
-                        continue
                     # only the root transform nodes
-                    if cmds.nodeType(node) == 'transform' and not maf.Node.hasParent(node):
-                        maf.Node.parent(node, itemGroupName)
+                    if node.isTransform() and not node.hasParent():
+                        node.parentTo(itemGroup)
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
