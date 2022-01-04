@@ -100,7 +100,7 @@ class DuMaNode():
         if not groupPath.startswith('|'):
             groupPath = '|' + groupPath
         groupNode = DuMaNode(groupPath)
-        groupNode.parent(parentNode)
+        groupNode.parentTo(parentNode)
         return groupNode
 
     @staticmethod
