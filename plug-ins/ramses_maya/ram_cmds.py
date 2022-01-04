@@ -836,8 +836,25 @@ class RamOpenCmd( om.MPxCommand ):
                     if node.isTransform() and not node.hasParent():
                         node.parentTo(itemGroup)
         elif result == 3: # replace
-            #TODO Implement when the publish/import has been updated
-            pass
+            # Get Data
+            item = importDialog.getItem()
+            if item is None:
+                return
+            step = importDialog.getStep()
+            filePaths = importDialog.getFiles()
+            itemShortName = item.shortName()
+            resource = importDialog.getResource()
+
+            # Let's import only if there's no user-defined import scripts
+            if len( RAMSES.replaceScripts ) > 0:
+                RAMSES.replaceItem(
+                    item,
+                    filePaths,
+                    step
+                )
+                return
+
+            #TODO Implement default replacement method when the publish/import has been updated
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
