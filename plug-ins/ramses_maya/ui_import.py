@@ -40,6 +40,8 @@ class ImportDialog( QDialog ):
     # <== PRIVATE METHODS ==>
 
     def __setupUi(self):
+        """Creates the dialog UI"""
+
         self.setWindowTitle( "Open / Import Item" )
 
         self.setMinimumWidth(500)
@@ -88,16 +90,22 @@ class ImportDialog( QDialog ):
         actionLayout.setContentsMargins(0,0,0,0)
         actionLayout.setSpacing(3)
         self.openButton = QPushButton()
-        self.openButton.setText("Open Item")
+        self.openButton.setText("Open item")
         self.openButton.setIcon(icon("ramopenscene"))
         self.openButton.setCheckable(True)
         self.openButton.setChecked(True)
         actionLayout.addWidget(self.openButton)
         self.importButton = QPushButton()
-        self.importButton.setText("Import Item")
+        self.importButton.setText("Import item")
         self.importButton.setIcon(icon("ramimportitem"))
         self.importButton.setCheckable(True)
         actionLayout.addWidget(self.importButton)
+        self.replaceButton = QPushButton()
+        self.replaceButton.setText("Replace selected items")
+        self.replaceButton.setIcon(icon("ramreplaceitem"))
+        self.replaceButton.setCheckable(True)
+        # self.replaceButton.setVisible(False) # Not available yet
+        actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
 
