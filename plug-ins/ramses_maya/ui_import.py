@@ -42,6 +42,20 @@ class ImportDialog( QDialog ):
     def __setupUi(self):
         """Creates the dialog UI"""
 
+        checkableButtonCSS = """
+            QPushButton {
+                background-color: rgba(0,0,0,0);
+                border:none;
+                padding: 5px;
+                color: #eeeeee;
+            }
+            QPushButton:hover {
+                background-color: #707070;
+            }
+            QPushButton:checked {
+                background-color: #2b2b2b;
+            }"""
+
         self.setWindowTitle( "Open / Import Item" )
 
         self.setMinimumWidth(500)
@@ -70,16 +84,19 @@ class ImportDialog( QDialog ):
         self.assetButton.setText("Asset")
         self.assetButton.setIcon(icon("ramasset"))
         self.assetButton.setCheckable(True)
+        self.assetButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.assetButton)
         self.shotButton = QPushButton()
         self.shotButton.setText("Shot")
         self.shotButton.setIcon(icon("ramshot"))
         self.shotButton.setCheckable(True)
+        self.shotButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.shotButton)
         self.templateButton = QPushButton()
         self.templateButton.setText("Template")
         self.templateButton.setIcon(icon("ramtemplateitem"))
         self.templateButton.setCheckable(True)
+        self.templateButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.templateButton)
         self.typeWidget.setLayout(typeLayout)
         self.typeWidget.setEnabled(False)
@@ -94,16 +111,19 @@ class ImportDialog( QDialog ):
         self.openButton.setIcon(icon("ramopenscene"))
         self.openButton.setCheckable(True)
         self.openButton.setChecked(True)
+        self.openButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.openButton)
         self.importButton = QPushButton()
         self.importButton.setText("Import item")
         self.importButton.setIcon(icon("ramimportitem"))
         self.importButton.setCheckable(True)
+        self.importButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.importButton)
         self.replaceButton = QPushButton()
         self.replaceButton.setText("Replace selected items")
         self.replaceButton.setIcon(icon("ramreplaceitem"))
         self.replaceButton.setCheckable(True)
+        self.replaceButton.setStyleSheet(checkableButtonCSS)
         self.replaceButton.hide() # Not available yet
         actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
