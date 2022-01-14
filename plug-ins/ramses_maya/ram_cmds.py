@@ -476,7 +476,10 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if self.updateSatus:
             # Show status dialog
             statusDialog = StatusDialog(maf.UI.getMayaWindow())
-            statusDialog.setOffline(not SETTINGS.online)
+            if not SETTINGS.online or currentItem.itemType() == ram.ItemType.GENERAL:
+                statusDialog.setOffline(True)
+            else:
+                statusDialog.setOffline(False)
             statusDialog.setPublish( self.publish )
             if currentStatus is not None:
                 statusDialog.setStatus( currentStatus )
@@ -535,13 +538,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if self.publish:
             publishedFileInfo = ram.RamFileManager.getPublishInfo( saveFilePath )
-            print(publishedFileInfo.filePath())
             # Prepare the file for backup in the published folder
             backupInfo = publishedFileInfo.copy()
             backupInfo.version = -1
             backupInfo.state = ''
             # Save
-            print(backupInfo.filePath())
             publishedFilePath = backupInfo.filePath()
             cmds.file( rename = publishedFilePath )
             cmds.file( save=True, options="v=1;" )
@@ -819,7 +820,6 @@ class RamOpenCmd( om.MPxCommand ):
                         itemShortName = ram.ItemType.SHOT + itemShortName
                 # If it's a general item, store in a group named after the step
                 else:
-                    itemShortName = resource
                     groupName = 'RamITEMS'
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName

@@ -403,8 +403,6 @@ class ImportDialog( QDialog ):
             self._replaceButton.hide()
             self._openButton.show()
             self.versionsLabel.setText("Version:")
-            self.resourceList.show()
-            self.resourcesLabel.show()
             self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
             self.publishVersionBox.setVisible(False)
         else: # Import or replace
@@ -418,17 +416,68 @@ class ImportDialog( QDialog ):
                 self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self._openButton.hide()
             self.versionsLabel.setText("File:")
-            self.resourceList.hide()
-            self.resourcesLabel.hide()
             self.publishVersionBox.setVisible(True)
         self.__updateResources()
         self.__resourceChanged( self.resourceList.currentRow() )
     
     @Slot()
     def __updateResources(self):
+
+        def listTemplateResources(step):
+            folder = step.templatesFolderPath()
+            if folder == '': return
+
+            for f in os.listdir( folder ):
+                # Template must be a folder
+                fPath = ram.RamFileManager.buildPath((
+                    folder,
+                    f
+                ))
+                if not os.path.isdir(fPath):
+                    continue
+
+                nm = ram.RamFileInfo()
+                if not nm.setFileName( f ):
+                    continue
+
+                if nm.project != step.projectShortName():
+                    continue
+
+                if nm.step != step.shortName():
+                    continue
+                
+                for t in os.listdir( fPath ):
+                    # Resource must be a file
+                    resource = ram.RamFileManager.buildPath((
+                        fPath,
+                        t
+                    ))
+                    if not os.path.isfile(resource):
+                        continue
+
+                    if not nm.setFileName( t ):
+                        continue
+                    
+                    res = nm.resource
+
+                    if nm.isRestoredVersion:
+                        if res != '': res = res + " | "
+                        res = res + "v" + str(nm.restoredVersion) + " (restored)"
+
+                    if res == "":
+                        res = "Main (" + nm.extension + ")"
+                        self._openButton.setEnabled(True)
+
+                    item = QListWidgetItem( nm.shortName + " | " + res )
+                    item.setData( Qt.UserRole, resource )
+                    item.setToolTip(t)
+                    self.resourceList.addItem( item )
+
+        self.resourceList.hide()
+        self.resourcesLabel.hide()
+
         self.resourceList.clear()
         self.versionList.clear()
-        self.publishVersionBox.clear()
         
         stepItem = self.stepList.currentItem()
         if not stepItem: return
@@ -438,6 +487,8 @@ class ImportDialog( QDialog ):
 
         # If open, list resources in wip folder
         if self.openButton.isChecked():
+            self.resourceList.show()
+            self.resourcesLabel.show()
             # Shots and Assets
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 if not currentItem: return
@@ -466,61 +517,42 @@ class ImportDialog( QDialog ):
             # Templates
             else:
                 # List resources
-                folder = step.templatesFolderPath()
-                if folder == '': return
+                listTemplateResources(step)
 
-                for f in os.listdir( folder ):
-                    nm = ram.RamFileInfo()
-                    if not nm.setFileName( f ):
-                        continue
-
-                    if nm.project != step.projectShortName():
-                        continue
-
-                    if nm.step != step.shortName():
-                        continue
-
-                    res = nm.shortName + ' | ' + nm.resource
-
-                    if res == "":
-                        res = "Main (" + nm.extension + ")"
-                        self._openButton.setEnabled(True)
-
-                    resource = ram.RamFileManager.buildPath((
-                        folder,
-                        f
-                    ))
-
-                    item = QListWidgetItem( res )
-                    item.setData( Qt.UserRole, resource )
-                    item.setToolTip(f)
-                    self.resourceList.addItem( item )
-
-        # If import, list all subfolders
+        # If import asset or shot, list all subfolders
+        elif self.assetButton.isChecked() or self.shotButton.isChecked():
+            self.__listPublishedVersions()
+        # If import template, list resources
         else:
-            folders = []
-            if self.assetButton.isChecked() or self.shotButton.isChecked():
-                if not currentItem: return
-                folders = currentItem.publishedVersionFolderPaths( step )
+            self.resourceList.show()
+            self.resourcesLabel.show()
+            listTemplateResources(step)
+        
+    def __listPublishedVersions(self):
+        self.publishVersionBox.clear()
+        folders = []
+        currentItem = self.getItem()
+        if not currentItem: return
+        step = self.getStep()
+        if not step: return
+        folders = currentItem.publishedVersionFolderPaths( step )
+
+        for f in reversed(folders): # list more recent first
+            folderName = os.path.basename( f )
+            folderName = folderName.split("_")
+            title = ""
+
+            # Test length to know what we've got
+            if len(folderName) == 3: # resource, version, state
+                title = folderName[0] + " | v" + folderName[1] + " | " + folderName[2]
+            elif len(folderName) < 3: # version (state)
+                if int(folderName[0]) != 0:
+                    title = "v" + " | ".join(folderName)
             else:
-                folders = step.templatesPublishedVersionFolderPaths( )
+                title = " | ".join(folderName)
 
-            for f in reversed(folders): # list more recent first
-                folderName = os.path.basename( f )
-                folderName = folderName.split("_")
-                title = ""
-
-                # Test length to know what we've got
-                if len(folderName) == 3: # resource, version, state
-                    title = folderName[0] + " | v" + folderName[1] + " | " + folderName[2]
-                elif len(folderName) < 3: # version (state)
-                    if int(folderName[0]) != 0:
-                        title = "v" + " | ".join(folderName)
-                else:
-                    title = " | ".join(folderName)
-
-                self.publishVersionBox.addItem(title, f)
-                self.__updatePublishedFiles()
+            self.publishVersionBox.addItem(title, f)
+            self.__updatePublishedFiles()
 
     @Slot()
     def __updatePublishedFiles(self):
@@ -543,9 +575,14 @@ class ImportDialog( QDialog ):
     @Slot()
     def __resourceChanged(self, row):
 
+        # Import, list publish files for templates
         if self.importButton.isChecked():
+            if self.assetButton.isChecked() or self.shotButton.isChecked():
+                return
+            self.__listPublishedVersions()
             return
 
+        # Open, list versions
         if row < 0:
             self._openButton.setEnabled(False)
         else:
@@ -558,10 +595,7 @@ class ImportDialog( QDialog ):
         
         # List versions
         versionFiles = ()
-        if self.assetButton.isChecked() or self.shotButton.isChecked():
-            versionFiles = currentItem.versionFilePaths( self.getResource(), self.getStep() )
-        else:
-            versionFiles = currentItem.versionFilePaths( )
+        versionFiles = currentItem.versionFilePaths( self.getResource(), self.getStep() )
 
         if len(versionFiles) == 0: return
 
@@ -655,18 +689,14 @@ class ImportDialog( QDialog ):
 
     def getItem(self):
         """Returns the Item (RamAsset, RamShot or RamItem if template) currently selected."""
+        
         # if it's an asset or a shot, get from itemList
         if self.shotButton.isChecked() or self.assetButton.isChecked():
             item = self.itemList.currentItem()
             if not item: return None
             return item.data(Qt.UserRole)
 
-        # if it's a template, get the item from the path of the selected resource (or version if import)
-        if self.importButton.isChecked():
-            item = self.versionList.currentItem()
-            if not item: return None
-            return ram.RamItem.fromPath( item.data(Qt.UserRole ) )
-        
+        # if it's a template, get the item from the path of the selected resource (or version if import)        
         item = self.resourceList.currentItem()
         if not item: return None
         return ram.RamItem.fromPath( item.data(Qt.UserRole) )

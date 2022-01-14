@@ -100,7 +100,7 @@ class PublishTemplateDialog( QDialog ):
         self._publishButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
         self.extensionBox.currentIndexChanged.connect( self.__buildFileName )
-        self.nameEdit.textEdited.connect( self.__buildFileName )
+        self.nameEdit.textEdited.connect( self.__buildPath )
 
     def __loadProjects(self):
         # Load projects
@@ -156,7 +156,16 @@ class PublishTemplateDialog( QDialog ):
             self.locationEdit.setPlaceholderText("Sorry, Invalid step...")
             return
         self.locationEdit.setPlaceholderText("Location")
-        self.locationEdit.setText( step.templatesFolderPath() )
+        # Build the subfolder name
+        nm = ram.RamFileInfo()
+        nm.project = pShortName
+        nm.step = sShortName
+        nm.ramType = ram.ItemType.GENERAL
+        nm.shortName = self.nameEdit.text()
+        if nm.shortName == "":
+            nm.shortName = "Template"
+
+        self.locationEdit.setText( step.templatesFolderPath() + "/" + nm.fileName() )
         self._publishButton.setEnabled(True)
         # build file name
         self.__buildFileName()
@@ -169,9 +178,9 @@ class PublishTemplateDialog( QDialog ):
         nm.step = self.__getCurrentShortName( self.stepBox )
         nm.extension = self.extensionBox.currentData()
         nm.ramType = ram.ItemType.GENERAL
-        nm.resource = self.nameEdit.text()
-        if nm.resource == "":
-            nm.resource = "Template"
+        nm.shortName = self.nameEdit.text()
+        if nm.shortName == "":
+            nm.shortName = "Template"
         
         self.fileNameLabel.setText( nm.fileName() )
 
