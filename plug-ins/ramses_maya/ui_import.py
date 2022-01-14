@@ -466,7 +466,6 @@ class ImportDialog( QDialog ):
 
                     if res == "":
                         res = "Main (" + nm.extension + ")"
-                        self._openButton.setEnabled(True)
 
                     item = QListWidgetItem( nm.shortName + " | " + res )
                     item.setData( Qt.UserRole, resource )
@@ -475,6 +474,7 @@ class ImportDialog( QDialog ):
 
         self.resourceList.hide()
         self.resourcesLabel.hide()
+        self._openButton.setEnabled(False)
 
         self.resourceList.clear()
         self.versionList.clear()
