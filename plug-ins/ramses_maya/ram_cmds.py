@@ -53,7 +53,7 @@ def getSaveFilePath( filePath ):
     if saveFilePath == '':
         cmds.warning( ram.Log.MalformedName )
         # Set file to be renamed
-        cmds.file( renameToSave = True )
+        # cmds.file( renameToSave = True )
         cmds.inViewMessage( msg='Some Problem occured, <hl>the file name is still invalid for Ramses</hl>, sorry.', pos='midCenter', fade=True )
         return ''
 
@@ -100,6 +100,14 @@ def getPreviewFolder( item, step):
         return ''
     return previewFolder
 
+def getTempDir():
+    """Creates and returns a tempdir. For some reason, sometimes the user folder is incorrect in TEMP on windows"""
+    tempDir = tempfile.mkdtemp()
+    if platform.system() == 'Windows':
+        userDir = os.getenv('USERPROFILE')
+        tempDir = userDir + '/AppData/Local/Temp/' + os.path.basename(tempDir)
+    return tempDir
+
 def createPlayblast(filePath, size):
 
     # Warning, That's for win only ! Needs work on MAC/Linux
@@ -115,8 +123,13 @@ def createPlayblast(filePath, size):
     ffplayFile = ramsesFoler + '/bin/ffplay.exe'
 
     # Get a temp dir for rendering the playblast
-    tempDir = tempfile.mkdtemp()
+    tempDir = getTempDir()
+    # The tempDir may not exist
+    if not os.path.isdir(tempDir):
+        os.makedirs(tempDir)
     imageFile = tempDir + '/' + 'blast'
+
+    print(imageFile)
     
     # Create jpg frame sequence
     w = cmds.getAttr("defaultResolution.width") * size
@@ -154,7 +167,7 @@ def createPlayblast(filePath, size):
         ffmpegFile,
         '-loglevel', 'error', # limit output to errors
         '-y', # overwrite
-        '-start_number', '1',
+        '-start_number', str(cmds.playbackOptions(q=True,minTime=True)),
         '-framerate', str(framerate),
         '-i', imageFile.replace('####', "%5d"), # Image file
     ]
@@ -179,12 +192,12 @@ def createPlayblast(filePath, size):
         filePath # Output file
     ]
 
-    ram.log('FFmpeg args: ' + ' | '.join(ffmpegArgs), ram.LogLevel.Debug)
+    #ram.log('FFmpeg args: ' + ' | '.join(ffmpegArgs), ram.LogLevel.Debug)
 
     ffmpegProcess = subprocess.Popen(ffmpegArgs,shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) # Launch!
 
     output = ffmpegProcess.communicate()
-    ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
+    #ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
 
     # Remove temp files
     shutil.rmtree(tempDir)
