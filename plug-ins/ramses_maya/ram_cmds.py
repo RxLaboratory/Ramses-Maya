@@ -128,8 +128,6 @@ def createPlayblast(filePath, size):
     if not os.path.isdir(tempDir):
         os.makedirs(tempDir)
     imageFile = tempDir + '/' + 'blast'
-
-    print(imageFile)
     
     # Create jpg frame sequence
     w = cmds.getAttr("defaultResolution.width") * size
