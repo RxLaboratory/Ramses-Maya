@@ -74,10 +74,17 @@ class Node():
             cmds.delete(shapes[1:])
 
     @staticmethod
-    def freezeTransform(transformNode):
+    def centerPivot( transformNode ):
         cmds.move(0, 0, 0, transformNode + ".rotatePivot", absolute=True)
         cmds.move(0, 0, 0, transformNode + ".scalePivot", absolute=True)
-        cmds.makeIdentity(transformNode, apply=True, t=1, r=1, s=1, n=0)
+
+    @staticmethod
+    def freezeTransform(transformNode):
+        try:
+            cmds.makeIdentity(transformNode, apply=True, t=1, r=1, s=1, n=0)
+        except RuntimeError:
+            return
+        Node.centerPivot(transformNode)
 
     @staticmethod
     def renameShapes( node ):
@@ -162,7 +169,7 @@ class Node():
             if nodes is None: nodes = []
             nodes.append( transformNode )
             for node in nodes: Node.lockTransform(node, l, False)
-        if not Node.isTransform( transformNode) :
+        if not Node.isTransform( transformNode ) :
             return
         for a in ['.tx','.ty','.tz','.rx','.ry','.rz','.sx','.sy','.sz']:
             cmds.setAttr(transformNode + a, lock=l )
@@ -277,6 +284,6 @@ class Node():
         cmds.select(cl=True)
         for n in nodes:
             try:
-                cmds.select(n, noExpand=True, toggle=True)
+                cmds.select(n, noExpand=True, add=True)
             except:
                 pass
