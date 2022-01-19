@@ -145,6 +145,19 @@ class DuMaNode():
             nodeName = nodeName.split(':')[-1]
         return nodeName
 
+    def centerPivot(self):
+        """Moves the pivot to 0,0,0"""
+        if not self.exists():
+            return
+
+        # Works only from transform nodes
+        if not self.isTransform():
+            return
+
+        nodePath = self.path()
+        cmds.move(0, 0, 0, nodePath + ".rotatePivot", absolute=True)
+        cmds.move(0, 0, 0, nodePath + ".scalePivot", absolute=True)
+
     def checkType(self, deleteIfEmpty=True, typesToKeep=()):
         """Checks if the node contains one of the given types.
         If not, the node is removed, and optionally if it is empty.
@@ -258,9 +271,11 @@ class DuMaNode():
             return
 
         nodePath = self.path()
-        cmds.move(0, 0, 0, nodePath + ".rotatePivot", absolute=True)
-        cmds.move(0, 0, 0, nodePath + ".scalePivot", absolute=True)
-        cmds.makeIdentity(nodePath, apply=True, t=1, r=1, s=1, n=0)
+        try:
+            cmds.makeIdentity(nodePath, apply=True, t=1, r=1, s=1, n=0)
+        except RuntimeError:
+            return
+        self.centerPivot()
 
     def getAttr(self, attribute):
         """Gets the value of the Maya attribute"""
