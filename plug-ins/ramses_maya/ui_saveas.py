@@ -384,6 +384,9 @@ class SaveAsDialog( QDialog ):
             fileName
         ))
 
+    def getExtension(self):
+        return self.extensionBox.currentData()
+
     def getProject(self):
         p = self.projectBox.currentData()
         if not p:
