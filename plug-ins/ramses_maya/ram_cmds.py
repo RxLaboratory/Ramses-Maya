@@ -381,6 +381,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             return
 
         filePath = saveAsDialog.getFilePath()
+        extension = saveAsDialog.getExtension()
         if filePath == '':
             self.setResult( False )
             return
@@ -397,8 +398,11 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             ram.RamMetaDataManager.setComment( backupFilePath, "Overwritten by an external file." )
             ram.log( 'I\'ve added this comment for you: "Overwritten by an external file."' )
 
+        mayaType = 'mayaBinary'
+        if extension == 'ma':
+            mayaType = 'mayaAscii'
         cmds.file(rename = filePath )
-        cmds.file( save=True, options="v=1;", f=True )
+        cmds.file( save=True, options="v=1;", f=True, typ=mayaType )
 
         # Create the first version ( or increment existing )
         ram.RamFileManager.copyToVersion( filePath, increment=True )
