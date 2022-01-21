@@ -36,7 +36,7 @@ class Node():
 
         if shapes is None:
             # No shapes, no child: empty group to remove
-            if not Node.hasChildren(node) and deleteIfEmpty:
+            if not Node.hasChildren(node) and Node.isGroup(node) and deleteIfEmpty:
                 cmds.delete(node)
                 # Finished
                 return False
