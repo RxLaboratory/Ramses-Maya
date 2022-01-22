@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Maya commands"""
 
 import os, re, platform, subprocess, tempfile, shutil
 from datetime import datetime, timedelta
@@ -8,6 +9,7 @@ import maya.cmds as cmds # pylint: disable=import-error
 import maya.mel as mel # pylint: disable=import-error
 
 import dumaf as maf
+
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
 from .ui_versions import VersionDialog # pylint: disable=import-error,no-name-in-module
@@ -18,21 +20,21 @@ from .ui_saveas import SaveAsDialog # pylint: disable=import-error,no-name-in-mo
 from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-module
 
 import ramses as ram
-# Keep the ramses and the settings instances at hand
-ramses = ram.Ramses.instance()
-settings = ram.RamSettings.instance()
+# Keep the ramses and the SETTINGS instances at hand
+RAMSES = ram.Ramses.instance()
+SETTINGS = ram.RamSettings.instance()
 
 def checkDaemon():
-    """Checks if the Daemon is available (if the settings tell we have to work with it)"""
-    if settings.online:
-        if not ramses.connect():
+    """Checks if the Daemon is available (if the SETTINGS tell we have to work with it)"""
+    if SETTINGS.online:
+        if not RAMSES.connect():
             cmds.confirmDialog(
                 title="No User",
                 message="You must log in Ramses first!",
                 button=["OK"],
                 icon="warning"
                 )
-            ramses.showClient()
+            RAMSES.showClient()
             cmds.error( "User not available: You must log in Ramses first!" )
             return False
 
@@ -51,7 +53,7 @@ def getSaveFilePath( filePath ):
     if saveFilePath == '':
         cmds.warning( ram.Log.MalformedName )
         # Set file to be renamed
-        cmds.file( renameToSave = True )
+        # cmds.file( renameToSave = True )
         cmds.inViewMessage( msg='Some Problem occured, <hl>the file name is still invalid for Ramses</hl>, sorry.', pos='midCenter', fade=True )
         return ''
 
@@ -63,11 +65,11 @@ def getCurrentProject( filePath ):
     # Set the project and step
     project = None
     if nm.project != '':
-        project = ramses.project( nm.project )
-        ramses.setCurrentProject( project )
+        project = RAMSES.project( nm.project )
+        RAMSES.setCurrentProject( project )
     # Try to get the current project
     if project is None:
-        project = ramses.currentProject()
+        project = RAMSES.currentProject()
 
     return project
 
@@ -98,6 +100,14 @@ def getPreviewFolder( item, step):
         return ''
     return previewFolder
 
+def getTempDir():
+    """Creates and returns a tempdir. For some reason, sometimes the user folder is incorrect in TEMP on windows"""
+    tempDir = tempfile.mkdtemp()
+    if platform.system() == 'Windows':
+        userDir = os.getenv('USERPROFILE')
+        tempDir = userDir + '/AppData/Local/Temp/' + os.path.basename(tempDir)
+    return tempDir
+
 def createPlayblast(filePath, size):
 
     # Warning, That's for win only ! Needs work on MAC/Linux
@@ -113,7 +123,10 @@ def createPlayblast(filePath, size):
     ffplayFile = ramsesFoler + '/bin/ffplay.exe'
 
     # Get a temp dir for rendering the playblast
-    tempDir = tempfile.mkdtemp()
+    tempDir = getTempDir()
+    # The tempDir may not exist
+    if not os.path.isdir(tempDir):
+        os.makedirs(tempDir)
     imageFile = tempDir + '/' + 'blast'
     
     # Create jpg frame sequence
@@ -152,7 +165,7 @@ def createPlayblast(filePath, size):
         ffmpegFile,
         '-loglevel', 'error', # limit output to errors
         '-y', # overwrite
-        '-start_number', '1',
+        '-start_number', str(cmds.playbackOptions(q=True,minTime=True)),
         '-framerate', str(framerate),
         '-i', imageFile.replace('####', "%5d"), # Image file
     ]
@@ -177,12 +190,12 @@ def createPlayblast(filePath, size):
         filePath # Output file
     ]
 
-    ram.log('FFmpeg args: ' + ' | '.join(ffmpegArgs), ram.LogLevel.Debug)
+    #ram.log('FFmpeg args: ' + ' | '.join(ffmpegArgs), ram.LogLevel.Debug)
 
     ffmpegProcess = subprocess.Popen(ffmpegArgs,shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) # Launch!
 
     output = ffmpegProcess.communicate()
-    ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
+    #ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
 
     # Remove temp files
     shutil.rmtree(tempDir)
@@ -248,7 +261,7 @@ class RamSaveCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -293,7 +306,7 @@ class RamSaveCmd( om.MPxCommand ):
         prevVersionInfo = ram.RamFileManager.getLatestVersionInfo( saveFilePath, previous=True )
         modified = prevVersionInfo.date
         now = datetime.today()
-        timeout = timedelta(seconds = settings.autoIncrementTimeout * 60 )
+        timeout = timedelta(seconds = SETTINGS.autoIncrementTimeout * 60 )
         if  timeout < now - modified and not increment:
             incrementReason = "the file was too old."
             increment = True
@@ -338,7 +351,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -368,6 +381,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             return
 
         filePath = saveAsDialog.getFilePath()
+        extension = saveAsDialog.getExtension()
         if filePath == '':
             self.setResult( False )
             return
@@ -384,8 +398,11 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             ram.RamMetaDataManager.setComment( backupFilePath, "Overwritten by an external file." )
             ram.log( 'I\'ve added this comment for you: "Overwritten by an external file."' )
 
+        mayaType = 'mayaBinary'
+        if extension == 'ma':
+            mayaType = 'mayaAscii'
         cmds.file(rename = filePath )
-        cmds.file( save=True, options="v=1;", f=True )
+        cmds.file( save=True, options="v=1;", f=True, typ=mayaType )
 
         # Create the first version ( or increment existing )
         ram.RamFileManager.copyToVersion( filePath, increment=True )
@@ -440,7 +457,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -474,7 +491,10 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if self.updateSatus:
             # Show status dialog
             statusDialog = StatusDialog(maf.UI.getMayaWindow())
-            statusDialog.setOffline(not settings.online)
+            if not SETTINGS.online or currentItem.itemType() == ram.ItemType.GENERAL:
+                statusDialog.setOffline(True)
+            else:
+                statusDialog.setOffline(False)
             statusDialog.setPublish( self.publish )
             if currentStatus is not None:
                 statusDialog.setStatus( currentStatus )
@@ -495,7 +515,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         cmds.file( rename = saveFilePath )
         cmds.file( save=True, options="v=1;" )
         # Backup / Increment
-        state = ramses.defaultState
+        state = RAMSES.defaultState
         if status is not None:
             state = status.state
         elif currentStatus is not None:
@@ -519,11 +539,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
             step = None
             if project is not None:
                 step = project.step(currentStep)
-                ramses.setCurrentProject(project)
+                RAMSES.setCurrentProject(project)
                 
             if step is not None:
                 currentItem.setStatus(status, step)
-                ramses.updateStatus(currentItem, status, step)
+                RAMSES.updateStatus(currentItem, status, step)
 
         # Alert
         newVersionStr = str( newVersion )
@@ -533,13 +553,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if self.publish:
             publishedFileInfo = ram.RamFileManager.getPublishInfo( saveFilePath )
-            print(publishedFileInfo.filePath())
             # Prepare the file for backup in the published folder
             backupInfo = publishedFileInfo.copy()
             backupInfo.version = -1
             backupInfo.state = ''
             # Save
-            print(backupInfo.filePath())
             publishedFilePath = backupInfo.filePath()
             cmds.file( rename = publishedFilePath )
             cmds.file( save=True, options="v=1;" )
@@ -553,9 +571,9 @@ class RamSaveVersionCmd( om.MPxCommand ):
             step = None
             if project is not None:
                 step = project.step(currentStep)
-                ramses.setCurrentProject(project)
+                RAMSES.setCurrentProject(project)
             if step is not None:
-                ramses.publish( currentItem, step, publishedFileInfo.copy() )
+                RAMSES.publish( currentItem, step, publishedFileInfo.copy() )
 
         if self.preview:
             cmds.ramPreview()
@@ -580,7 +598,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -634,7 +652,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -649,7 +667,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
         # Prepare the dialog
         publishDialog = PublishTemplateDialog(maf.UI.getMayaWindow())
-        if not settings.online:
+        if not SETTINGS.online:
             publishDialog.setOffline()
 
         # Set the project and step
@@ -681,6 +699,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             ram.log('Template saved as: ' + saveName + ' in ' + saveFolder)
 
 class RamOpenCmd( om.MPxCommand ):
+    """Shows the UI to open, import or replace an item"""
     name = "ramOpen"
 
     def __init__(self):
@@ -694,22 +713,25 @@ class RamOpenCmd( om.MPxCommand ):
     @staticmethod
     def createSyntax():
         syntax = om.MSyntax()
-        syntax.addFlag('-i', "-importMode", om.MSyntax.kBoolean )
+        syntax.addFlag('-i', "-import", om.MSyntax.kBoolean )
+        syntax.addFlag('-r', "-replace", om.MSyntax.kBoolean )
         return syntax
 
     def parseArgs(self, args):
         parser = om.MArgParser( self.syntax(), args)
         if parser.isFlagSet( '-i' ):
-            self.importMode = parser.flagArgumentBool('-i', 0)
+            self.mode = "import"
+        elif parser.isFlagSet( '-r' ):
+            self.mode = "replace"
         else:
-            self.importMode = False
+            self.mode = "open"
 
     def doIt(self, args):
         try:
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -721,23 +743,23 @@ class RamOpenCmd( om.MPxCommand ):
 
         # Let's show the dialog
         importDialog = ImportDialog(maf.UI.getMayaWindow())
-        importDialog.setImportMode( self.importMode )
+        importDialog.setMode( self.mode )
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
         if currentFilePath != '':
             nm = ram.RamFileInfo()
             nm.setFilePath( currentFilePath )
             if nm.project != '':
-                project = ramses.project( nm.project )
+                project = RAMSES.project( nm.project )
                 if project is not None:
-                    ramses.setCurrentProject( project )
+                    RAMSES.setCurrentProject( project )
                     importDialog.setProject( project )
                     importDialog.setType( nm.ramType )
                     importDialog.setItem( nm.shortName )
                     # importDialog.setStep( nm.step )
         else:
-            # Try to get project from ramses
-            project = ramses.currentProject()
+            # Try to get project from RAMSES
+            project = RAMSES.currentProject()
             if project is not None:
                 importDialog.setProject( project )
         result = importDialog.exec_()
@@ -755,14 +777,16 @@ class RamOpenCmd( om.MPxCommand ):
         elif result == 2: # import
             # Get Data
             item = importDialog.getItem()
+            if item is None:
+                return
             step = importDialog.getStep()
             filePaths = importDialog.getFiles()
             itemShortName = item.shortName()
             resource = importDialog.getResource()
 
             # Let's import only if there's no user-defined import scripts
-            if len( ramses.importScripts ) > 0:
-                ramses.importItem(
+            if len( RAMSES.importScripts ) > 0:
+                RAMSES.importItem(
                     item,
                     filePaths,
                     step                
@@ -811,23 +835,42 @@ class RamOpenCmd( om.MPxCommand ):
                         itemShortName = ram.ItemType.SHOT + itemShortName
                 # If it's a general item, store in a group named after the step
                 else:
-                    itemShortName = resource
                     groupName = 'RamITEMS'
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                groupName = maf.Node.getCreateGroup(groupName)
+                group = maf.DuMaNode.getCreateGroup(groupName)
+
                 # Import the file
-                newNodes = cmds.file(filePath,i=True,ignoreVersion=True,mergeNamespacesOnClash=True,returnNewNodes=True,ns=itemShortName)
+                newNodes = maf.Scene.importFile(filePath, itemShortName)
+                
                 # Add a group for the imported asset
-                itemGroupName = maf.Node.getCreateGroup( itemShortName, groupName)
+                itemGroup = maf.DuMaNode.getCreateGroup( itemShortName, group)
+                # Parent the imported nodes
                 for node in newNodes:
-                    # When parenting the root, children won't exist anymore
-                    if not cmds.objExists(node):
-                        continue
                     # only the root transform nodes
-                    if cmds.nodeType(node) == 'transform' and not maf.Node.hasParent(node):
-                        maf.Node.parent(node, itemGroupName)
+                    if node.isTransform() and not node.hasParent():
+                        node.parentTo(itemGroup)
+        elif result == 3: # replace
+            # Get Data
+            item = importDialog.getItem()
+            if item is None:
+                return
+            step = importDialog.getStep()
+            filePath = importDialog.getFile()
+            itemShortName = item.shortName()
+            resource = importDialog.getResource()
+
+            # Let's import only if there's no user-defined import scripts
+            if len( RAMSES.replaceScripts ) > 0:
+                RAMSES.replaceItem(
+                    item,
+                    filePath,
+                    step
+                )
+                return
+
+            #TODO Implement default replacement method when the publish/import has been updated
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
@@ -849,7 +892,7 @@ class RamPreviewCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
@@ -882,7 +925,7 @@ class RamPreviewCmd( om.MPxCommand ):
             return
         ram.log( "I'm previewing in " + previewFolder )
 
-        # Keep current settings
+        # Keep current SETTINGS
         currentAA = cmds.getAttr('hardwareRenderingGlobals.multiSampleEnable')
         currentAO = cmds.getAttr('hardwareRenderingGlobals.ssaoEnable')
 
@@ -959,7 +1002,7 @@ class RamPreviewCmd( om.MPxCommand ):
         # Hide window
         dialog.hideRenderer()
         
-        # Set back render settings
+        # Set back render SETTINGS
         cmds.setAttr('hardwareRenderingGlobals.multiSampleEnable',currentAA)
         cmds.setAttr('hardwareRenderingGlobals.ssaoEnable',currentAO)
 
@@ -996,11 +1039,11 @@ class RamSettingsCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
-        ram.log("Opening settings...")  
+        ram.log("Opening SETTINGS...")  
         self.settingsDialog.show()
 
 class RamOpenRamsesCmd( om.MPxCommand ):
@@ -1023,12 +1066,12 @@ class RamOpenRamsesCmd( om.MPxCommand ):
             self.run(args)
         except:
             ram.printException()
-            if settings.debugMode:
+            if SETTINGS.debugMode:
                 raise
 
     def run(self, args):
         ram.log("Opening the Ramses client...")
-        ramses.showClient()
+        RAMSES.showClient()
         
 cmds_classes = (
     RamSaveCmd,

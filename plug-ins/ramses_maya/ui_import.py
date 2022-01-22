@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from platform import version
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
+from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QDialog,
     QHBoxLayout,
     QVBoxLayout,
@@ -13,19 +12,23 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QLabel,
     QPushButton,
     QWidget,
-    QRadioButton,
     QLineEdit,
     QAbstractItemView
 )
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
+from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
     Slot,
     Qt
 )
 
 import ramses as ram
-ramses = ram.Ramses.instance()
+
+from .utils import icon
+
+RAMSES = ram.Ramses.instance()
 
 class ImportDialog( QDialog ):
+
+    # <== CONSTRUCTOR ==>
 
     def __init__(self, parent=None):
         super(ImportDialog,self).__init__(parent)
@@ -34,7 +37,25 @@ class ImportDialog( QDialog ):
         self.__loadProjects()
         self.__connectEvents()
 
+    # <== PRIVATE METHODS ==>
+
     def __setupUi(self):
+        """Creates the dialog UI"""
+
+        checkableButtonCSS = """
+            QPushButton {
+                background-color: rgba(0,0,0,0);
+                border:none;
+                padding: 5px;
+                color: #eeeeee;
+            }
+            QPushButton:hover {
+                background-color: #707070;
+            }
+            QPushButton:checked {
+                background-color: #2b2b2b;
+            }"""
+
         self.setWindowTitle( "Open / Import Item" )
 
         self.setMinimumWidth(500)
@@ -58,11 +79,24 @@ class ImportDialog( QDialog ):
         self.typeWidget = QWidget()
         typeLayout = QVBoxLayout()
         typeLayout.setContentsMargins(0,0,0,0)
-        self.assetButton = QRadioButton("Asset")
+        typeLayout.setSpacing(3)
+        self.assetButton = QPushButton()
+        self.assetButton.setText("Asset")
+        self.assetButton.setIcon(icon("ramasset"))
+        self.assetButton.setCheckable(True)
+        self.assetButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.assetButton)
-        self.shotButton = QRadioButton("Shot")
+        self.shotButton = QPushButton()
+        self.shotButton.setText("Shot")
+        self.shotButton.setIcon(icon("ramshot"))
+        self.shotButton.setCheckable(True)
+        self.shotButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.shotButton)
-        self.templateButton = QRadioButton("Template")
+        self.templateButton = QPushButton()
+        self.templateButton.setText("Template")
+        self.templateButton.setIcon(icon("ramtemplateitem"))
+        self.templateButton.setCheckable(True)
+        self.templateButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.templateButton)
         self.typeWidget.setLayout(typeLayout)
         self.typeWidget.setEnabled(False)
@@ -71,11 +105,27 @@ class ImportDialog( QDialog ):
         self.actionWidget = QWidget()
         actionLayout = QVBoxLayout()
         actionLayout.setContentsMargins(0,0,0,0)
-        self.openButton = QRadioButton("Open Item")
+        actionLayout.setSpacing(3)
+        self.openButton = QPushButton()
+        self.openButton.setText("Open item")
+        self.openButton.setIcon(icon("ramopenscene"))
+        self.openButton.setCheckable(True)
         self.openButton.setChecked(True)
+        self.openButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.openButton)
-        self.importButton = QRadioButton("Import Item")
+        self.importButton = QPushButton()
+        self.importButton.setText("Import item")
+        self.importButton.setIcon(icon("ramimportitem"))
+        self.importButton.setCheckable(True)
+        self.importButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.importButton)
+        self.replaceButton = QPushButton()
+        self.replaceButton.setText("Replace selected items")
+        self.replaceButton.setIcon(icon("ramreplaceitem"))
+        self.replaceButton.setCheckable(True)
+        self.replaceButton.setStyleSheet(checkableButtonCSS)
+        self.replaceButton.hide() # Not available yet
+        actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
 
@@ -139,10 +189,14 @@ class ImportDialog( QDialog ):
         self._importButton = QPushButton("Import")
         self._importButton.hide()
         buttonsLayout.addWidget( self._importButton )
+        self._replaceButton = QPushButton("Replace")
+        self._replaceButton.hide()
+        buttonsLayout.addWidget( self._replaceButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         self._openButton.setEnabled(False)
+        self._replaceButton.setEnabled(False)
         self._importButton.setEnabled(False)
 
         mainLayout.addLayout( buttonsLayout )
@@ -151,14 +205,25 @@ class ImportDialog( QDialog ):
 
     def __connectEvents(self):
         self.projectBox.currentIndexChanged.connect( self.__projectChanged )
+
+        self.assetButton.clicked.connect( self.__assetButtonClicked )
+        self.shotButton.clicked.connect( self.__shotButtonClicked )
+        self.templateButton.clicked.connect( self.__templateButtonClicked )
         self.assetButton.clicked.connect( self.__typeChanged )
         self.shotButton.clicked.connect( self.__typeChanged )
         self.templateButton.clicked.connect( self.__typeChanged )
+
+        self.openButton.clicked.connect( self.__openButtonClicked )
+        self.importButton.clicked.connect( self.__importButtonClicked )
+        self.replaceButton.clicked.connect( self.__replaceButtonClicked )
         self.openButton.clicked.connect( self.__actionChanged )
         self.importButton.clicked.connect( self.__actionChanged )
+        self.replaceButton.clicked.connect( self.__actionChanged )
+
         self._cancelButton.clicked.connect( self.reject )
         self._openButton.clicked.connect( self.accept )
         self._importButton.clicked.connect( self.__import )
+        self._replaceButton.clicked.connect( self.__replace )
         self.itemList.currentRowChanged.connect( self.__updateResources )
         self.stepList.currentRowChanged.connect( self.__updateResources )
         self.resourceList.currentRowChanged.connect( self.__resourceChanged )
@@ -168,9 +233,45 @@ class ImportDialog( QDialog ):
         self.versionSearchField.textChanged.connect( self.__searchVersion )
         self.publishVersionBox.currentIndexChanged.connect( self.__updatePublishedFiles )
 
+    @Slot()
+    def __assetButtonClicked(self):
+        self.assetButton.setChecked(True)
+        self.shotButton.setChecked(False)
+        self.templateButton.setChecked(False)
+
+    @Slot()
+    def __shotButtonClicked(self):
+        self.assetButton.setChecked(False)
+        self.shotButton.setChecked(True)
+        self.templateButton.setChecked(False)
+
+    @Slot()
+    def __templateButtonClicked(self):
+        self.assetButton.setChecked(False)
+        self.shotButton.setChecked(False)
+        self.templateButton.setChecked(True)
+
+    @Slot()
+    def __openButtonClicked(self):
+        self.openButton.setChecked(True)
+        self.importButton.setChecked(False)
+        self.replaceButton.setChecked(False)
+
+    @Slot()
+    def __importButtonClicked(self):
+        self.openButton.setChecked(False)
+        self.importButton.setChecked(True)
+        self.replaceButton.setChecked(False)
+
+    @Slot()
+    def __replaceButtonClicked(self):
+        self.openButton.setChecked(False)
+        self.importButton.setChecked(False)
+        self.replaceButton.setChecked(True)
+
     def __loadProjects(self):
         # Load projects
-        projects = ramses.projects()
+        projects = RAMSES.projects()
         self.projectBox.clear()
 
         if projects is None:
@@ -179,7 +280,7 @@ class ImportDialog( QDialog ):
             self.templateButton.setChecked(False)
             return
 
-        for project in ramses.projects():
+        for project in RAMSES.projects():
             self.projectBox.addItem(str(project), project)
 
         self.projectBox.setCurrentIndex(-1)
@@ -299,28 +400,84 @@ class ImportDialog( QDialog ):
     def __actionChanged(self):
         if self.openButton.isChecked():
             self._importButton.hide()
+            self._replaceButton.hide()
             self._openButton.show()
             self.versionsLabel.setText("Version:")
-            self.resourceList.show()
-            self.resourcesLabel.show()
             self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
             self.publishVersionBox.setVisible(False)
-        else: # Import
-            self._importButton.show()
+        else: # Import or replace
+            if self.replaceButton.isChecked():
+                self._replaceButton.show()
+                self._importButton.hide()
+                self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
+            else:
+                self._replaceButton.hide()
+                self._importButton.show()
+                self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self._openButton.hide()
             self.versionsLabel.setText("File:")
-            self.resourceList.hide()
-            self.resourcesLabel.hide()
-            self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
             self.publishVersionBox.setVisible(True)
         self.__updateResources()
         self.__resourceChanged( self.resourceList.currentRow() )
     
     @Slot()
     def __updateResources(self):
+
+        def listTemplateResources(step):
+            folder = step.templatesFolderPath()
+            if folder == '': return
+
+            for f in os.listdir( folder ):
+                # Template must be a folder
+                fPath = ram.RamFileManager.buildPath((
+                    folder,
+                    f
+                ))
+                if not os.path.isdir(fPath):
+                    continue
+
+                nm = ram.RamFileInfo()
+                if not nm.setFileName( f ):
+                    continue
+
+                if nm.project != step.projectShortName():
+                    continue
+
+                if nm.step != step.shortName():
+                    continue
+                
+                for t in os.listdir( fPath ):
+                    # Resource must be a file
+                    resource = ram.RamFileManager.buildPath((
+                        fPath,
+                        t
+                    ))
+                    if not os.path.isfile(resource):
+                        continue
+
+                    if not nm.setFileName( t ):
+                        continue
+                    
+                    res = nm.resource
+
+                    if nm.isRestoredVersion:
+                        if res != '': res = res + " | "
+                        res = res + "v" + str(nm.restoredVersion) + " (restored)"
+
+                    if res == "":
+                        res = "Main (" + nm.extension + ")"
+
+                    item = QListWidgetItem( nm.shortName + " | " + res )
+                    item.setData( Qt.UserRole, resource )
+                    item.setToolTip(t)
+                    self.resourceList.addItem( item )
+
+        self.resourceList.hide()
+        self.resourcesLabel.hide()
+        self._openButton.setEnabled(False)
+
         self.resourceList.clear()
         self.versionList.clear()
-        self.publishVersionBox.clear()
         
         stepItem = self.stepList.currentItem()
         if not stepItem: return
@@ -330,6 +487,8 @@ class ImportDialog( QDialog ):
 
         # If open, list resources in wip folder
         if self.openButton.isChecked():
+            self.resourceList.show()
+            self.resourcesLabel.show()
             # Shots and Assets
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 if not currentItem: return
@@ -358,61 +517,42 @@ class ImportDialog( QDialog ):
             # Templates
             else:
                 # List resources
-                folder = step.templatesFolderPath()
-                if folder == '': return
+                listTemplateResources(step)
 
-                for f in os.listdir( folder ):
-                    nm = ram.RamFileInfo()
-                    if not nm.setFileName( f ):
-                        continue
-
-                    if nm.project != step.projectShortName():
-                        continue
-
-                    if nm.step != step.shortName():
-                        continue
-
-                    res = nm.shortName + ' | ' + nm.resource
-
-                    if res == "":
-                        res = "Main (" + nm.extension + ")"
-                        self._openButton.setEnabled(True)
-
-                    resource = ram.RamFileManager.buildPath((
-                        folder,
-                        f
-                    ))
-
-                    item = QListWidgetItem( res )
-                    item.setData( Qt.UserRole, resource )
-                    item.setToolTip(f)
-                    self.resourceList.addItem( item )
-
-        # If import, list all subfolders
+        # If import asset or shot, list all subfolders
+        elif self.assetButton.isChecked() or self.shotButton.isChecked():
+            self.__listPublishedVersions()
+        # If import template, list resources
         else:
-            folders = []
-            if self.assetButton.isChecked() or self.shotButton.isChecked():
-                if not currentItem: return
-                folders = currentItem.publishedVersionFolderPaths( step )
+            self.resourceList.show()
+            self.resourcesLabel.show()
+            listTemplateResources(step)
+        
+    def __listPublishedVersions(self):
+        self.publishVersionBox.clear()
+        folders = []
+        currentItem = self.getItem()
+        if not currentItem: return
+        step = self.getStep()
+        if not step: return
+        folders = currentItem.publishedVersionFolderPaths( step )
+
+        for f in reversed(folders): # list more recent first
+            folderName = os.path.basename( f )
+            folderName = folderName.split("_")
+            title = ""
+
+            # Test length to know what we've got
+            if len(folderName) == 3: # resource, version, state
+                title = folderName[0] + " | v" + folderName[1] + " | " + folderName[2]
+            elif len(folderName) < 3: # version (state)
+                if int(folderName[0]) != 0:
+                    title = "v" + " | ".join(folderName)
             else:
-                folders = step.templatesPublishedVersionFolderPaths( )
+                title = " | ".join(folderName)
 
-            for f in reversed(folders): # list more recent first
-                folderName = os.path.basename( f )
-                folderName = folderName.split("_")
-                title = ""
-
-                # Test length to know what we've got
-                if len(folderName) == 3: # resource, version, state
-                    title = folderName[0] + " | v" + folderName[1] + " | " + folderName[2]
-                elif len(folderName) < 3: # version (state)
-                    if int(folderName[0]) != 0:
-                        title = "v" + " | ".join(folderName)
-                else:
-                    title = " | ".join(folderName)
-
-                self.publishVersionBox.addItem(title, f)
-                self.__updatePublishedFiles()
+            self.publishVersionBox.addItem(title, f)
+            self.__updatePublishedFiles()
 
     @Slot()
     def __updatePublishedFiles(self):
@@ -435,9 +575,14 @@ class ImportDialog( QDialog ):
     @Slot()
     def __resourceChanged(self, row):
 
+        # Import, list publish files for templates
         if self.importButton.isChecked():
+            if self.assetButton.isChecked() or self.shotButton.isChecked():
+                return
+            self.__listPublishedVersions()
             return
 
+        # Open, list versions
         if row < 0:
             self._openButton.setEnabled(False)
         else:
@@ -450,10 +595,7 @@ class ImportDialog( QDialog ):
         
         # List versions
         versionFiles = ()
-        if self.assetButton.isChecked() or self.shotButton.isChecked():
-            versionFiles = currentItem.versionFilePaths( self.getResource(), self.getStep() )
-        else:
-            versionFiles = currentItem.versionFilePaths( )
+        versionFiles = currentItem.versionFilePaths( self.getResource(), self.getStep() )
 
         if len(versionFiles) == 0: return
 
@@ -481,13 +623,26 @@ class ImportDialog( QDialog ):
     @Slot()
     def __versionChanged(self, row):
         self._importButton.setEnabled(row >= 0)
+        self._replaceButton.setEnabled(row >= 0)
 
     @Slot()
     def __import(self):
         self.done(2)
 
-    def setImportMode(self, importMode=True):
-        self.importButton.setChecked( importMode )
+    @Slot()
+    def __replace(self):
+        self.done(3)
+
+    # <== PUBLIC METHODS ==>
+
+    def setMode(self, mode="open"):
+        """Sets the mode of the window, either open, import or replace"""
+        if mode == "import":
+            self.__importButtonClicked()
+        elif mode == "replace":
+            self.__replaceButtonClicked()
+        else:
+            self.__openButtonClicked()
         self.__actionChanged()
 
     def setProject(self, project):
@@ -534,18 +689,14 @@ class ImportDialog( QDialog ):
 
     def getItem(self):
         """Returns the Item (RamAsset, RamShot or RamItem if template) currently selected."""
+        
         # if it's an asset or a shot, get from itemList
         if self.shotButton.isChecked() or self.assetButton.isChecked():
             item = self.itemList.currentItem()
             if not item: return None
             return item.data(Qt.UserRole)
 
-        # if it's a template, get the item from the path of the selected resource (or version if import)
-        if self.importButton.isChecked():
-            item = self.versionList.currentItem()
-            if not item: return None
-            return ram.RamItem.fromPath( item.data(Qt.UserRole ) )
-        
+        # if it's a template, get the item from the path of the selected resource (or version if import)        
         item = self.resourceList.currentItem()
         if not item: return None
         return ram.RamItem.fromPath( item.data(Qt.UserRole) )
