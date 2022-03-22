@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""UI for the preview options"""
 
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QCheckBox,
@@ -19,13 +20,10 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 )
 
 import maya.cmds as cmds # pylint: disable=import-error
-import maya.mel as mel # pylint: disable=import-error
 import dumaf as maf
 
-import ramses as ram
-ramses = ram.Ramses.instance()
-
 class PreviewDialog( QDialog ):
+    """The dialog for preview options"""
 
     def __init__(self, parent=None):
         super(PreviewDialog, self).__init__(parent)
@@ -34,12 +32,12 @@ class PreviewDialog( QDialog ):
         self.pbLayout = 'ramsesPlayblasterLayout'
         self.modelPanel = 'ramsesPlayblasterPanel'
 
-        self.__setupUi()
-        self.__loadCameras()
+        self._setupUi()
+        self._loadCameras()
         self.showRenderer()
-        self.__connectEvents()
+        self._connectEvents()
 
-    def __setupUi(self):
+    def _setupUi(self):
         self.setWindowTitle( "Create preview" )
 
         mainLayout = QVBoxLayout()
@@ -105,6 +103,9 @@ class PreviewDialog( QDialog ):
         renderOptionsLayout.addWidget(self.onlyPolyBox)
         self.motionTrailBox = QCheckBox("Show Motion Trails")
         renderOptionsLayout.addWidget(self.motionTrailBox)
+        self.showHudBox = QCheckBox("Show HUD")
+        self.showHudBox.setChecked(True)
+        renderOptionsLayout.addWidget(self.showHudBox)
         renderOptionsWidget.setLayout( renderOptionsLayout )
         topLayout.addRow("Renderer:", renderOptionsWidget)
 
@@ -126,26 +127,26 @@ class PreviewDialog( QDialog ):
 
         self.setLayout(mainLayout)
 
-    def __connectEvents(self):
-        self._playblastButton.clicked.connect( self.__ok )
+    def _connectEvents(self):
+        self._playblastButton.clicked.connect( self._ok )
         self._playblastButton.clicked.connect( self.accept )
-        self._thumbnailButton.clicked.connect( self.__ok )
-        self._thumbnailButton.clicked.connect( self.__thumbnail )
+        self._thumbnailButton.clicked.connect( self._ok )
+        self._thumbnailButton.clicked.connect( self._thumbnail )
         self._cancelButton.clicked.connect( self.reject )
         self.rejected.connect(self.hideRenderer)
-        self.displayAppearenceBox.currentIndexChanged.connect( self.__updateLightsBox )
-        self.displayAppearenceBox.currentIndexChanged.connect( self.__updateRenderer )
-        self.useLightsBox.currentIndexChanged.connect( self.__updateRenderer )
-        self.displayTexturesBox.clicked.connect( self.__updateRenderer )
-        self.motionTrailBox.clicked.connect( self.__updateRenderer )
-        self.displayShadowsBox.clicked.connect( self.__updateRenderer )
-        self.cameraBox.currentIndexChanged.connect( self.__updateRenderer )
-        self.aaBox.clicked.connect( self.__updateRenderer )
-        self.aoBox.clicked.connect( self.__updateRenderer )
+        self.displayAppearenceBox.currentIndexChanged.connect( self._updateLightsBox )
+        self.displayAppearenceBox.currentIndexChanged.connect( self._updateRenderer )
+        self.useLightsBox.currentIndexChanged.connect( self._updateRenderer )
+        self.displayTexturesBox.clicked.connect( self._updateRenderer )
+        self.motionTrailBox.clicked.connect( self._updateRenderer )
+        self.displayShadowsBox.clicked.connect( self._updateRenderer )
+        self.cameraBox.currentIndexChanged.connect( self._updateRenderer )
+        self.aaBox.clicked.connect( self._updateRenderer )
+        self.aoBox.clicked.connect( self._updateRenderer )
         self.sizeSlider.valueChanged.connect( self.sizeEdit.setValue )
         self.sizeEdit.valueChanged.connect( self.sizeSlider.setValue )
 
-    def __updateRenderer(self):
+    def _updateRenderer(self):
         cmds.modelEditor(self.modelEditor,
             camera=self.cameraBox.currentData(), 
             displayAppearance=self.displayAppearenceBox.currentData(),
@@ -159,6 +160,7 @@ class PreviewDialog( QDialog ):
         cmds.setAttr('hardwareRenderingGlobals.ssaoEnable', self.aoBox.isChecked() ) # AO
 
     def showRenderer(self):
+        """Shows the renderer window / Maya viewport for capturing the preview"""
         # Get/Create window
         if not cmds.window( self.pbWin, exists=True, query=True):
             cmds.window( self.pbWin )
@@ -188,7 +190,7 @@ class PreviewDialog( QDialog ):
         self.modelEditor = cmds.modelPanel(self.modelPanel, modelEditor=True, query=True)
         # Adjust render setting
         cmds.modelEditor(self.modelEditor, activeView=True, edit=True)
-        self.__updateRenderer()
+        self._updateRenderer()
         
         # Adjust cam
         cmds.camera(self.cameraBox.currentData(),e=True,displayFilmGate=False,displayResolution=False,overscan=1.0)
@@ -198,21 +200,21 @@ class PreviewDialog( QDialog ):
         # Show window
         cmds.showWindow( self.pbWin )
 
-    def __ok(self):
+    def _ok(self):
         if self.onlyPolyBox.isChecked():
             cmds.modelEditor(self.modelEditor, e=True, alo=False) # only polys, all off
             cmds.modelEditor(self.modelEditor, e=True, polymeshes=True) # polys
             cmds.modelEditor(self.modelEditor, e=True, motionTrails=self.motionTrailBox.isChecked() )
 
     Slot()
-    def __updateLightsBox(self, index):
+    def _updateLightsBox(self, index):
         self.useLightsBox.setEnabled( index < 2 )
 
     Slot()
-    def __thumbnail(self):
+    def _thumbnail(self):
         self.done(2)
 
-    def __loadCameras(self):
+    def _loadCameras(self):
         cameras = cmds.ls(type='camera')
         renderableCameras = []
         perspCameras = []
@@ -244,25 +246,33 @@ class PreviewDialog( QDialog ):
         for camera in orthoCameras:
             cameraName = maf.Path.baseName(camera)
             self.cameraBox.addItem( cameraName, camera)
-    
+
     def comment(self):
+        """Returns the comment added by the user"""
         return self.commentEdit.text()
 
     def camera(self):
+        """Returns the selected camera"""
         return self.cameraBox.currentData()
 
     def getSize(self):
+        """Returns the size %"""
         return self.sizeEdit.value() / 100.0
+
+    def showHUD(self):
+        """Returns True if the HUD has to be shown"""
+        return self.showHudBox.isChecked()
 
     Slot()
     def hideRenderer(self):
+        """Hides the Maya viewport used to capture the preview"""
         cmds.window( self.pbWin, visible=False, edit=True)
 
     def setWindowSize(self):
+        """Changes the size of the viewport used to capture the preview"""
         s = self.getSize()
         w = cmds.getAttr("defaultResolution.width") * s - 4
         h = cmds.getAttr("defaultResolution.height") * s - 23
         cmds.windowPref(self.pbWin, maximized=False, edit=True)
         cmds.window(self.pbWin, width=w, height=h, edit=True)
         cmds.refresh(cv=True)
-

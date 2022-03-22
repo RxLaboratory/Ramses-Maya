@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """Maya commands"""
 
-import os, re, platform, subprocess, tempfile, shutil
+import os
+import re
+import platform
+import subprocess
+import tempfile
+import shutil
 from datetime import datetime, timedelta
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
@@ -41,6 +46,7 @@ def checkDaemon():
     return True
 
 def getSaveFilePath( filePath ):
+    """Returns the file path for saving the given scene"""
     # Ramses will check if the current file has to be renamed to respect the Ramses Tree and Naming Scheme
     saveFilePath = ram.RamFileManager.getSaveFilePath( filePath )
     if saveFilePath == '': # Ramses may return None if the current file name does not respeect the Ramses Naming Scheme
@@ -60,6 +66,7 @@ def getSaveFilePath( filePath ):
     return saveFilePath
 
 def getCurrentProject( filePath ):
+    """Returns the RamProject for this file"""
     nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
     # Set the project and step
@@ -74,6 +81,7 @@ def getCurrentProject( filePath ):
     return project
 
 def getStep( filePath ):
+    """Returns the RamStep for this file"""
     project = getCurrentProject( filePath )
     nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
@@ -82,6 +90,7 @@ def getStep( filePath ):
     return None
 
 def getNameManager( filePath ):
+    """Returns a RamFileInfo for the file"""
     nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
     if nm.project == '':
@@ -92,6 +101,7 @@ def getNameManager( filePath ):
     return nm
 
 def getPreviewFolder( item, step):
+    """Returns the preview subfolder for the RamItem and the RamStep"""
     previewFolder = item.previewFolderPath( step )
     if previewFolder == '':
         ram.log("I can't find the publish folder for this item, maybe it does not respect the ramses naming scheme or it is out of place.", ram.LogLevel.Fatal)
@@ -109,7 +119,7 @@ def getTempDir():
     return tempDir
 
 def createPlayblast(filePath, size):
-
+    """Creates a playblast"""
     # Warning, That's for win only ! Needs work on MAC/Linux
     # TODO MAC: open playblast at the end
     # TODO MAC/LINUX: video (audio) playblast format must not be avi
@@ -128,7 +138,7 @@ def createPlayblast(filePath, size):
     if not os.path.isdir(tempDir):
         os.makedirs(tempDir)
     imageFile = tempDir + '/' + 'blast'
-    
+
     # Create jpg frame sequence
     w = cmds.getAttr("defaultResolution.width") * size
     h = cmds.getAttr("defaultResolution.height") * size
@@ -195,7 +205,7 @@ def createPlayblast(filePath, size):
     ffmpegProcess = subprocess.Popen(ffmpegArgs,shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) # Launch!
 
     output = ffmpegProcess.communicate()
-    #ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
+    ram.log('FFmpeg output: ' + str(output[1]), ram.LogLevel.Debug)
 
     # Remove temp files
     shutil.rmtree(tempDir)
@@ -208,6 +218,7 @@ def createPlayblast(filePath, size):
         subprocess.call(["xdg-open", filePath])
 
 def createThumbnail(filePath):
+    """Saves a thumbnail for the current viewport at filepath"""
     cmds.refresh(cv=True, fn = filePath)
 
 class RamSaveCmd( om.MPxCommand ):
@@ -898,7 +909,7 @@ class RamPreviewCmd( om.MPxCommand ):
     def run(self, args):
         currentFilePath = cmds.file( q=True, sn=True )
 
-        # Get the save path 
+        # Get the save path
         saveFilePath = getSaveFilePath( currentFilePath )
         if saveFilePath == '':
             return
@@ -939,6 +950,7 @@ class RamPreviewCmd( om.MPxCommand ):
         comment = dialog.comment()
         cam = dialog.camera()
         size = dialog.getSize()
+        hud = dialog.showHUD()
 
         # Remove all current HUD
         currentHuds = cmds.headsUpDisplay(listHeadsUpDisplays=True)
@@ -946,28 +958,76 @@ class RamPreviewCmd( om.MPxCommand ):
             for hud in currentHuds:
                 cmds.headsUpDisplay(hud, remove=True)
         # Add ours
-        # Collect info
-        itemName = currentItem.name()
-        if itemName == '':
-            itemName = currentItem.shortName()
-        if currentItem.itemType() == ram.ItemType.SHOT:
-            itemName = 'Shot: ' + itemName 
-        elif currentItem.itemType() == ram.ItemType.ASSET:
-            itemName = 'Asset: ' + itemName
-        else:
-            itemName = 'Item: ' + itemName
-        camName = maf.Path.baseName(cam)
-        focalLength = str(round(cmds.getAttr(cam + '.focalLength'))) + ' mm'
-        if cmds.keyframe(cam, at='focalLength', query=True, keyframeCount=True):
-            focalLength = 'Animated'
+        if (hud):
+            # Collect info
+            itemName = currentItem.name()
+            if itemName == '':
+                itemName = currentItem.shortName()
+            if currentItem.itemType() == ram.ItemType.SHOT:
+                itemName = 'Shot: ' + itemName 
+            elif currentItem.itemType() == ram.ItemType.ASSET:
+                itemName = 'Asset: ' + itemName
+            else:
+                itemName = 'Item: ' + itemName
+            camName = maf.Path.baseName(cam)
+            focalLength = str(round(cmds.getAttr(cam + '.focalLength'))) + ' mm'
+            if cmds.keyframe(cam, at='focalLength', query=True, keyframeCount=True):
+                focalLength = 'Animated'
 
-        cmds.headsUpDisplay('RamItem',section=2, block=0,ba='center', blockSize='large', label=itemName, labelFontSize='large')
-        cmds.headsUpDisplay('RamStep',section=2, block=1,ba='center',blockSize='small', label='Step: ' + currentStep, labelFontSize='small')
-        if comment != '':
-            cmds.headsUpDisplay('RamComment',section=5, block=0, blockSize='small', ba='left', label='Comment : ' + comment, labelFontSize='small')
-        cmds.headsUpDisplay('RamCurrentFrame',section=0, block=0, blockSize='large', label='Frame ',pre='currentFrame', labelFontSize='large',dfs='large')
-        cmds.headsUpDisplay('RamCam',section=7, block=0, blockSize='large', label='Camera: ' + camName, labelFontSize='large')
-        cmds.headsUpDisplay('RamFocalLength',section=9, block=0, blockSize='large', label='Focal Length: ' + focalLength,labelFontSize='large')
+            cmds.headsUpDisplay(
+                'RamItem',
+                section=2,
+                block=0,
+                ba='center',
+                blockSize='large',
+                label=itemName,
+                labelFontSize='large'
+                )
+            cmds.headsUpDisplay(
+                'RamStep',
+                section=2,
+                block=1,
+                ba='center',
+                blockSize='small',
+                label='Step: ' + currentStep,
+                labelFontSize='small'
+                )
+            if comment != '':
+                cmds.headsUpDisplay(
+                    'RamComment',
+                    section=5,
+                    block=0,
+                    blockSize='small',
+                    ba='left',
+                    label='Comment : ' + comment,
+                    labelFontSize='small'
+                    )
+            cmds.headsUpDisplay(
+                'RamCurrentFrame',
+                section=0,
+                block=0,
+                blockSize='large',
+                label='Frame ',
+                pre='currentFrame',
+                labelFontSize='large',
+                dfs='large'
+                )
+            cmds.headsUpDisplay(
+                'RamCam',
+                section=7,
+                block=0,
+                blockSize='large',
+                label='Camera: ' + camName,
+                labelFontSize='large'
+                )
+            cmds.headsUpDisplay(
+                'RamFocalLength',
+                section=9,
+                block=0,
+                blockSize='large',
+                label='Focal Length: ' + focalLength,
+                labelFontSize='large'
+                )
 
         # Save path
         pbNM = nm.copy()
@@ -1001,7 +1061,7 @@ class RamPreviewCmd( om.MPxCommand ):
 
         # Hide window
         dialog.hideRenderer()
-        
+
         # Set back render SETTINGS
         cmds.setAttr('hardwareRenderingGlobals.multiSampleEnable',currentAA)
         cmds.setAttr('hardwareRenderingGlobals.ssaoEnable',currentAO)
