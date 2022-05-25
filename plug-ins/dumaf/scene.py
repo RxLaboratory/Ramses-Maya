@@ -55,4 +55,4 @@ class Scene():
             returnNewNodes=True,
             ns=nameSpace
         )
-        return DuMaNode.getDuMaNodes(nodes)
+        return DuMaNode.get_dumanodes(nodes)

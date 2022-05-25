@@ -25,7 +25,7 @@ import maya.cmds as cmds  # pylint: disable=import-error
 class DuMaNode():
     """A wrapper class for maya nodes"""
 
-    nonDeletableObjects = [
+    non_deletable_objects = [
         '|frontShape',
         '|front',
         '|perspShape',
@@ -43,78 +43,78 @@ class DuMaNode():
 
     # <== Constructor ==>
 
-    def __init__(self, nodePath):
+    def __init__(self, node_path):
 
-        if isinstance(nodePath, DuMaNode):
+        if isinstance(node_path, DuMaNode):
             # Copy constructor
 
             # Get the uuid
-            self.__uuid = nodePath.uuid()
+            self.__uuid = node_path.uuid()
         else:
             # Get the uuid
             # For some reason, Maya returns the short names if queried with uuid,
             # We need to get the full paths first...
-            nPath = cmds.ls(nodePath, long=True)
-            if len(nPath) > 0:
-                self.__uuid = cmds.ls(nPath, uuid=True)[0]
+            node_paths = cmds.ls(node_path, long=True)
+            if len(node_paths) > 0:
+                self.__uuid = cmds.ls(node_paths, uuid=True)[0]
             else:
-                raise ValueError("Sorry, the node '" + nodePath + "' doesn't exist.")
+                raise ValueError("Sorry, the node '" + node_path + "' doesn't exist.")
 
     # <== Static ==>
 
     @staticmethod
-    def getDuMaNodes(nodePathsOrUuids):
+    def get_dumanodes(node_paths_or_uuids):
         """Returns a list of DuMaNodes"""
-        if nodePathsOrUuids is None:
+        if node_paths_or_uuids is None:
             return []
         nodes = []
-        for nodePath in nodePathsOrUuids:
+        for nodePath in node_paths_or_uuids:
             nodes.append(DuMaNode(nodePath))
         return nodes
 
     @staticmethod
-    def getCreateGroup(groupName, parentNode=None):
+    def get_create_group(group_name, parent_node=None):
         """Gets or create a group with the groupName in the parentNode"""
-        groupName = groupName.replace(' ', '_')
+        group_name = group_name.replace(' ', '_')
         # Check if exists
-        if parentNode is None:
-            if not groupName.startswith('|'):
-                groupName = '|' + groupName
-            if cmds.objExists(groupName):
-                groupNode = DuMaNode(groupName)
-                if groupNode.isGroup():
+        if parent_node is None:
+            if not group_name.startswith('|'):
+                group_name = '|' + group_name
+            if cmds.objExists(group_name):
+                groupNode = DuMaNode(group_name)
+                if groupNode.is_group():
                     return groupNode
         else:
-            parentNode = DuMaNode(parentNode)
-            childNodes = parentNode.children(recursive=False, transformOnly=True)
+            parent_node = DuMaNode(parent_node)
+            childNodes = parent_node.children(recursive=False, transform_only=True)
             if len(childNodes) > 0:
                 # May end with a number
-                reStr = '^' + re.escape(groupName) + '\\d*$'
+                reStr = '^' + re.escape(group_name) + '\\d*$'
                 regex = re.compile(reStr)
                 for childNode in childNodes:
                     childName = childNode.name()
                     if re.match( regex, childName ):
                         return childNode
         # Create the group
-        groupPath = cmds.group( name= groupName, em=True )
+        groupPath = cmds.group( name= group_name, em=True )
         if not groupPath.startswith('|'):
             groupPath = '|' + groupPath
         groupNode = DuMaNode(groupPath)
-        groupNode.parentTo(parentNode)
+        groupNode.parent_to(parent_node)
         return groupNode
 
     @staticmethod
-    def getEmptyGroups(parentNode=None):
+    def get_empty_groups(parent_node=None):
         """Gets all empty groups children of the parent node or in the scene"""
         nodes = ()
         emptyGroups = []
 
-        if parentNode is None:
+        if parent_node is None:
             nodes = cmds.ls(type='transform')
-            nodes = DuMaNode.getDuMaNodes(nodes)
+            nodes = DuMaNode.get_dumanodes(nodes)
         else:
-            parentNode = DuMaNode(parentNode)
-            nodes = parentNode.children(transformOnly=True)
+            parent_node = DuMaNode(parent_node)
+            nodes = parent_node.children(transform_only=True)
 
         for testNode in nodes:
             if not testNode.isGroup():
@@ -125,40 +125,40 @@ class DuMaNode():
 
 
     @staticmethod
-    def removeEmptyGroups(parentNode=None):
+    def remove_empty_groups(parent_node=None):
         """Removes all empty groups from the scene or the given parent node"""
-        emptyGroups = DuMaNode.getEmptyGroups(parentNode)
+        emptyGroups = DuMaNode.get_empty_groups(parent_node)
         while len(emptyGroups) > 0:
             for group in emptyGroups:
                 group.remove()
-            emptyGroups = DuMaNode.getEmptyGroups(parentNode)
+            emptyGroups = DuMaNode.get_empty_groups(parent_node)
 
     # <== Public ==>
 
-    def name(self, keepNameSpace = False):
+    def name(self, keep_namespace = False):
         """Returns the name of the node"""
         if not self.exists():
             return ''
         nodePath = self.path()
         nodeName = nodePath.split('|')[-1]
-        if not keepNameSpace:
+        if not keep_namespace:
             nodeName = nodeName.split(':')[-1]
         return nodeName
 
-    def centerPivot(self):
+    def center_pivot(self):
         """Moves the pivot to 0,0,0"""
         if not self.exists():
             return
 
         # Works only from transform nodes
-        if not self.isTransform():
+        if not self.is_transform():
             return
 
         nodePath = self.path()
         cmds.move(0, 0, 0, nodePath + ".rotatePivot", absolute=True)
         cmds.move(0, 0, 0, nodePath + ".scalePivot", absolute=True)
 
-    def checkType(self, deleteIfEmpty=True, typesToKeep=()):
+    def check_type(self, delete_if_empty=True, types_to_keep=()):
         """Checks if the node contains one of the given types.
         If not, the node is removed, and optionally if it is empty.
         Note: extra shapes will be removed.
@@ -167,37 +167,37 @@ class DuMaNode():
         if not self.exists:
             return False
 
-        self.removeExtraShapes()
+        self.remove_extra_shapes()
 
-        shapeType = self.shapeType()
+        shapeType = self.shape_type()
 
         # no shape, remove if it is empty
         if shapeType == '':
-            if not self.hasChildren() and deleteIfEmpty:
+            if not self.has_children() and delete_if_empty:
                 self.remove()
                 return False
 
         # if we keep everything
-        if len(typesToKeep) == 0:
+        if len(types_to_keep) == 0:
             return True
 
         # Check type
-        if not shapeType in typesToKeep:
-            self.removeShape()
+        if not shapeType in types_to_keep:
+            self.remove_shape()
             # If it is empty, remove
-            if not self.hasChildren() and deleteIfEmpty:
+            if not self.has_children() and delete_if_empty:
                 self.remove()
                 return False
 
         return True
 
-    def children(self, recursive=True, transformOnly=False):
+    def children(self, recursive=True, transform_only=False):
         """Gets the children of this node"""
         if not self.exists():
             return []
         children = []
         nodePath = self.path()
-        if transformOnly:
+        if transform_only:
             children = cmds.listRelatives(
                 nodePath,
                 ad=recursive,
@@ -210,9 +210,9 @@ class DuMaNode():
             )
         if children is None:
             return []
-        return DuMaNode.getDuMaNodes(children)
+        return DuMaNode.get_dumanodes(children)
 
-    def createRootController(self, ctrlName):
+    def create_root_controller(self, crtl_name):
         """Creates and returns a curve to be used as a controller for this node"""
         if not self.exists():
             return None
@@ -236,13 +236,13 @@ class DuMaNode():
         cv3 = ( xmax + margin, 0, zmax + margin)
         cv4 = ( xmin - margin, 0, zmax + margin)
         cv5 = cv1
-        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrlName)
+        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=crtl_name)
         controller = DuMaNode(controller)
         # Parent the node
-        self.parentTo(controller)
+        self.parent_to(controller)
         return controller
 
-    def deleteHistory(self):
+    def delete_history(self):
         """Deletes the construction history of the node"""
         if not self.exists():
             return
@@ -261,13 +261,13 @@ class DuMaNode():
             return False
         return cmds.objExists(nodePath)
 
-    def freezeTransform(self):
+    def freeze_transform(self):
         """Resets the transformation matrix to 0"""
         if not self.exists():
             return
 
         # Works only from transform nodes
-        if not self.isTransform():
+        if not self.is_transform():
             return
 
         nodePath = self.path()
@@ -275,126 +275,126 @@ class DuMaNode():
             cmds.makeIdentity(nodePath, apply=True, t=1, r=1, s=1, n=0)
         except RuntimeError:
             return
-        self.centerPivot()
+        self.center_pivot()
 
-    def getAttr(self, attribute):
+    def get_attr(self, attribute):
         """Gets the value of the Maya attribute"""
         if not self.exists():
             return None
-        if not self.hasAttr(attribute):
+        if not self.has_attr(attribute):
             return None
 
         nodePath = self.path()
         return cmds.getAttr(nodePath + '.' + attribute)
 
-    def hasChildren(self):
+    def has_children(self):
         """Checks if the nodes has any children"""
         if not self.exists():
             return False
-        return len(self.children(transformOnly=True)) != 0
+        return len(self.children(transform_only=True)) != 0
 
-    def hasParent(self):
+    def has_parent(self):
         """Checks if the node has a parent"""
         if not self.exists():
             return False
         return cmds.listRelatives(self.path(), p=True, f=True) is not None
 
-    def hasAttr(self, attribute):
+    def has_attr(self, attribute):
         """Checks if the nodes has the given Maya attribute"""
         if not self.exists():
             return False
         nodePath = self.path()
         return cmds.attributeQuery(attribute, n=nodePath, exists=True)
 
-    def importReference(self):
+    def import_reference(self):
         """Imports the reference file is this node is part of a reference"""
         if not self.exists():
             return
-        if not self.isReferenced():
+        if not self.is_referenced():
             return
 
-        refFile = self.referenceFile()
+        refFile = self.reference_file()
         cmds.file(refFile, importReference=True)
 
-    def isGroup(self):
+    def is_group(self):
         """Check if the node is a group (does not have any shape)"""
         if not self.exists():
             return False
         # A group is a transform node
-        if not self.isTransform():
+        if not self.is_transform():
             return False
         # And it does not have any child shape
         nodePath = self.path()
         return cmds.listRelatives(nodePath, s=True, f=True) is None
 
-    def isHidden(self):
+    def is_hidden(self):
         """Checks if the node is hidden.
         Note that if it does not have a visibility attribute,
         this function returns False"""
         if not self.exists():
             return False
-        if not self.hasAttr('visibility'):
+        if not self.has_attr('visibility'):
             return False
-        return self.getAttr('visibility') == 0
+        return self.get_attr('visibility') == 0
 
-    def isReferenced(self):
+    def is_referenced(self):
         """Checks if this node is part of a reference"""
         if not self.exists():
             return False
         nodePath = self.path()
         return cmds.referenceQuery(nodePath, isNodeReferenced=True)
 
-    def isTransform(self):
+    def is_transform(self):
         """Checks if this is a transform node"""
         if not self.exists():
             return False
         return cmds.nodeType(self.path()) == 'transform'
 
-    def isVisible(self):
+    def is_visible(self):
         """Checks if the node is visible.
         Note that if it does not have a visibility attribute,
         this function returns True"""
         if not self.exists():
             return False
-        return not self.isHidden()
+        return not self.is_hidden()
 
-    def lockTransform(self, lockNode=True, lockChildren=False):
+    def lock_transform(self, lock_node=True, lock_children=False):
         """Locks all transformation of the node"""
         if not self.exists():
             return
         # This is not a transform node
-        if not self.isTransform():
+        if not self.is_transform():
             return
-        if lockChildren:
-            children = self.children(transformOnly=True)
+        if lock_children:
+            children = self.children(transform_only=True)
             for child in children:
-                child.lockTransform(lockNode)
+                child.lockTransform(lock_node)
 
         nodePath = self.path()
         for attr in ['.tx', '.ty', '.tz', '.rx', '.ry', '.rz', '.sx', '.sy', '.sz']:
-            cmds.setAttr(nodePath + attr, lock=lockNode)
+            cmds.setAttr(nodePath + attr, lock=lock_node)
 
-    def lockVisibility(self, lockNode=True, lockChildren=False):
+    def lock_visibility(self, lock_node=True, lock_children=False):
         """Locks the visibility of the node"""
         if not self.exists():
             return
 
-        if lockChildren:
-            children = self.children(transformOnly=True)
+        if lock_children:
+            children = self.children(transform_only=True)
             for child in children:
-                child.lockVisibility(lockNode)
+                child.lockVisibility(lock_node)
 
         nodePath = self.path()
         if not cmds.attributeQuery('visibility', n=nodePath, exists=True):
             return
-        cmds.setAttr(nodePath + '.visibility', lock=lockNode)
+        cmds.setAttr(nodePath + '.visibility', lock=lock_node)
 
-    def moveToZero(self):
+    def move_to_zero(self):
         """Moves the node to the [0,0,0] coordinate (translation)"""
         if not self.exists():
             return
         # Unlock transform to be able to move
-        self.lockTransform(False)
+        self.lock_transform(False)
         nodePath = self.path()
         cmds.setAttr(nodePath + '.tx', 0)
         cmds.setAttr(nodePath + '.ty', 0)
@@ -413,7 +413,7 @@ class DuMaNode():
 
         return None
 
-    def parentTo(self, parent, rel=False):
+    def parent_to(self, parent, rel=False):
         """Parents the node to the parent"""
         if not self.exists():
             return
@@ -443,12 +443,12 @@ class DuMaNode():
             return ''
         return paths[0]
 
-    def referenceFile(self):
+    def reference_file(self):
         """Gets the source file of the reference if this node is part of a reference"""
         if not self.exists():
             return
 
-        if not self.isReferenced:
+        if not self.is_referenced:
             return None
 
         nodePath = self.path()
@@ -461,22 +461,22 @@ class DuMaNode():
         if not self.exists():
             return
 
-        children = self.children(transformOnly=True)
+        children = self.children(transform_only=True)
         for child in children:
             child.importReference()
         nodePath = self.path()
         cmds.delete(nodePath)
 
-    def removeShape(self):
+    def remove_shape(self):
         """Removes the shape from this node"""
         if not self.exists():
             return
-        self.removeExtraShapes()
+        self.remove_extra_shapes()
         shape = self.shape()
         if shape is not None:
             shape.remove()
 
-    def removeExtraShapes(self):
+    def remove_extra_shapes(self):
         """Removes all extra shapes from this node"""
         if not self.exists():
             return
@@ -489,7 +489,7 @@ class DuMaNode():
             for shape in shapes[1:]:
                 shape.remove()
 
-    def renameShapes(self):
+    def rename_shapes(self):
         """Automatically renames the shapes after the transform node name"""
         if not self.exists():
             return
@@ -515,7 +515,7 @@ class DuMaNode():
         nodePath = self.path()
         # The shapes of this node
         shapePaths = cmds.listRelatives(nodePath,s=True,f=True)
-        return DuMaNode.getDuMaNodes(shapePaths)
+        return DuMaNode.get_dumanodes(shapePaths)
 
     def shape(self):
         """Gets the main shape of this node"""
@@ -526,7 +526,7 @@ class DuMaNode():
             return None
         return shapes[0]
 
-    def snap(self, targetNode):
+    def snap(self, target_node):
         """Moves the node to the target.
         The current translation value is kept (offset from current parent is kept)"""
         if not self.exists():
@@ -536,12 +536,12 @@ class DuMaNode():
         parent = self.parent()
 
         # Parent with snap
-        self.parentTo(targetNode, True)
+        self.parent_to(target_node, True)
 
         # Reparent
-        self.parentTo(parent)
+        self.parent_to(parent)
 
-    def shapeType(self):
+    def shape_type(self):
         """Checks the type of the shape of this node"""
         if not self.exists():
             return ''
@@ -551,11 +551,11 @@ class DuMaNode():
         shapePath = shape.path()
         return cmds.nodeType(shapePath)
 
-    def unParent(self):
+    def unparent(self):
         """Unparents (= parents to the world) the node"""
         if not self.exists():
             return
-        self.parentTo('|')
+        self.parent_to('|')
 
     def uuid(self):
         """Returns the uuid of this node"""
@@ -567,4 +567,4 @@ if __name__ == '__main__':
     node = DuMaNode('pCube1')
 
     print(node.path())
-    print(node.deleteHistory())
+    print(node.delete_history())

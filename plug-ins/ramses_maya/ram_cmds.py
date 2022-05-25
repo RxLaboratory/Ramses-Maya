@@ -850,13 +850,13 @@ class RamOpenCmd( om.MPxCommand ):
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                group = maf.DuMaNode.getCreateGroup(groupName)
+                group = maf.DuMaNode.get_create_group(groupName)
 
                 # Import the file
                 newNodes = maf.Scene.importFile(filePath, itemShortName)
                 
                 # Add a group for the imported asset
-                itemGroup = maf.DuMaNode.getCreateGroup( itemShortName, group)
+                itemGroup = maf.DuMaNode.get_create_group( itemShortName, group)
                 # Parent the imported nodes
                 for node in newNodes:
                     # only the root transform nodes
