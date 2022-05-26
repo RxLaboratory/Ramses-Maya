@@ -7,7 +7,7 @@ import ramses_maya as ram
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
 VENDOR = "RxLaboratory"
-VERSION = "0.2.13-Alpha"
+VERSION = "0.3.0-Alpha"
 
 def maya_useNewAPI(): # pylint: disable=invalid-name
     """

@@ -3,6 +3,7 @@
 The UI for publishing scenes
 """
 
+import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QMainWindow,
     QVBoxLayout,
@@ -22,15 +23,25 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QComboBox,
     QLineEdit,
     QSpinBox,
-    QDoubleSpinBox
+    QDoubleSpinBox,
+    QFileDialog
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
     Qt,
 )
+from PySide2.QtGui import (  # pylint: disable=no-name-in-module
+    QKeySequence,
+)
 from maya import cmds # pylint: disable=import-error
 import yaml
 from dumaf import DuMaNode
+from .utils import (
+    PUBLISH_PRESETS_PATH,
+    open_help,
+    about_ramses,
+    open_api_reference
+)
 
 # NOTE
 # formats to implement: abc, ma, mb, ma shaders, mb shaders, ass
@@ -55,6 +66,7 @@ class PublishDialog(QMainWindow):
         self.__setup_ui()
         self.__setup_menu()
         self.__connect_events()
+        self.set_preset_folder("")
         self.__update_preset()
 
     # <== PRIVATE METHODS ==>
@@ -63,9 +75,14 @@ class PublishDialog(QMainWindow):
         edit_menu = self.menuBar().addMenu("Edit")
         self.__save_preset_action = edit_menu.addAction("Save preset...")
         self.__load_preset_action = edit_menu.addAction("Load preset...")
+        self.__save_preset_action.setShortcut(QKeySequence("Ctrl+S"))
+        self.__load_preset_action.setShortcut(QKeySequence("Ctrl+O"))
 
         help_menu = self.menuBar().addMenu("Help")
         self.__help_action = help_menu.addAction("Ramses Maya Add-on help...")
+        self.__about_ramses_action = help_menu.addAction("Ramses general help...")
+        self.__api_reference_action = help_menu.addAction("Ramses API reference...")
+        self.__help_action.setShortcut(QKeySequence("F1"))
 
     def __setup_ui(self):
         self.setWindowFlag(Qt.Dialog)
@@ -118,16 +135,11 @@ class PublishDialog(QMainWindow):
         general_widget = QWidget()
         self.__ui_stacked_layout.addWidget(general_widget)
         general_layout = QFormLayout(general_widget)
+        general_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         general_layout.setSpacing(3)
 
-        self.__ui_built_in_preset = QComboBox()
-        self.__ui_built_in_preset.addItem("None")
-        self.__ui_built_in_preset.addItem("Simple.mb")
-        self.__ui_built_in_preset.addItem("Geometry.abc")
-        self.__ui_built_in_preset.addItem("Rig.ma")
-        self.__ui_built_in_preset.addItem("Animation.abc")
-        self.__ui_built_in_preset.addItem("Shaders.mb")
-        general_layout.addRow("Built-in preset:", self.__ui_built_in_preset)
+        self.__ui_preset_box = QComboBox()
+        general_layout.addRow("Preset:", self.__ui_preset_box)
 
         format_widget = QWidget()
         format_layout = QVBoxLayout(format_widget)
@@ -176,36 +188,30 @@ class PublishDialog(QMainWindow):
 
         pre_publish_layout = QFormLayout()
         pre_publish_layout.setSpacing(3)
+        pre_publish_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         pre_publish_vlayout.addLayout(pre_publish_layout)
 
         self.__ui_import_references_box = QCheckBox("Import references")
-        self.__ui_import_references_box.setChecked(True)
         pre_publish_layout.addRow("Clean:", self.__ui_import_references_box)
 
         self.__ui_remove_namespaces_box = QCheckBox("Remove namespaces")
-        self.__ui_remove_namespaces_box.setChecked(True)
         pre_publish_layout.addRow("", self.__ui_remove_namespaces_box)
 
         self.__ui_remove_hidden_nodes_box = QCheckBox("Remove hidden nodes")
-        self.__ui_remove_hidden_nodes_box.setChecked(True)
         pre_publish_layout.addRow("", self.__ui_remove_hidden_nodes_box)
 
         self.__ui_delete_history_box = QCheckBox("Delete node history")
-        self.__ui_delete_history_box.setChecked(True)
         pre_publish_layout.addRow("", self.__ui_delete_history_box)
 
         self.__ui_remove_extra_shapes_box = QCheckBox("Remove extra shapes")
-        self.__ui_remove_extra_shapes_box.setChecked(True)
         pre_publish_layout.addRow("", self.__ui_remove_extra_shapes_box)
 
         self.__ui_remove_animation_box = QCheckBox("Remove animation")
-        self.__ui_remove_animation_box.setChecked(True)
         pre_publish_layout.addRow("", self.__ui_remove_animation_box)
 
         self.__ui_types_box = QComboBox()
         self.__ui_types_box.addItem("Keep", "keep")
         self.__ui_types_box.addItem("Remove", "remove")
-        self.__ui_types_box.setCurrentIndex(1)
         pre_publish_layout.addRow("Types:", self.__ui_types_box)
 
         self.__ui_types_edit = QTextEdit()
@@ -214,7 +220,6 @@ class PublishDialog(QMainWindow):
         pre_publish_layout.addRow("", self.__ui_types_edit)
 
         self.__ui_freeze_transform_box = QCheckBox("")
-        self.__ui_freeze_transform_box.setChecked(True)
         pre_publish_layout.addRow("Freeze transformations", self.__ui_freeze_transform_box)
 
         self.__ui_freeze_white_list_widget = QWidget()
@@ -238,6 +243,7 @@ class PublishDialog(QMainWindow):
 
         maya_layout = QFormLayout()
         maya_layout.setSpacing(3)
+        maya_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         maya_vlayout.addLayout(maya_layout)
 
         self.__ui_maya_format_box = QComboBox()
@@ -246,7 +252,6 @@ class PublishDialog(QMainWindow):
         maya_layout.addRow("Format:", self.__ui_maya_format_box )
 
         self.__ui_maya_hidden_nodes_box = QCheckBox("Lock visibility")
-        self.__ui_maya_hidden_nodes_box.setChecked(True)
         maya_layout.addRow("Hidden nodes:", self.__ui_maya_hidden_nodes_box)
 
         self.__ui_maya_hide_joints_box = QComboBox()
@@ -263,6 +268,7 @@ class PublishDialog(QMainWindow):
         shaders_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( shaders_widget )
         shaders_layout = QFormLayout()
+        shaders_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         shaders_layout.setSpacing(3)
         shaders_vlayout.addLayout(shaders_layout)
 
@@ -278,11 +284,11 @@ class PublishDialog(QMainWindow):
         alembic_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( alembic_widget )
         alembic_layout = QFormLayout()
+        alembic_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         alembic_layout.setSpacing(3)
         alembic_vlayout.addLayout(alembic_layout)
 
         self.__ui_alembic_renderable_box = QCheckBox("Renderable only")
-        self.__ui_alembic_renderable_box.setChecked(True)
         alembic_layout.addRow("Export:", self.__ui_alembic_renderable_box)
 
         self.__ui_alembic_frames_widget = QWidget()
@@ -292,14 +298,10 @@ class PublishDialog(QMainWindow):
         self.__ui_alembic_frame_start_box = QSpinBox()
         self.__ui_alembic_frame_start_box.setMinimum(-10000)
         self.__ui_alembic_frame_start_box.setMaximum(10000)
-        in_frame = int(cmds.playbackOptions(q=True,ast=True))
         frame_range_layout.addWidget( self.__ui_alembic_frame_start_box)
-        self.__ui_alembic_frame_start_box.setValue( in_frame )
         self.__ui_alembic_frame_end_box = QSpinBox()
         self.__ui_alembic_frame_end_box.setMinimum(-10000)
         self.__ui_alembic_frame_end_box.setMaximum(10000)
-        out_frame = int(cmds.playbackOptions(q=True,aet=True))
-        self.__ui_alembic_frame_end_box.setValue(out_frame)
         frame_range_layout.addWidget( self.__ui_alembic_frame_end_box)
         alembic_layout.addRow("Frame range:", self.__ui_alembic_frames_widget)
 
@@ -324,49 +326,99 @@ class PublishDialog(QMainWindow):
         self.__ui_alembic_frame_step_box.setMinimum(0.1)
         self.__ui_alembic_frame_step_box.setMaximum( 100 )
         self.__ui_alembic_frame_step_box.setDecimals(1)
-        self.__ui_alembic_frame_step_box.setValue(1.0)
         alembic_layout.addRow("Frame step:", self.__ui_alembic_frame_step_box)
         
         self.__ui_alembic_filter_euler_box = QCheckBox("Filter Euler rotations")
-        self.__ui_alembic_filter_euler_box.setChecked(True)
         alembic_layout.addRow("", self.__ui_alembic_filter_euler_box)
 
     def __connect_events(self):
         self.__ui_sections_box.currentRowChanged.connect( self.__ui_sections_box_row_changed )
+        # menu
+        self.__load_preset_action.triggered.connect( self.load_preset )
+        self.__save_preset_action.triggered.connect( self.save_preset )
+        self.__help_action.triggered.connect( open_help )
+        self.__about_ramses_action.triggered.connect( about_ramses )
+        self.__api_reference_action.triggered.connect( open_api_reference )
         # format
-        self.__ui_maya_scene_box.clicked.connect( self.__ui_maya_scene_box_clicked )
-        self.__ui_maya_shaders_box.clicked.connect( self.__ui_maya_shaders_box_clicked )
-        self.__ui_alembic_box.clicked.connect( self.__ui_alembic_box_clicked )
-        self.__ui_arnold_scene_source_box.clicked.connect( self.__ui_arnold_scene_source_box_clicked )
+        self.__ui_maya_scene_box.toggled.connect( self.__ui_maya_scene_box_clicked )
+        self.__ui_maya_shaders_box.toggled.connect( self.__ui_maya_shaders_box_clicked )
+        self.__ui_alembic_box.toggled.connect( self.__ui_alembic_box_clicked )
+        self.__ui_arnold_scene_source_box.toggled.connect( self.__ui_arnold_scene_source_box_clicked )
+        self.__ui_preset_box.currentIndexChanged.connect( self.__ui_preset_box_current_changed )
         # general
-        self.__ui_import_references_box.clicked.connect( self.__update_preset )
-        self.__ui_remove_namespaces_box.clicked.connect( self.__update_preset )
-        self.__ui_remove_animation_box.clicked.connect( self.__update_preset )
-        self.__ui_remove_hidden_nodes_box.clicked.connect( self.__update_preset )
-        self.__ui_delete_history_box.clicked.connect( self.__update_preset )
-        self.__ui_remove_extra_shapes_box.clicked.connect( self.__update_preset )
-        self.__ui_freeze_transform_box.clicked.connect( self.__update_preset )
+        self.__ui_import_references_box.toggled.connect( self.__update_preset )
+        self.__ui_remove_namespaces_box.toggled.connect( self.__update_preset )
+        self.__ui_remove_animation_box.toggled.connect( self.__update_preset )
+        self.__ui_remove_hidden_nodes_box.toggled.connect( self.__update_preset )
+        self.__ui_delete_history_box.toggled.connect( self.__update_preset )
+        self.__ui_remove_extra_shapes_box.toggled.connect( self.__update_preset )
+        self.__ui_freeze_transform_box.toggled.connect( self.__update_preset )
         self.__ui_freeze_white_list_edit.textEdited.connect( self.__update_preset )
-        self.__ui_freeze_white_list_case_box.clicked.connect( self.__update_preset )
+        self.__ui_freeze_white_list_case_box.toggled.connect( self.__update_preset )
         self.__ui_types_box.currentIndexChanged.connect( self.__update_preset )
         self.__ui_types_edit.textChanged.connect( self.__update_preset )
         # nodes
-        self.__ui_select_no_nodes.clicked.connect( self.__ui_nodes_tree.clearSelection )
-        self.__ui_select_all_nodes.clicked.connect( self.__ui_nodes_tree.selectAll )
+        self.__ui_select_no_nodes.toggled.connect( self.__ui_nodes_tree.clearSelection )
+        self.__ui_select_all_nodes.toggled.connect( self.__ui_nodes_tree.selectAll )
         # maya
         self.__ui_maya_format_box.currentIndexChanged.connect( self.__update_preset )
         self.__ui_maya_hide_joints_box.currentIndexChanged.connect( self.__update_preset )
-        self.__ui_maya_hidden_nodes_box.clicked.connect( self.__update_preset )
+        self.__ui_maya_hidden_nodes_box.toggled.connect( self.__update_preset )
         # maya shaders
         self.__ui_shaders_format_box.currentIndexChanged.connect( self.__update_preset )
         # alembic
-        self.__ui_alembic_renderable_box.clicked.connect( self.__update_preset )
+        self.__ui_alembic_renderable_box.toggled.connect( self.__update_preset )
         self.__ui_alembic_frame_start_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_frame_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_handle_start_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_handle_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_frame_step_box.valueChanged.connect( self.__update_preset )
-        self.__ui_alembic_filter_euler_box.clicked.connect( self.__update_preset )
+        self.__ui_alembic_filter_euler_box.toggled.connect( self.__update_preset )
+
+    def __load_bool_preset(self, name, options, checkbox, default=None):
+        if name in options:
+            checkbox.setChecked(options[name])
+        elif default is not None:
+            checkbox.setChecked(default)
+
+    def __load_enum_preset( self, name, options, combobox, default=None ):
+        data = default
+        if name in options:
+            data = options[name]
+
+        if data is not None:
+            for i in range(combobox.count()):
+                if combobox.itemData(i, Qt.UserRole) == options[name]:
+                    combobox.setCurrentIndex(i)
+                    break
+
+    def __load_number_preset(self, name, options, spinbox, default=None):
+        if name in options:
+            spinbox.setValue( options[name] )
+        elif default is not None:
+            spinbox.setValue( default )
+
+    def __set_maya_defaults(self, frmt="mb"):
+        self.__ui_maya_scene_box.setChecked(True)
+        # Default maya options
+        if frmt == "mb":
+            self.__ui_maya_format_box.setCurrentIndex(0)
+        else:
+            self.__ui_maya_format_box.setCurrentIndex(1)
+        self.__ui_maya_hide_joints_box.setCurrentIndex(0)
+        self.__ui_maya_hidden_nodes_box.setChecked(True)
+
+    def __set_alembic_defaults(self):
+        self.__ui_alembic_box.setChecked(True)
+        self.__ui_alembic_renderable_box.setChecked(True)
+        in_frame = int(cmds.playbackOptions(q=True,ast=True))
+        self.__ui_alembic_frame_start_box.setValue( in_frame )
+        out_frame = int(cmds.playbackOptions(q=True,aet=True))
+        self.__ui_alembic_frame_end_box.setValue(out_frame)
+        self.__ui_alembic_handle_start_box.setValue(0)
+        self.__ui_alembic_handle_end_box.setValue(0)
+        self.__ui_alembic_frame_step_box.setValue(1)
+        self.__ui_alembic_filter_euler_box.setChecked(True)
 
     # <== PRIVATE SLOTS ==>
 
@@ -378,6 +430,8 @@ class PublishDialog(QMainWindow):
     def __ui_maya_scene_box_clicked(self, checked):
         item = self.__ui_sections_box.item(3)
         item.setHidden(not checked)
+        if checked:
+            self.__set_maya_defaults()
         self.__update_preset()
 
     @Slot(bool)
@@ -390,13 +444,20 @@ class PublishDialog(QMainWindow):
     def __ui_alembic_box_clicked(self, checked):
         item = self.__ui_sections_box.item(5)
         item.setHidden(not checked)
+        if checked:
+            self.__set_alembic_defaults()
         self.__update_preset()
 
-    @Slot(bool)
-    def __ui_arnold_scene_source_box_clicked(self, checked):
+    @Slot()
+    def __ui_arnold_scene_source_box_clicked(self):
         #item = self.__ui_sections_box.item(5)
         #item.setHidden(not checked)
         self.__update_preset()
+
+    @Slot(int)
+    def __ui_preset_box_current_changed(self, index):
+        file_path = self.__ui_preset_box.itemData(index, Qt.UserRole)
+        self.load_preset_file( file_path )
 
     @Slot()
     def __update_preset(self):
@@ -417,16 +478,17 @@ class PublishDialog(QMainWindow):
         options["remove_hidden_nodes"] = self.__ui_remove_hidden_nodes_box.isChecked()
         options["delete_history"] = self.__ui_delete_history_box.isChecked()
         options["remove_extra_shapes"] = self.__ui_remove_extra_shapes_box.isChecked()
-        options["types_mode"] = self.__ui_types_box.currentData(Qt.UserRole)
 
         types_str = self.__ui_types_edit.toPlainText()
         if types_str != "":
+            options["types"] = {}
+            options["types"]["mode"] = self.__ui_types_box.currentData(Qt.UserRole)
             types_arr = types_str.split("\n")
-            options["types"] = []
+            options["types"]["list"] = []
             for type_str in types_arr:
                 type_str = type_str.replace(" ", "")
                 type_str = type_str.replace("\r", "")
-                options["types"].append(type_str)
+                options["types"]["list"].append(type_str)
 
         if self.__ui_freeze_transform_box.isChecked():
             self.__ui_freeze_white_list_widget.setEnabled(True)
@@ -500,8 +562,8 @@ class PublishDialog(QMainWindow):
         abc["renderable_only"] = self.__ui_alembic_renderable_box.isChecked()
         if not self.__ui_remove_animation_box.isChecked():
             abc["animation"] = {}
-            abc["animation"]["in"] = self.__ui_alembic_frame_start_box.value()
-            abc["animation"]["out"] = self.__ui_alembic_frame_end_box.value()
+            #abc["animation"]["in"] = self.__ui_alembic_frame_start_box.value()
+            #abc["animation"]["out"] = self.__ui_alembic_frame_end_box.value()
             abc["animation"]["handle_in"] = self.__ui_alembic_handle_start_box.value()
             abc["animation"]["handle_out"] = self.__ui_alembic_handle_end_box.value()
             abc["animation"]["frame_step"] = self.__ui_alembic_frame_step_box.value()
@@ -539,8 +601,149 @@ class PublishDialog(QMainWindow):
             item.setData(0, Qt.UserRole, node)
             self.__ui_nodes_tree.addTopLevelItem(item)
 
-if __name__ == '__main__':
-    #app = QApplication(sys.argv)
-    publish_dialog = PublishDialog()
-    publish_dialog.show()
-    #sys.exit(app.exec_())
+    def set_preset_folder(self, folder_path):
+        """Sets the default folder for loading/saving presets"""
+
+        if folder_path != "" and os.path.isdir(folder_path):
+            self.__preset_folder = folder_path
+        else:
+            self.__preset_folder = PUBLISH_PRESETS_PATH
+
+        # List files in the folder
+        preset_files = []
+
+        for file_name in os.listdir(self.__preset_folder):
+            ext = os.path.splitext(file_name)[1].lower()
+            if ext == ".yaml" or ext == ".yml":
+                preset_files.append(self.__preset_folder + file_name)
+
+        self.__ui_preset_box.clear()
+
+        if len(preset_files) > 0:
+            for preset_file in preset_files:
+                name = os.path.basename(preset_file)
+                name = os.path.splitext(name)[0]
+                self.__ui_preset_box.addItem(name, preset_file)
+
+    def load_preset_file(self, file_path):
+        """Loads a preset file"""
+        print(file_path)
+        if not os.path.isfile(file_path):
+            return
+
+        with open(file_path, 'r', encoding='utf-8') as preset_file:
+            options = yaml.safe_load(preset_file.read())
+            if options:
+                self.set_options(options)
+
+    def set_options(self, options):
+        """Loads options from a preset"""
+
+        # General
+        if "freeze_transform" in options:
+            self.__ui_freeze_transform_box.setChecked(True)
+            self.__load_bool_preset( "case_sensitive", options["freeze_transform"], self.__ui_freeze_white_list_case_box, False )
+            if "whitelist" in options["freeze_transform"]:
+                whitelist = ", ".join(options["freeze_transform"]["whitelist"])
+                self.__ui_freeze_white_list_edit.setText(whitelist)
+            else:
+                self.__ui_freeze_white_list_edit.setText("")
+        else:
+            self.__ui_freeze_transform_box.setChecked(False)
+
+        if "types" in options:
+            if "list" in options["types"]:
+                types_str = "\n".join(options["types"]["list"])
+                self.__ui_types_edit.setPlainText(types_str)
+                self.__load_enum_preset( "mode", options["types"], self.__ui_types_box, "remove" )
+        else:
+            self.__ui_types_edit.setPlainText("")
+
+        self.__load_bool_preset( "delete_history", options, self.__ui_delete_history_box, False )
+        self.__load_bool_preset( "import_references", options, self.__ui_import_references_box, True )
+        self.__load_bool_preset( "remove_animation", options, self.__ui_remove_animation_box, False )
+        self.__load_bool_preset( "remove_extra_shapes", options, self.__ui_remove_extra_shapes_box, True )
+        self.__load_bool_preset( "remove_hidden_nodes", options, self.__ui_remove_hidden_nodes_box, True )
+        self.__load_bool_preset( "remove_namespaces", options, self.__ui_remove_namespaces_box, True )
+
+        # Formats
+        # Uncheck all
+        self.__ui_maya_scene_box.setChecked(False)
+        self.__ui_maya_shaders_box.setChecked(False)
+        self.__ui_alembic_box.setChecked(False)
+        self.__ui_arnold_scene_source_box.setChecked(False)
+
+        if "formats" in options:
+            for frmt in options["formats"]:
+
+                # <-- MAYA -->
+
+                if frmt == "mb" or frmt == "ma":
+                    self.__set_maya_defaults(frmt)
+
+                elif "mb" in frmt or "ma" in frmt:
+                    shaders = False
+
+                    mbin = "mb" in frmt
+                    if mbin:
+                        frmt = frmt["mb"]
+                    else:
+                        frmt = frmt["ma"]
+
+                    if "only_shaders" in frmt: 
+                        shaders = frmt["only_shaders"]
+                    if shaders:
+                        self.__ui_maya_shaders_box.setChecked(True)
+                        if mbin:
+                            self.__ui_shaders_format_box.setCurrentIndex(0)
+                        else:
+                            self.__ui_shaders_format_box.setCurrentIndex(1)
+                        continue
+
+                    if mbin:
+                        self.__ui_maya_format_box.setCurrentIndex(0)
+                    else:
+                        self.__ui_maya_format_box.setCurrentIndex(1)
+
+                    self.__ui_maya_scene_box.setChecked(True)
+                    self.__load_bool_preset( "lock_hidden_nodes", frmt, self.__ui_maya_hidden_nodes_box, True )
+                    self.__load_enum_preset( "joints", frmt, self.__ui_maya_hide_joints_box, "disable" )
+
+                # <-- ALEMBIC -->
+
+                elif frmt == "abc":
+                    self.__set_alembic_defaults()
+
+                elif "abc" in frmt:
+                    self.__set_alembic_defaults()
+                    frmt = frmt["abc"]
+                    self.__load_bool_preset( "filter_euler_rotations", frmt, self.__ui_alembic_filter_euler_box, True)
+                    self.__load_bool_preset( "renderable_only", frmt, self.__ui_alembic_filter_euler_box, True)
+                    if "animation" in frmt:
+                        anim = frmt["animation"]
+                        self.__load_number_preset( "frame_step", anim, self.__ui_alembic_frame_step_box, 1)
+                        self.__load_number_preset( "handle_in", anim, self.__ui_alembic_handle_start_box, 1)
+                        self.__load_number_preset( "handle_out", anim, self.__ui_alembic_handle_end_box, 1)
+                        self.__load_number_preset( "in", anim, self.__ui_alembic_frame_start_box)
+                        self.__load_number_preset( "out", anim, self.__ui_alembic_frame_end_box)
+
+                # <-- ASS -->
+
+                elif frmt == "ass" or "ass" in frmt:
+                    self.__ui_arnold_scene_source_box.setChecked(True)
+        else:
+            self.__set_maya_defaults()
+
+    def save_preset(self):
+        """Saves the current options as a preset file"""
+        save_file = QFileDialog.getSaveFileName(self, "Save current publish settings as preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
+        if save_file != "":
+            options = self.get_options()
+            with open(save_file, "w") as preset_file:
+                yaml.dump(options, preset_file)
+
+    def load_preset(self):
+        """Prompts the user to select a preset file to load"""
+        open_file = QFileDialog.getOpenFileName(self, "OPen publish settings preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
+        if open_file != "":
+            self.load_preset_file(open_file)

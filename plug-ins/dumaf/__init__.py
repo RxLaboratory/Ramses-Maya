@@ -10,3 +10,4 @@ from .animation import Animation
 from .references import Reference
 from .ui_progress import ProgressDialog
 from .dumanode import DuMaNode
+from . import mayapy

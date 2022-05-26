@@ -1,0 +1,10 @@
+delete_history: false
+formats:
+- mb:
+    joints: disable
+    lock_hidden_nodes: true
+import_references: true
+remove_animation: true
+remove_extra_shapes: false
+remove_hidden_nodes: false
+remove_namespaces: true

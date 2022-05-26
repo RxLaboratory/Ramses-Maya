@@ -4,12 +4,14 @@ This is a file for running tests and should not be used in production.
 """
 
 import sys
-from ramses_maya import ui_publish, utils_nodes
+import ramses_maya as ram
+from dumaf import mayapy
 
-publish_nodes = utils_nodes.get_publish_nodes()
+mayapy.reset_script_session( ram.utils.PLUGIN_PATH )
+
+publish_nodes = ram.utils_nodes.get_publish_nodes()
 if len(publish_nodes) == 0:
     sys.exit()
-publish_dialog = ui_publish.PublishDialog()
+publish_dialog = ram.ui_publish.PublishDialog()
 publish_dialog.load_nodes(publish_nodes)
-ok = publish_dialog.exec_()
-print(ok)
+publish_dialog.show()

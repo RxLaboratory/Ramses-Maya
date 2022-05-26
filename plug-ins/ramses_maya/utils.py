@@ -1,14 +1,40 @@
 # -*- coding: utf-8 -*-
+"""Some general utilitary stuff"""
 
 import os
 from PySide2.QtGui import ( # pylint: disable=no-name-in-module,import-error
-    QIcon
+    QIcon,
+    QDesktopServices
+)
+from PySide2.QtCore import ( # pylint: disable=no-name-in-module
+    Slot,
+    QUrl
 )
 
+from ramses import RamSettings
+SETTINGS = RamSettings.instance()
+
 # Some paths we need
-modPath = os.path.dirname(os.path.realpath(__file__))
-pluginPath = os.path.dirname(modPath)
-iconPath = os.path.dirname(pluginPath) + "/icons/"
+MODULE_PATH = os.path.dirname(os.path.realpath(__file__))
+PLUGIN_PATH = os.path.dirname(MODULE_PATH)
+ICON_PATH = os.path.dirname(PLUGIN_PATH) + "/icons/"
+PUBLISH_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/publish_presets/"
 
 def icon(name):
-    return QIcon(iconPath + name + ".png")
+    """Gest QIcon for an icon from its name (without extension)"""
+    return QIcon(ICON_PATH + name + ".png")
+
+@Slot()
+def open_help():
+    """Opens the online help for the addon"""
+    QDesktopServices.openUrl( QUrl( SETTINGS.addonsHelpUrl ) )
+
+@Slot()
+def about_ramses():
+    """Opens the web page about Ramses"""
+    QDesktopServices.openUrl( QUrl( SETTINGS.generalHelpUrl ) )
+
+@Slot()
+def open_api_reference():
+    """Opens the online API reference"""
+    QDesktopServices.openUrl( QUrl( SETTINGS.apiReferenceUrl ) )
