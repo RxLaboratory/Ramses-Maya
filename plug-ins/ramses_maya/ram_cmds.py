@@ -29,7 +29,7 @@ import ramses as ram
 RAMSES = ram.Ramses.instance()
 SETTINGS = ram.RamSettings.instance()
 
-def checkDaemon():
+def check_daemon():
     """Checks if the Daemon is available (if the SETTINGS tell we have to work with it)"""
     if SETTINGS.online:
         if not RAMSES.connect():
@@ -45,7 +45,7 @@ def checkDaemon():
 
     return True
 
-def getSaveFilePath( filePath ):
+def get_save_filepath( filePath ):
     """Returns the file path for saving the given scene"""
     # Ramses will check if the current file has to be renamed to respect the Ramses Tree and Naming Scheme
     saveFilePath = ram.RamFileManager.getSaveFilePath( filePath )
@@ -65,7 +65,7 @@ def getSaveFilePath( filePath ):
 
     return saveFilePath
 
-def getCurrentProject( filePath ):
+def get_current_project( filePath ):
     """Returns the RamProject for this file"""
     nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
@@ -80,16 +80,16 @@ def getCurrentProject( filePath ):
 
     return project
 
-def getStep( filePath ):
+def get_step( filePath ):
     """Returns the RamStep for this file"""
-    project = getCurrentProject( filePath )
+    project = get_current_project( filePath )
     nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
     if nm.step != '':
         return project.step( nm.step )
     return None
 
-def getNameManager( filePath ):
+def get_name_manager( filePath ):
     """Returns a RamFileInfo for the file"""
     nm = ram.RamFileInfo()
     nm.setFilePath( filePath )
@@ -100,7 +100,7 @@ def getNameManager( filePath ):
         return None
     return nm
 
-def getPreviewFolder( item, step):
+def get_preview_folder( item, step):
     """Returns the preview subfolder for the RamItem and the RamStep"""
     previewFolder = item.previewFolderPath( step )
     if previewFolder == '':
@@ -110,7 +110,7 @@ def getPreviewFolder( item, step):
         return ''
     return previewFolder
 
-def getTempDir():
+def get_temp_dir():
     """Creates and returns a tempdir. For some reason, sometimes the user folder is incorrect in TEMP on windows"""
     tempDir = tempfile.mkdtemp()
     if platform.system() == 'Windows':
@@ -118,7 +118,7 @@ def getTempDir():
         tempDir = userDir + '/AppData/Local/Temp/' + os.path.basename(tempDir)
     return tempDir
 
-def createPlayblast(filePath, size):
+def create_playblast(filePath, size):
     """Creates a playblast"""
     # Warning, That's for win only ! Needs work on MAC/Linux
     # TODO MAC: open playblast at the end
@@ -133,7 +133,7 @@ def createPlayblast(filePath, size):
     ffplayFile = ramsesFoler + '/bin/ffplay.exe'
 
     # Get a temp dir for rendering the playblast
-    tempDir = getTempDir()
+    tempDir = get_temp_dir()
     # The tempDir may not exist
     if not os.path.isdir(tempDir):
         os.makedirs(tempDir)
@@ -217,11 +217,12 @@ def createPlayblast(filePath, size):
     elif platform.system() == "Linux":
         subprocess.call(["xdg-open", filePath])
 
-def createThumbnail(filePath):
+def create_thumbnial(filePath):
     """Saves a thumbnail for the current viewport at filepath"""
     cmds.refresh(cv=True, fn = filePath)
 
 class RamSaveCmd( om.MPxCommand ):
+    """ramSave Maya cmd"""
     name = "ramSave"
     
     def __init__(self):
@@ -287,7 +288,7 @@ class RamSaveCmd( om.MPxCommand ):
         #     return
 
         # Get the save path 
-        saveFilePath = getSaveFilePath( currentFilePath )
+        saveFilePath = get_save_filepath( currentFilePath )
         if saveFilePath == '':
             return
 
@@ -368,15 +369,15 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
     def run(self, args):
 
         # We need the daemon
-        if not checkDaemon():
+        if not check_daemon():
             return
 
         # Get current info
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Info
-        project = getCurrentProject( currentFilePath )
-        step = getStep( currentFilePath )
+        project = get_current_project( currentFilePath )
+        step = get_step( currentFilePath )
         item = ram.RamItem.fromPath( currentFilePath )
 
         saveAsDialog = SaveAsDialog(maf.UI.getMayaWindow())
@@ -424,11 +425,13 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         self.setResult( True )
 
 class RamSaveVersionCmd( om.MPxCommand ):
+    """ramSaveVersion Maya commnand: saves a new version, sets the status, publishes"""
     name = "ramSaveVersion"
 
     # Defaults
     updateSatus = True
     publish = False
+    edit_publish_settings = False
 
     def __init__(self):
         om.MPxCommand.__init__(self)
@@ -443,6 +446,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
         syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
         syntax.addFlag('-pv', "-preview", om.MSyntax.kBoolean )
+        syntax.addFlag('-eps', "-editPublishSettings", om.MSyntax.kBoolean )
         return syntax
 
     def parseArgs(self, args):
@@ -455,6 +459,8 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         if parser.isFlagSet( '-p' ):
             self.publish = parser.flagArgumentBool('-p', 0)
+            if parser.isFlagSet( '-eps' ):
+                self.edit_publish_settings = parser.flagArgumentBool('-eps', 0)
         else:
             self.publish = False
 
@@ -477,22 +483,22 @@ class RamSaveVersionCmd( om.MPxCommand ):
         ram.log("Saving file: " + currentFilePath)
         
         # Check if the Daemon is available if Ramses is set to be used "online"
-        if not checkDaemon():
+        if not check_daemon():
             return
 
         # Get the save path 
-        saveFilePath = getSaveFilePath( currentFilePath )
-        if saveFilePath == '':
+        save_filepath = get_save_filepath( currentFilePath )
+        if save_filepath == '':
             return
 
         self.parseArgs(args)
 
         # Update status
-        saveFileName = os.path.basename( saveFilePath )
+        saveFileName = os.path.basename( save_filepath )
         nm = ram.RamFileInfo()
         nm.setFileName( saveFileName )
         currentStep = nm.step
-        currentItem = ram.RamItem.fromPath( saveFilePath )
+        currentItem = ram.RamItem.fromPath( save_filepath )
         if currentItem is None:
             cmds.warning( ram.Log.NotAnItem )
             cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
@@ -501,29 +507,30 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         if self.updateSatus:
             # Show status dialog
-            statusDialog = StatusDialog(maf.UI.getMayaWindow())
+            status_dialog = StatusDialog(maf.UI.getMayaWindow())
             if not SETTINGS.online or currentItem.itemType() == ram.ItemType.GENERAL:
-                statusDialog.setOffline(True)
+                status_dialog.setOffline(True)
             else:
-                statusDialog.setOffline(False)
-            statusDialog.setPublish( self.publish )
+                status_dialog.setOffline(False)
+            status_dialog.setPublish( self.publish )
             if currentStatus is not None:
-                statusDialog.setStatus( currentStatus )
-            update = statusDialog.exec_()
+                status_dialog.setStatus( currentStatus )
+            update = status_dialog.exec_()
             if update == 0:
                 return
             if update == 1:
                 status = ram.RamStatus(
-                    statusDialog.getState(),
-                    statusDialog.getComment(),
-                    statusDialog.getCompletionRatio()
+                    status_dialog.getState(),
+                    status_dialog.getComment(),
+                    status_dialog.getCompletionRatio()
                 )
-                status.published = statusDialog.isPublished()
-                self.publish = statusDialog.isPublished()
-                self.preview = statusDialog.preview()
+                status.published = status_dialog.publish()
+                self.publish = status_dialog.publish()
+                self.preview = status_dialog.preview()
+                self.edit_publish_settings = status_dialog.edit_publish_settings()
 
         # Set the save name and save
-        cmds.file( rename = saveFilePath )
+        cmds.file( rename = save_filepath )
         cmds.file( save=True, options="v=1;" )
         # Backup / Increment
         state = RAMSES.defaultState
@@ -533,7 +540,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
             state = currentStatus.state
 
         backupFilePath = ram.RamFileManager.copyToVersion(
-            saveFilePath,
+            save_filepath,
             True,
             state.shortName()
             )
@@ -563,20 +570,20 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Publish
         if self.publish:
-            publishedFileInfo = ram.RamFileManager.getPublishInfo( saveFilePath )
+            publish_info = ram.RamFileManager.getPublishInfo( save_filepath )
             # Prepare the file for backup in the published folder
-            backupInfo = publishedFileInfo.copy()
-            backupInfo.version = -1
-            backupInfo.state = ''
+            backup_info = publish_info.copy()
+            backup_info.version = -1
+            backup_info.state = ''
             # Save
-            publishedFilePath = backupInfo.filePath()
-            cmds.file( rename = publishedFilePath )
+            published_filepath = backup_info.filePath()
+            cmds.file( rename = published_filepath )
             cmds.file( save=True, options="v=1;" )
-            ram.RamMetaDataManager.appendHistoryDate( publishedFilePath )
+            ram.RamMetaDataManager.appendHistoryDate( published_filepath )
             # Reopen initial file
-            cmds.file(saveFilePath,o=True,f=True)
-            ram.RamMetaDataManager.setVersion( publishedFilePath, newVersion )
-            ram.RamMetaDataManager.setVersionFilePath( publishedFilePath, backupFilePath )
+            cmds.file(save_filepath,o=True,f=True)
+            ram.RamMetaDataManager.setVersion( published_filepath, newVersion )
+            ram.RamMetaDataManager.setVersionFilePath( published_filepath, backupFilePath )
             # We need the RamStep, get it from the project
             project = currentItem.project()
             step = None
@@ -584,7 +591,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 step = project.step(currentStep)
                 RAMSES.setCurrentProject(project)
             if step is not None:
-                RAMSES.publish( currentItem, step, publishedFileInfo.copy() )
+                RAMSES.publish( currentItem, step, publish_info.copy(), self.edit_publish_settings )
 
         if self.preview:
             cmds.ramPreview()
@@ -617,7 +624,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Get the save path 
-        saveFilePath = getSaveFilePath( currentFilePath )
+        saveFilePath = get_save_filepath( currentFilePath )
         if not saveFilePath:
             return
 
@@ -670,7 +677,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         ram.log("Saving as template...")
 
         # Check if the Daemon is available if Ramses is set to be used "online"
-        if not checkDaemon():
+        if not check_daemon():
             return
 
         # Get info from the current file
@@ -682,8 +689,8 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             publishDialog.setOffline()
 
         # Set the project and step
-        project = getCurrentProject( currentFilePath )
-        step = getStep( currentFilePath )
+        project = get_current_project( currentFilePath )
+        step = get_step( currentFilePath )
         # Set
         if project is not None:
             publishDialog.setProject( project )
@@ -747,7 +754,7 @@ class RamOpenCmd( om.MPxCommand ):
 
     def run(self, args):
         # Check if the Daemon is available if Ramses is set to be used "online"
-        if not checkDaemon():
+        if not check_daemon():
             return
 
         self.parseArgs(args)
@@ -850,13 +857,13 @@ class RamOpenCmd( om.MPxCommand ):
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                group = maf.DuMaNode.get_create_group(groupName)
+                group = maf.Node.get_create_group(groupName)
 
                 # Import the file
                 newNodes = maf.Scene.importFile(filePath, itemShortName)
                 
                 # Add a group for the imported asset
-                itemGroup = maf.DuMaNode.get_create_group( itemShortName, group)
+                itemGroup = maf.Node.get_create_group( itemShortName, group)
                 # Parent the imported nodes
                 for node in newNodes:
                     # only the root transform nodes
@@ -910,7 +917,7 @@ class RamPreviewCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Get the save path
-        saveFilePath = getSaveFilePath( currentFilePath )
+        saveFilePath = get_save_filepath( currentFilePath )
         if saveFilePath == '':
             return
 
@@ -924,14 +931,14 @@ class RamPreviewCmd( om.MPxCommand ):
         currentStep = nm.step
         
         # Item info
-        nm = getNameManager( saveFilePath )
+        nm = get_name_manager( saveFilePath )
         if nm is None:
             return
         version = currentItem.latestVersion( nm.resource, '', currentStep )
         versionFilePath = currentItem.latestVersionFilePath( nm.resource, '', currentStep )
 
         # Preview folder
-        previewFolder = getPreviewFolder(currentItem, currentStep)
+        previewFolder = get_preview_folder(currentItem, currentStep)
         if previewFolder == '':
             return
         ram.log( "I'm previewing in " + previewFolder )
@@ -1047,7 +1054,7 @@ class RamPreviewCmd( om.MPxCommand ):
                 previewFolder,
                 pbNM.fileName()
             ))
-            createPlayblast(pbFilePath, size)
+            create_playblast(pbFilePath, size)
         else:
             pbNM.extension = 'png'
             # path
@@ -1057,7 +1064,7 @@ class RamPreviewCmd( om.MPxCommand ):
             ))
             # Attempt to set window size
             dialog.setWindowSize()
-            createThumbnail(pbFilePath)
+            create_thumbnial(pbFilePath)
 
         # Hide window
         dialog.hideRenderer()

@@ -5,7 +5,7 @@ The UI for publishing scenes
 
 import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
-    QMainWindow,
+    QDialog,
     QVBoxLayout,
     QHBoxLayout,
     QListWidget,
@@ -24,7 +24,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QLineEdit,
     QSpinBox,
     QDoubleSpinBox,
-    QFileDialog
+    QFileDialog,
+    QMenuBar
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
@@ -33,9 +34,8 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 from PySide2.QtGui import (  # pylint: disable=no-name-in-module
     QKeySequence,
 )
-from maya import cmds # pylint: disable=import-error
 import yaml
-from dumaf import DuMaNode
+from dumaf import Node
 from .utils import (
     PUBLISH_PRESETS_PATH,
     open_help,
@@ -57,12 +57,15 @@ class NoEditDelegate(QStyledItemDelegate):
         """Overrides QStyledItemDelegate.createEditor"""
         return 0
 
-class PublishDialog(QMainWindow):
+class PublishDialog(QDialog):
     """
     The Main Dialog to publish the scene
     """
+    # <== CONSTRUCTOR ==>
+
     def __init__(self, parent=None): # pylint: disable=useless-super-delegation
         super(PublishDialog, self).__init__(parent)
+        # <-- Setup -->
         self.__setup_ui()
         self.__setup_menu()
         self.__connect_events()
@@ -72,13 +75,13 @@ class PublishDialog(QMainWindow):
     # <== PRIVATE METHODS ==>
 
     def __setup_menu(self):
-        edit_menu = self.menuBar().addMenu("Edit")
+        edit_menu = self.__ui_menu_bar.addMenu("Edit")
         self.__save_preset_action = edit_menu.addAction("Save preset...")
         self.__load_preset_action = edit_menu.addAction("Load preset...")
         self.__save_preset_action.setShortcut(QKeySequence("Ctrl+S"))
         self.__load_preset_action.setShortcut(QKeySequence("Ctrl+O"))
 
-        help_menu = self.menuBar().addMenu("Help")
+        help_menu = self.__ui_menu_bar.addMenu("Help")
         self.__help_action = help_menu.addAction("Ramses Maya Add-on help...")
         self.__about_ramses_action = help_menu.addAction("Ramses general help...")
         self.__api_reference_action = help_menu.addAction("Ramses API reference...")
@@ -90,12 +93,20 @@ class PublishDialog(QMainWindow):
         self.setWindowTitle("Publish scene")
         self.setMinimumWidth( 700 )
 
+        uber_layout = QVBoxLayout()
+        uber_layout.setContentsMargins(0,0,0,0)
+        uber_layout.setSpacing(0)
+        self.setLayout(uber_layout)
+
+        self.__ui_menu_bar = QMenuBar()
+        uber_layout.addWidget(self.__ui_menu_bar)
+
         main_widget = QWidget()
-        self.setCentralWidget(main_widget)
+        uber_layout.addWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
         #mainWidget.setLayout( mainLayout )
         main_layout.setContentsMargins(6,6,6,6)
-        main_layout.setSpacing(12)
+        main_layout.setSpacing(3)
 
         content_layout = QHBoxLayout()
         main_layout.addLayout(content_layout)
@@ -129,6 +140,16 @@ class PublishDialog(QMainWindow):
         self.__ui_preset_edit = QTextEdit()
         self.__ui_preset_edit.setReadOnly(True)
         preset_layout.addWidget(self.__ui_preset_edit)
+
+        # <-- BOTTOM BUTTONS -->
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(2)
+        main_layout.addLayout(buttons_layout)
+
+        self.__ui_publish_button = QPushButton("Publish Scene")
+        buttons_layout.addWidget( self.__ui_publish_button )
+        self.__ui_cancel_button = QPushButton("Cancel")
+        buttons_layout.addWidget( self.__ui_cancel_button )
 
         # <-- GENERAL -->
 
@@ -205,6 +226,9 @@ class PublishDialog(QMainWindow):
 
         self.__ui_remove_extra_shapes_box = QCheckBox("Remove extra shapes")
         pre_publish_layout.addRow("", self.__ui_remove_extra_shapes_box)
+
+        self.__ui_remove_empty_groups_box = QCheckBox("Remove empty groups")
+        pre_publish_layout.addRow("", self.__ui_remove_empty_groups)
 
         self.__ui_remove_animation_box = QCheckBox("Remove animation")
         pre_publish_layout.addRow("", self.__ui_remove_animation_box)
@@ -291,20 +315,6 @@ class PublishDialog(QMainWindow):
         self.__ui_alembic_renderable_box = QCheckBox("Renderable only")
         alembic_layout.addRow("Export:", self.__ui_alembic_renderable_box)
 
-        self.__ui_alembic_frames_widget = QWidget()
-        frame_range_layout = QHBoxLayout(self.__ui_alembic_frames_widget)
-        frame_range_layout.setContentsMargins(0,0,0,0)
-        frame_range_layout.setSpacing(3)
-        self.__ui_alembic_frame_start_box = QSpinBox()
-        self.__ui_alembic_frame_start_box.setMinimum(-10000)
-        self.__ui_alembic_frame_start_box.setMaximum(10000)
-        frame_range_layout.addWidget( self.__ui_alembic_frame_start_box)
-        self.__ui_alembic_frame_end_box = QSpinBox()
-        self.__ui_alembic_frame_end_box.setMinimum(-10000)
-        self.__ui_alembic_frame_end_box.setMaximum(10000)
-        frame_range_layout.addWidget( self.__ui_alembic_frame_end_box)
-        alembic_layout.addRow("Frame range:", self.__ui_alembic_frames_widget)
-
         self.__ui_alembic_handles_widget = QWidget()
         handles_layout = QHBoxLayout(self.__ui_alembic_handles_widget)
         handles_layout.setContentsMargins(0,0,0,0)
@@ -321,18 +331,20 @@ class PublishDialog(QMainWindow):
         self.__ui_alembic_handle_end_box.setPrefix("+")
         handles_layout.addWidget( self.__ui_alembic_handle_end_box)
         alembic_layout.addRow("Handles:", self.__ui_alembic_handles_widget)
-       
+
         self.__ui_alembic_frame_step_box = QDoubleSpinBox()
         self.__ui_alembic_frame_step_box.setMinimum(0.1)
         self.__ui_alembic_frame_step_box.setMaximum( 100 )
         self.__ui_alembic_frame_step_box.setDecimals(1)
         alembic_layout.addRow("Frame step:", self.__ui_alembic_frame_step_box)
-        
+
         self.__ui_alembic_filter_euler_box = QCheckBox("Filter Euler rotations")
         alembic_layout.addRow("", self.__ui_alembic_filter_euler_box)
 
     def __connect_events(self):
         self.__ui_sections_box.currentRowChanged.connect( self.__ui_sections_box_row_changed )
+        self.__ui_publish_button.clicked.connect( self.__ui_publish_button_clicked )
+        self.__ui_cancel_button.clicked.connect( self.__ui_cancel_button_clicked )
         # menu
         self.__load_preset_action.triggered.connect( self.load_preset )
         self.__save_preset_action.triggered.connect( self.save_preset )
@@ -368,8 +380,6 @@ class PublishDialog(QMainWindow):
         self.__ui_shaders_format_box.currentIndexChanged.connect( self.__update_preset )
         # alembic
         self.__ui_alembic_renderable_box.toggled.connect( self.__update_preset )
-        self.__ui_alembic_frame_start_box.valueChanged.connect( self.__update_preset )
-        self.__ui_alembic_frame_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_handle_start_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_handle_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_frame_step_box.valueChanged.connect( self.__update_preset )
@@ -411,16 +421,20 @@ class PublishDialog(QMainWindow):
     def __set_alembic_defaults(self):
         self.__ui_alembic_box.setChecked(True)
         self.__ui_alembic_renderable_box.setChecked(True)
-        in_frame = int(cmds.playbackOptions(q=True,ast=True))
-        self.__ui_alembic_frame_start_box.setValue( in_frame )
-        out_frame = int(cmds.playbackOptions(q=True,aet=True))
-        self.__ui_alembic_frame_end_box.setValue(out_frame)
         self.__ui_alembic_handle_start_box.setValue(0)
         self.__ui_alembic_handle_end_box.setValue(0)
         self.__ui_alembic_frame_step_box.setValue(1)
         self.__ui_alembic_filter_euler_box.setChecked(True)
 
     # <== PRIVATE SLOTS ==>
+
+    @Slot()
+    def __ui_publish_button_clicked(self):
+        self.accept()
+
+    @Slot()
+    def __ui_cancel_button_clicked(self):
+        self.reject()
 
     @Slot(int)
     def __ui_sections_box_row_changed(self, row):
@@ -478,6 +492,7 @@ class PublishDialog(QMainWindow):
         options["remove_hidden_nodes"] = self.__ui_remove_hidden_nodes_box.isChecked()
         options["delete_history"] = self.__ui_delete_history_box.isChecked()
         options["remove_extra_shapes"] = self.__ui_remove_extra_shapes_box.isChecked()
+        options["remove_empty_groups"] = self.__ui_remove_empty_groups_box.isChecked()
 
         types_str = self.__ui_types_edit.toPlainText()
         if types_str != "":
@@ -562,16 +577,12 @@ class PublishDialog(QMainWindow):
         abc["renderable_only"] = self.__ui_alembic_renderable_box.isChecked()
         if not self.__ui_remove_animation_box.isChecked():
             abc["animation"] = {}
-            #abc["animation"]["in"] = self.__ui_alembic_frame_start_box.value()
-            #abc["animation"]["out"] = self.__ui_alembic_frame_end_box.value()
             abc["animation"]["handle_in"] = self.__ui_alembic_handle_start_box.value()
             abc["animation"]["handle_out"] = self.__ui_alembic_handle_end_box.value()
             abc["animation"]["frame_step"] = self.__ui_alembic_frame_step_box.value()
-            self.__ui_alembic_frames_widget.setEnabled(True)
             self.__ui_alembic_handles_widget.setEnabled(True)
             self.__ui_alembic_frame_step_box.setEnabled(True)
         else:
-            self.__ui_alembic_frames_widget.setEnabled(False)
             self.__ui_alembic_handles_widget.setEnabled(False)
             self.__ui_alembic_frame_step_box.setEnabled(False)
 
@@ -592,7 +603,7 @@ class PublishDialog(QMainWindow):
         """Gets the nodes to be published and populates the nodes tree view"""
         self.__ui_nodes_tree.clear()
         for node in nodes:
-            node = DuMaNode(node)
+            node = Node(node)
             item = QTreeWidgetItem(self.__ui_nodes_tree)
             item.setText(0, node.name())
             item.setText(1, node.name().replace("_", " "))
@@ -665,6 +676,7 @@ class PublishDialog(QMainWindow):
         self.__load_bool_preset( "remove_extra_shapes", options, self.__ui_remove_extra_shapes_box, True )
         self.__load_bool_preset( "remove_hidden_nodes", options, self.__ui_remove_hidden_nodes_box, True )
         self.__load_bool_preset( "remove_namespaces", options, self.__ui_remove_namespaces_box, True )
+        self.__load_bool_preset( "remove_empty_groups", options, self.__ui_remove_empty_groups_box, True )
 
         # Formats
         # Uncheck all
@@ -724,8 +736,6 @@ class PublishDialog(QMainWindow):
                         self.__load_number_preset( "frame_step", anim, self.__ui_alembic_frame_step_box, 1)
                         self.__load_number_preset( "handle_in", anim, self.__ui_alembic_handle_start_box, 1)
                         self.__load_number_preset( "handle_out", anim, self.__ui_alembic_handle_end_box, 1)
-                        self.__load_number_preset( "in", anim, self.__ui_alembic_frame_start_box)
-                        self.__load_number_preset( "out", anim, self.__ui_alembic_frame_end_box)
 
                 # <-- ASS -->
 
@@ -739,7 +749,7 @@ class PublishDialog(QMainWindow):
         save_file = QFileDialog.getSaveFileName(self, "Save current publish settings as preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
         if save_file != "":
             options = self.get_options()
-            with open(save_file, "w") as preset_file:
+            with open(save_file, "w", encoding='utf-8') as preset_file:
                 yaml.dump(options, preset_file)
 
     def load_preset(self):
@@ -747,3 +757,10 @@ class PublishDialog(QMainWindow):
         open_file = QFileDialog.getOpenFileName(self, "OPen publish settings preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
         if open_file != "":
             self.load_preset_file(open_file)
+
+    def get_nodes(self):
+        """"Returns a list of tuples (node, publish name)"""
+        nodes = []
+        for item in self.__ui_nodes_tree.selectedItems():
+            nodes.append((item.data(0, Qt.UserRole), item.text(1)))
+        return nodes

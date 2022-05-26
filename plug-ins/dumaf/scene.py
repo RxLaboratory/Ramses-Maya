@@ -5,7 +5,7 @@ import os
 import tempfile
 import maya.cmds as cmds  # pylint: disable=import-error
 
-from .dumanode import DuMaNode
+from .nodes import Node
 
 
 class Scene():
@@ -55,4 +55,4 @@ class Scene():
             returnNewNodes=True,
             ns=nameSpace
         )
-        return DuMaNode.get_dumanodes(nodes)
+        return Node.get_nodes(nodes)

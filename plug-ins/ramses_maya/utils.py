@@ -10,6 +10,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
     QUrl
 )
+from maya import cmds # pylint: disable=import-error
 
 from ramses import RamSettings
 SETTINGS = RamSettings.instance()
@@ -38,3 +39,15 @@ def about_ramses():
 def open_api_reference():
     """Opens the online API reference"""
     QDesktopServices.openUrl( QUrl( SETTINGS.apiReferenceUrl ) )
+
+def end_process(temp_data, progress_dialog):
+    """Ends a process on the scene (closes and removes the temp file)"""
+    # Re-Open initial scene
+    cmds.file(temp_data[1],o=True,f=True)
+
+    # Remove temp file
+    if os.path.isfile(temp_data[0]):
+        os.remove(temp_data[0])
+
+    if progress_dialog:
+        progress_dialog.hide()

@@ -26,26 +26,26 @@ class SaveAsDialog( QDialog ):
     def __init__(self, parent=None):
         super(SaveAsDialog, self).__init__(parent)
 
-        self._setupUi()
+        self.__setup_ui()
         self._loadProjects()
         self._connectEvents()
 
-    def _setupUi(self):
+    def __setup_ui(self):
         self.setWindowTitle( "Save Scene As..." )
 
         self.setMinimumWidth(400)
 
-        mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
-        mainLayout.setSpacing(3)
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(6,6,6,6)
+        main_layout.setSpacing(3)
 
-        topLayout = QFormLayout()
-        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
-        topLayout.setSpacing(3)
+        top_layout = QFormLayout()
+        top_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        top_layout.setSpacing(3)
 
-        self.projectBox = QComboBox()
-        self.projectBox.setEditable(True)
-        topLayout.addRow( "Project:", self.projectBox )
+        self.project_box = QComboBox()
+        self.project_box.setEditable(True)
+        top_layout.addRow( "Project:", self.project_box )
 
         typeWidget = QWidget()
         typeLayout = QVBoxLayout()
@@ -59,29 +59,29 @@ class SaveAsDialog( QDialog ):
         self.otherButton = QRadioButton("Other")
         typeLayout.addWidget(self.otherButton)
         typeWidget.setLayout(typeLayout)
-        topLayout.addRow("Type:", typeWidget)
+        top_layout.addRow("Type:", typeWidget)
 
         self.stepBox = QComboBox()
         self.stepBox.setEditable(True)
-        topLayout.addRow( "Step:", self.stepBox )
+        top_layout.addRow( "Step:", self.stepBox )
 
         self.assetGroupBox = QComboBox()
         self.assetGroupBox.setEditable(True)
         self.assetGroupLabel = QLabel("Asset Group:")
-        topLayout.addRow( self.assetGroupLabel, self.assetGroupBox )
+        top_layout.addRow( self.assetGroupLabel, self.assetGroupBox )
 
         self.itemBox = QComboBox()
         self.itemBox.setEditable(True)
         self.itemLabel = QLabel("Item:")
-        topLayout.addRow( self.itemLabel, self.itemBox )
+        top_layout.addRow( self.itemLabel, self.itemBox )
 
         self.resourceEdit = QLineEdit()
-        topLayout.addRow( "Resource:", self.resourceEdit)
+        top_layout.addRow( "Resource:", self.resourceEdit)
 
         self.extensionBox = QComboBox()
         self.extensionBox.addItem("Maya Binary (.mb)", "mb")
         self.extensionBox.addItem("Maya ASCII (.ma)", "ma")
-        topLayout.addRow("File Type:", self.extensionBox)
+        top_layout.addRow("File Type:", self.extensionBox)
 
         locationWidget = QWidget()
         locationLayout = QHBoxLayout()
@@ -98,12 +98,12 @@ class SaveAsDialog( QDialog ):
         self.browseButton.setVisible( False )
         locationLayout.addWidget( self.browseButton )
 
-        topLayout.addRow("Location:",locationWidget)
+        top_layout.addRow("Location:",locationWidget)
 
         self.fileNameLabel = QLabel()
-        topLayout.addRow("Filename:", self.fileNameLabel)
+        top_layout.addRow("Filename:", self.fileNameLabel)
 
-        mainLayout.addLayout(topLayout)
+        main_layout.addLayout(top_layout)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -111,14 +111,14 @@ class SaveAsDialog( QDialog ):
         buttonsLayout.addWidget( self._saveButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
-        mainLayout.addLayout( buttonsLayout )
+        main_layout.addLayout( buttonsLayout )
 
-        self.setLayout(mainLayout)
+        self.setLayout(main_layout)
 
     def _connectEvents(self):
         self._saveButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
-        self.projectBox.currentTextChanged.connect( self._loadSteps )
+        self.project_box.currentTextChanged.connect( self._loadSteps )
         self.stepBox.currentIndexChanged.connect( self._loadItems )
         self.assetButton.clicked.connect( self._typeChanged )
         self.shotButton.clicked.connect( self._typeChanged )
@@ -133,15 +133,15 @@ class SaveAsDialog( QDialog ):
     def _loadProjects(self):
         # Load projects
         projects = RAMSES.projects()
-        self.projectBox.clear()
+        self.project_box.clear()
         if len(projects) == 0:
             self.setOffline()
             self._loadSteps( )
             return
         for project in RAMSES.projects():
-            self.projectBox.addItem(str(project), project)
+            self.project_box.addItem(str(project), project)
         # No selection, to make things faster and load steps & items only once needed
-        self.projectBox.setCurrentIndex(-1)
+        self.project_box.setCurrentIndex(-1)
         self._loadSteps( )
 
     @Slot()
@@ -332,13 +332,13 @@ class SaveAsDialog( QDialog ):
         pass
 
     def setProject(self, project):
-        for i in range(self.projectBox.count()):
-            if self.projectBox.itemData(i) == project:
-                self.projectBox.setCurrentIndex(i)
+        for i in range(self.project_box.count()):
+            if self.project_box.itemData(i) == project:
+                self.project_box.setCurrentIndex(i)
                 return
 
-        self.projectBox.addItem(str(project), project)
-        self.projectBox.setCurrentIndex( self.projectBox.count() - 1)
+        self.project_box.addItem(str(project), project)
+        self.project_box.setCurrentIndex( self.project_box.count() - 1)
 
     def setStep(self, step):
         for i in range( self.stepBox.count() ):
@@ -392,9 +392,9 @@ class SaveAsDialog( QDialog ):
         return self.extensionBox.currentData()
 
     def getProject(self):
-        p = self.projectBox.currentData()
+        p = self.project_box.currentData()
         if not p:
-            pShortName = self.projectBox.currentText()
+            pShortName = self.project_box.currentText()
             p = RAMSES.project( pShortName )
         return p
 
