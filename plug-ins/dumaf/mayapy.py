@@ -29,8 +29,7 @@ def reset_script_session(script_path=None):
                 print( "Removing %s" % key )
                 to_delete.append(key)
         except Exception as err: # pylint: disable=broad-except
-            # print(err)
-            pass
+            print(err)
 
     # If we'd deleted the module in the loop above, it would have changed the size of the dictionary and
     # broken the loop. So now we go over the list we made and delete all the modules

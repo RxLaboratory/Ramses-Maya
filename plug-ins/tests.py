@@ -7,5 +7,7 @@ import ramses_maya as ram
 import ramses
 import dumaf as maf
 
+maf.mayapy.reset_script_session( ram.utils.PLUGIN_PATH )
+
 ui = ram.ui_publish.PublishDialog()
 ui.show()
