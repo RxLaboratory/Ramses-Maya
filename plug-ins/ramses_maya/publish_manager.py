@@ -116,9 +116,11 @@ def publisher(item, step, publish_info, edit_settings):
     for node in reversed(publish_nodes):
         progress_dialog.setText("Publishing " + node[1] + "...")
         progress_dialog.increment()
+        ram.log("Publishing " + node[1] + "...")
         publish_node(node, publish_options, publish_info)
 
     end_process(temp_data, progress_dialog)
+    ram.log("Successful publish, Yay!")
 
 def get_option(name, options, default=None):
     """Returns the option or the default value if it is missing"""
