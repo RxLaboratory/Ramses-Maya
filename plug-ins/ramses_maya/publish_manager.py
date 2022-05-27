@@ -305,16 +305,15 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
         ram.log("Sorry, I did not find any shader to publish...", ram.LogLevel.Info)
         return
 
-    # TODO create a sphere per shader and export that
-
     # Select and export shadingEngines
     # Get path and save
-    file_path = get_publish_file_path( publish_info, extension, name )
+    file_path = get_publish_file_path( publish_info, extension, name + "-shaders" )
 
     cmds.select(clear=True)
     for shading_engine in all_shading_engines:
         shading_engine = maf.Node(shading_engine)
-        shading_engine.select()
+        #TODO create a sphere per shader and export that
+
 
     maya_type = 'mayaBinary'
     if extension == 'ma':

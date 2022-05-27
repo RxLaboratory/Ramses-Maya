@@ -702,23 +702,29 @@ class PublishDialog(QDialog):
 
                 elif "mb" in frmt or "ma" in frmt:
                     shaders = False
-                    self.__set_maya_defaults(frmt)
 
                     mbin = "mb" in frmt
                     if mbin:
                         frmt = frmt["mb"]
-                        self.__ui_shaders_format_box.setCurrentIndex(0)
-                        self.__ui_maya_format_box.setCurrentIndex(0)
                     else:
                         frmt = frmt["ma"]
-                        self.__ui_shaders_format_box.setCurrentIndex(1)
-                        self.__ui_maya_format_box.setCurrentIndex(1)
 
                     if "only_shaders" in frmt: 
                         shaders = frmt["only_shaders"]
                     if shaders:
                         self.__ui_maya_shaders_box.setChecked(True)
+                        if mbin:
+                            self.__ui_shaders_format_box.setCurrentIndex(0)
+                        else:
+                            self.__ui_shaders_format_box.setCurrentIndex(1)
                         continue
+
+                    self.__set_maya_defaults(frmt)
+
+                    if mbin:
+                        self.__ui_maya_format_box.setCurrentIndex(0)
+                    else:
+                        self.__ui_maya_format_box.setCurrentIndex(1)
 
                     self.__load_bool_preset( "lock_hidden_nodes", frmt, self.__ui_maya_hidden_nodes_box, True )
                     self.__load_bool_preset( "lock_transformations", frmt, self.__ui_maya_lock_transform_box, False )
