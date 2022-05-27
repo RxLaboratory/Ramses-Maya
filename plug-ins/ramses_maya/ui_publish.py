@@ -5,7 +5,6 @@ The UI for publishing scenes
 
 import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
-    QDialog,
     QVBoxLayout,
     QHBoxLayout,
     QListWidget,
@@ -25,7 +24,6 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QSpinBox,
     QDoubleSpinBox,
     QFileDialog,
-    QMenuBar
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
@@ -38,9 +36,12 @@ import yaml
 from dumaf import Node
 from .utils import (
     PUBLISH_PRESETS_PATH,
-    open_help,
-    about_ramses,
-    open_api_reference
+)
+from .ui_dialog import Dialog
+from .utils_options import (
+    load_bool_preset,
+    load_enum_preset,
+    load_number_preset
 )
 
 # NOTE
@@ -57,7 +58,7 @@ class NoEditDelegate(QStyledItemDelegate):
         """Overrides QStyledItemDelegate.createEditor"""
         return 0
 
-class PublishDialog(QDialog):
+class PublishDialog(Dialog):
     """
     The Main Dialog to publish the scene
     """
@@ -75,41 +76,17 @@ class PublishDialog(QDialog):
     # <== PRIVATE METHODS ==>
 
     def __setup_menu(self):
-        edit_menu = self.__ui_menu_bar.addMenu("Edit")
-        self.__save_preset_action = edit_menu.addAction("Save preset...")
-        self.__load_preset_action = edit_menu.addAction("Load preset...")
+        self.__save_preset_action = self.edit_menu.addAction("Save preset...")
+        self.__load_preset_action = self.edit_menu.addAction("Load preset...")
         self.__save_preset_action.setShortcut(QKeySequence("Ctrl+S"))
         self.__load_preset_action.setShortcut(QKeySequence("Ctrl+O"))
 
-        help_menu = self.__ui_menu_bar.addMenu("Help")
-        self.__help_action = help_menu.addAction("Ramses Maya Add-on help...")
-        self.__about_ramses_action = help_menu.addAction("Ramses general help...")
-        self.__api_reference_action = help_menu.addAction("Ramses API reference...")
-        self.__help_action.setShortcut(QKeySequence("F1"))
-
     def __setup_ui(self):
-        self.setWindowFlag(Qt.Dialog)
-        self.setWindowModality(Qt.ApplicationModal)
         self.setWindowTitle("Publish scene")
         self.setMinimumWidth( 700 )
 
-        uber_layout = QVBoxLayout()
-        uber_layout.setContentsMargins(0,0,0,0)
-        uber_layout.setSpacing(0)
-        self.setLayout(uber_layout)
-
-        self.__ui_menu_bar = QMenuBar()
-        uber_layout.addWidget(self.__ui_menu_bar)
-
-        main_widget = QWidget()
-        uber_layout.addWidget(main_widget)
-        main_layout = QVBoxLayout(main_widget)
-        #mainWidget.setLayout( mainLayout )
-        main_layout.setContentsMargins(6,6,6,6)
-        main_layout.setSpacing(3)
-
         content_layout = QHBoxLayout()
-        main_layout.addLayout(content_layout)
+        self.main_layout.addLayout(content_layout)
         content_layout.setSpacing(3)
 
         self.__ui_sections_box = QListWidget()
@@ -135,7 +112,7 @@ class PublishDialog(QDialog):
         preset_layout.setContentsMargins(3,3,3,3)
         content_layout.addWidget(preset_widget)
 
-        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as defaults for pipes or steps.")
+        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for pipes or steps.")
         preset_layout.addWidget(preset_label)
         self.__ui_preset_edit = QTextEdit()
         self.__ui_preset_edit.setReadOnly(True)
@@ -144,7 +121,7 @@ class PublishDialog(QDialog):
         # <-- BOTTOM BUTTONS -->
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(2)
-        main_layout.addLayout(buttons_layout)
+        self.main_layout.addLayout(buttons_layout)
 
         self.__ui_publish_button = QPushButton("Publish Scene")
         buttons_layout.addWidget( self.__ui_publish_button )
@@ -351,9 +328,6 @@ class PublishDialog(QDialog):
         # menu
         self.__load_preset_action.triggered.connect( self.load_preset )
         self.__save_preset_action.triggered.connect( self.save_preset )
-        self.__help_action.triggered.connect( open_help )
-        self.__about_ramses_action.triggered.connect( about_ramses )
-        self.__api_reference_action.triggered.connect( open_api_reference )
         # format
         self.__ui_maya_scene_box.toggled.connect( self.__ui_maya_scene_box_clicked )
         self.__ui_maya_shaders_box.toggled.connect( self.__ui_maya_shaders_box_clicked )
@@ -389,29 +363,6 @@ class PublishDialog(QDialog):
         self.__ui_alembic_handle_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_frame_step_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_filter_euler_box.toggled.connect( self.__update_preset )
-
-    def __load_bool_preset(self, name, options, checkbox, default=None):
-        if name in options:
-            checkbox.setChecked(options[name])
-        elif default is not None:
-            checkbox.setChecked(default)
-
-    def __load_enum_preset( self, name, options, combobox, default=None ):
-        data = default
-        if name in options:
-            data = options[name]
-
-        if data is not None:
-            for i in range(combobox.count()):
-                if combobox.itemData(i, Qt.UserRole) == options[name]:
-                    combobox.setCurrentIndex(i)
-                    break
-
-    def __load_number_preset(self, name, options, spinbox, default=None):
-        if name in options:
-            spinbox.setValue( options[name] )
-        elif default is not None:
-            spinbox.setValue( default )
 
     def __set_maya_defaults(self, frmt="mb"):
         self.__ui_maya_scene_box.setChecked(True)
@@ -660,7 +611,7 @@ class PublishDialog(QDialog):
         # General
         if "freeze_transform" in options:
             self.__ui_freeze_transform_box.setChecked(True)
-            self.__load_bool_preset( "case_sensitive", options["freeze_transform"], self.__ui_freeze_white_list_case_box, False )
+            load_bool_preset( "case_sensitive", options["freeze_transform"], self.__ui_freeze_white_list_case_box, False )
             if "whitelist" in options["freeze_transform"]:
                 whitelist = ", ".join(options["freeze_transform"]["whitelist"])
                 self.__ui_freeze_white_list_edit.setText(whitelist)
@@ -673,17 +624,17 @@ class PublishDialog(QDialog):
             if "list" in options["types"]:
                 types_str = "\n".join(options["types"]["list"])
                 self.__ui_types_edit.setPlainText(types_str)
-                self.__load_enum_preset( "mode", options["types"], self.__ui_types_box, "remove" )
+                load_enum_preset( "mode", options["types"], self.__ui_types_box, "remove" )
         else:
             self.__ui_types_edit.setPlainText("")
 
-        self.__load_bool_preset( "delete_history", options, self.__ui_delete_history_box, False )
-        self.__load_bool_preset( "import_references", options, self.__ui_import_references_box, True )
-        self.__load_bool_preset( "remove_animation", options, self.__ui_remove_animation_box, False )
-        self.__load_bool_preset( "remove_extra_shapes", options, self.__ui_remove_extra_shapes_box, True )
-        self.__load_bool_preset( "remove_hidden_nodes", options, self.__ui_remove_hidden_nodes_box, True )
-        self.__load_bool_preset( "remove_namespaces", options, self.__ui_remove_namespaces_box, True )
-        self.__load_bool_preset( "remove_empty_groups", options, self.__ui_remove_empty_groups_box, True )
+        load_bool_preset( "delete_history", options, self.__ui_delete_history_box, False )
+        load_bool_preset( "import_references", options, self.__ui_import_references_box, True )
+        load_bool_preset( "remove_animation", options, self.__ui_remove_animation_box, False )
+        load_bool_preset( "remove_extra_shapes", options, self.__ui_remove_extra_shapes_box, True )
+        load_bool_preset( "remove_hidden_nodes", options, self.__ui_remove_hidden_nodes_box, True )
+        load_bool_preset( "remove_namespaces", options, self.__ui_remove_namespaces_box, True )
+        load_bool_preset( "remove_empty_groups", options, self.__ui_remove_empty_groups_box, True )
 
         # Formats
         # Uncheck all
@@ -726,9 +677,9 @@ class PublishDialog(QDialog):
                     else:
                         self.__ui_maya_format_box.setCurrentIndex(1)
 
-                    self.__load_bool_preset( "lock_hidden_nodes", frmt, self.__ui_maya_hidden_nodes_box, True )
-                    self.__load_bool_preset( "lock_transformations", frmt, self.__ui_maya_lock_transform_box, False )
-                    self.__load_enum_preset( "joints", frmt, self.__ui_maya_hide_joints_box, "disable" )
+                    load_bool_preset( "lock_hidden_nodes", frmt, self.__ui_maya_hidden_nodes_box, True )
+                    load_bool_preset( "lock_transformations", frmt, self.__ui_maya_lock_transform_box, False )
+                    load_enum_preset( "joints", frmt, self.__ui_maya_hide_joints_box, "disable" )
 
                 # <-- ALEMBIC -->
 
@@ -738,13 +689,13 @@ class PublishDialog(QDialog):
                 elif "abc" in frmt:
                     self.__set_alembic_defaults()
                     frmt = frmt["abc"]
-                    self.__load_bool_preset( "filter_euler_rotations", frmt, self.__ui_alembic_filter_euler_box, True)
-                    self.__load_bool_preset( "renderable_only", frmt, self.__ui_alembic_filter_euler_box, True)
+                    load_bool_preset( "filter_euler_rotations", frmt, self.__ui_alembic_filter_euler_box, True)
+                    load_bool_preset( "renderable_only", frmt, self.__ui_alembic_filter_euler_box, True)
                     if "animation" in frmt:
                         anim = frmt["animation"]
-                        self.__load_number_preset( "frame_step", anim, self.__ui_alembic_frame_step_box, 1)
-                        self.__load_number_preset( "handle_in", anim, self.__ui_alembic_handle_start_box, 1)
-                        self.__load_number_preset( "handle_out", anim, self.__ui_alembic_handle_end_box, 1)
+                        load_number_preset( "frame_step", anim, self.__ui_alembic_frame_step_box, 1)
+                        load_number_preset( "handle_in", anim, self.__ui_alembic_handle_start_box, 1)
+                        load_number_preset( "handle_out", anim, self.__ui_alembic_handle_end_box, 1)
 
                 # <-- ASS -->
 

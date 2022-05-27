@@ -3,11 +3,10 @@ The Rx Asset Management System (Ramses) Maya Plugin.
 This is a file for running tests and should not be used in production.
 """
 
-import ramses_maya as ram
 import ramses
+import ramses_maya as ram
 import dumaf as maf
 
 maf.mayapy.reset_script_session( ram.utils.PLUGIN_PATH )
 
-ui = ram.ui_publish.PublishDialog()
-ui.show()
+ram.importer(ramses.RamItem("item", "an asset"), "", ramses.RamStep("STEP", "a step"), False)

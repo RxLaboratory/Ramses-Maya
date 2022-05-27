@@ -1,5 +1,7 @@
 delete_history: true
 formats:
+- mb:
+    only_shaders: true
 - abc:
     filter_euler_rotations: true
     renderable_only: true

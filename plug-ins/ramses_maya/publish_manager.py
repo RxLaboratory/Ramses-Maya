@@ -18,6 +18,9 @@ from .utils_attributes import (
     get_ramses_attr,
     set_ramses_attr
 )
+from .utils_options import (
+    get_option
+)
 
 def get_publish_file_path(publish_info, extension, name):
     """Gets the path for publishing the file"""
@@ -45,19 +48,19 @@ def publisher(item, step, publish_info, edit_settings):
     # Get options
     publish_options = {}
     publish_nodes = ()
-    if not edit_settings:
-        publish_options_str = step.publishSettings()
-        if publish_options_str != "":
-            publish_options = yaml.safe_load( publish_options_str )
+    publish_options_str = step.publishSettings()
+    if publish_options_str != "":
+        publish_options = yaml.safe_load( publish_options_str )
 
     # Check if we need to show the publish dialog
     publish_dialog = PublishDialog()
-    if "formats" not in publish_options or len(publish_options["formats"]) == 0:
+    if "formats" not in publish_options or len(publish_options["formats"]) == 0 or edit_settings:
         # Get the nodes
         nodes = get_publish_nodes()
         if len(nodes) == 0:
             return
         publish_dialog.load_nodes(nodes)
+        publish_dialog.set_options(publish_options)
         if not publish_dialog.exec_():
             return
         publish_options = publish_dialog.get_options()
@@ -121,13 +124,6 @@ def publisher(item, step, publish_info, edit_settings):
 
     end_process(temp_data, progress_dialog)
     ram.log("Successful publish, Yay!")
-
-def get_option(name, options, default=None):
-    """Returns the option or the default value if it is missing"""
-    if name in options:
-        return options[name]
-
-    return default
 
 def publish_node( published_node, publish_options, publish_info ):
     """Publishes a specific node"""
@@ -322,7 +318,8 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
         cmds.setAttr(sphere + ".translateX", offset)
         offset = offset + 2
         spheres.append(sphere)
-    cmds.select(spheres)
+    root_group = cmds.group(spheres, name=name)
+    cmds.select(root_group)
 
     maya_type = 'mayaBinary'
     if extension == 'ma':

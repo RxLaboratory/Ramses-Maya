@@ -13,16 +13,22 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QPushButton,
     QWidget,
     QLineEdit,
-    QAbstractItemView
+    QAbstractItemView,
+    QCheckBox,
+    QTextEdit
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
     Slot,
     Qt
 )
-
+import yaml
 import ramses as ram
-
 from .utils import icon
+from .ui_dialog import Dialog
+from .utils_options import (
+    load_bool_preset,
+    get_option
+)
 
 RAMSES = ram.Ramses.instance()
 
@@ -758,12 +764,124 @@ class ImportDialog( QDialog ):
             files.append( item.data(Qt.UserRole) )
         return files
 
-if __name__ == '__main__':
-    importDialog = ImportDialog()
-    ok = importDialog.exec_()
+class ImportSettingsDialog( Dialog ):
+    """
+    The Dialog to edit import settings
+    """
 
-    print( importDialog.getItem() )
-    print( importDialog.getStep() )
-    print( importDialog.getFile() )
-    print( importDialog.getResource() )
-    print( importDialog.getFiles() )
+    # <== CONSTRUCTOR ==>
+
+    def __init__(self, parent=None): # pylint: disable=useless-super-delegation
+        super(ImportSettingsDialog, self).__init__(parent)
+        # <-- Setup -->
+        self.__setup_ui()
+        self.__connect_events()
+        self.__incoming_step_name = ""
+        self.__update_preset()
+
+    # <== PRIVATE METHODS ==>
+
+    def __setup_ui(self):
+        self.setWindowTitle("Import items")
+
+        uber_layout = QHBoxLayout()
+        uber_layout.setSpacing(3)
+        self.main_layout.addLayout(uber_layout)
+
+        # <-- GENERAL -->
+
+        main_layout = QFormLayout()
+        main_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        uber_layout.addLayout(main_layout)
+
+        self.__ui_reference_box = QCheckBox("As reference")
+        main_layout.addRow("Import:", self.__ui_reference_box )
+
+        self.__ui_lock_transform_box = QCheckBox("Lock transformations")
+        self.__ui_lock_transform_box.setChecked(True)
+        main_layout.addRow("", self.__ui_lock_transform_box)
+
+        self.__ui_apply_shaders_box = QCheckBox("Apply to selected nodes")
+        self.__ui_apply_shaders_box.setChecked(True)
+        main_layout.addRow("Shaders:", self.__ui_apply_shaders_box)
+
+        # <-- PRESET -->
+
+        preset_widget = QWidget()
+        preset_layout = QVBoxLayout(preset_widget)
+        preset_layout.setSpacing(3)
+        preset_layout.setContentsMargins(3,3,3,3)
+        uber_layout.addWidget(preset_widget)
+
+        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for steps.")
+        preset_layout.addWidget(preset_label)
+        self.__ui_preset_edit = QTextEdit()
+        self.__ui_preset_edit.setReadOnly(True)
+        preset_layout.addWidget(self.__ui_preset_edit)
+
+        # <-- BOTTOM BUTTONS -->
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(2)
+        self.main_layout.addLayout(buttons_layout)
+
+        self.__ui_import_button = QPushButton("Import")
+        buttons_layout.addWidget( self.__ui_import_button )
+        self.__ui_cancel_button = QPushButton("Cancel")
+        buttons_layout.addWidget( self.__ui_cancel_button )
+
+    def __connect_events(self):
+        self.__ui_import_button.clicked.connect( self.accept )
+        self.__ui_cancel_button.clicked.connect( self.reject )
+
+        self.__ui_reference_box.toggled.connect( self.__ui_reference_box_clicked )
+        self.__ui_lock_transform_box.toggled.connect( self.__update_preset )
+        self.__ui_apply_shaders_box.toggled.connect( self.__update_preset )
+
+    @Slot()
+    def __update_preset(self):
+        # Main options
+        options = self.get_options()
+        options_str = yaml.dump(options)
+        self.__ui_preset_edit.setText(options_str)
+
+    @Slot(bool)
+    def __ui_reference_box_clicked(self, checked):
+        self.__ui_lock_transform_box.setDisabled(checked)
+        if checked:
+            self.__ui_lock_transform_box.setChecked(False)
+        self.__update_preset()
+
+    # <== PUBLIC METHODS ==>
+
+    def get_options(self):
+        """Gets the import options as a dict"""
+
+        options = {}
+        if self.__incoming_step_name != "":
+            options["incoming_step"] = self.__incoming_step_name
+        
+        as_ref = self.__ui_reference_box.isChecked()
+        options["as_reference"] = as_ref
+        if not as_ref:
+            options["lock_transformations"] = self.__ui_lock_transform_box.isChecked()
+        else:
+            options["lock_transformations"] = False
+        
+        options["apply_shaders"] = self.__ui_apply_shaders_box.isChecked()
+        
+        return options
+
+    def set_options(self, options):
+        """Loads options from a preset"""
+
+        load_bool_preset("lock_transformations", options, self.__ui_lock_transform_box, True)
+        load_bool_preset("as_reference", options, self.__ui_reference_box, False)
+        load_bool_preset("apply_shaders", options, self.__ui_apply_shaders_box, True)
+
+        self.__incoming_step_name = get_option("incoming_step", options, "")
+
+    def set_incoming_step_name(self, name):
+        """Sets the name of the incoming step, to be used in the preset/options"""
+        self.__incoming_step_name = name
+        self.__update_preset()

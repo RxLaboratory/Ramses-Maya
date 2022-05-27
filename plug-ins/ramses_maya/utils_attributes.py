@@ -29,17 +29,17 @@ class RamsesAttribute():
     ORIGIN_SCA = 'ramsesOriginalSca'
     RESOURCE = 'ramsesResource'
 
-def set_import_attributes( node, item, step, filePath ):
+def set_import_attributes( node, item, step, file_path ):
     """Sets the attributes needed when importing an asset"""
-    timestamp = os.path.getmtime( filePath )
+    timestamp = os.path.getmtime( file_path )
     timestamp = int(timestamp)
 
-    version = ram.RamMetaDataManager.getVersion( filePath )
-    state = ram.RamMetaDataManager.getState( filePath )
-    resource = ram.RamMetaDataManager.getResource(filePath)
+    version = ram.RamMetaDataManager.getVersion( file_path )
+    state = ram.RamMetaDataManager.getState( file_path )
+    resource = ram.RamMetaDataManager.getResource(file_path)
 
     set_ramses_managed( node )
-    set_ramses_attr( node, RamsesAttribute.SOURCE_FILE, filePath, 'string' )
+    set_ramses_attr( node, RamsesAttribute.SOURCE_FILE, file_path, 'string' )
     set_ramses_attr( node, RamsesAttribute.SOURCE_TIME, timestamp, 'long' )
     set_ramses_attr( node, RamsesAttribute.VERSION, version, 'long' )
     set_ramses_attr( node, RamsesAttribute.STATE, state, 'string' )
@@ -75,6 +75,8 @@ def set_ramses_attr3( node, attr, x, y, z, t):
 
 def set_ramses_attr( node, attr, value, t):
     """Sets a simple Ramses attribute to the node"""
+    if isinstance(node, maf.Node):
+        node = node.path()
     # Temporarily unlock ref edit
     cmds.optionVar(iv=("refLockEditable",1))
     try: # Some nodes won't accept new attributes

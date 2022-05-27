@@ -476,8 +476,8 @@ class Node():
         if not self.exists():
             return None
 
-        nodePath = self.path()
-        prnt = cmds.listRelatives(nodePath, p=True, f=True)
+        node_path = self.path()
+        prnt = cmds.listRelatives(node_path, p=True, f=True)
 
         if prnt is not None:
             return Node(prnt[0])
