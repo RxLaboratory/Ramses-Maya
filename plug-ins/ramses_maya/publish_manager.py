@@ -310,10 +310,19 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
     file_path = get_publish_file_path( publish_info, extension, name + "-shaders" )
 
     cmds.select(clear=True)
+    spheres = []
+    offset = 0
     for shading_engine in all_shading_engines:
         shading_engine = maf.Node(shading_engine)
-        #TODO create a sphere per shader and export that
-
+        # create a sphere per shader and export that
+        sphere = cmds.polySphere(name=shading_engine.name().replace("_Engine",""), constructionHistory=False)[0]
+        # Assign shader
+        cmds.sets(sphere, e=True, forceElement=shading_engine.path())
+        # Move on the X axis
+        cmds.setAttr(sphere + ".translateX", offset)
+        offset = offset + 2
+        spheres.append(sphere)
+    cmds.select(spheres)
 
     maya_type = 'mayaBinary'
     if extension == 'ma':
