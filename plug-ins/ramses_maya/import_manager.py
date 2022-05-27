@@ -79,13 +79,13 @@ def importer( item, file_paths, step, edit_import_settings):
         for node in new_nodes:
             # get meshes
             meshes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
-            # Rename the node
-            cmds.rename(node, node + "-shaders")
             for mesh in meshes:
                 node_history = cmds.listHistory( mesh, f=True )
                 shading_engines = cmds.listConnections( node_history, type='shadingEngine')
                 if shading_engines:
                     shaders = shaders + shading_engines
+            # Rename the node
+            cmds.rename(node, Node(node).name() + "_shaders")
         # Assign!
         ram.log("Got shaders:\n" + "\n> ".join(shaders), ram.LogLevel.Debug)
         apply_shaders(shaders, geo_nodes)

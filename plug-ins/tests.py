@@ -7,6 +7,6 @@ import ramses
 import ramses_maya as ram
 import dumaf as maf
 
-maf.mayapy.reset_script_session( ram.utils.PLUGIN_PATH )
-
-ram.importer(ramses.RamItem("item", "an asset"), "", ramses.RamStep("STEP", "a step"), False)
+node = maf.Node("truc")
+print(node.is_empty())
+node.remove_empty(True)

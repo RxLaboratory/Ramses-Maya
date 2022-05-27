@@ -2,6 +2,7 @@
 """The entry point for publishing scenes"""
 
 import os
+import time
 import yaml
 import ramses as ram
 import dumaf as maf

@@ -354,7 +354,7 @@ class Node():
         """Checks if the node is empty (no children, no shape)"""
         if not self.is_group():
             return False
-        
+
         if len(self.children()) == 0:
             return True
 
@@ -534,9 +534,9 @@ class Node():
 
         children = self.children(transform_only=True)
         for child in children:
-            child.importReference()
-        nodePath = self.path()
-        cmds.delete(nodePath)
+            child.import_reference()
+        node_path = self.path()
+        cmds.delete(node_path)
 
     def remove_shape(self):
         """Removes the shape from this node"""
@@ -549,8 +549,12 @@ class Node():
 
     def remove_empty(self, recursive=True):
         """Removes all empty groups"""
+        for child in self.children():
+            child = Node(child)
+            if child.is_empty(recursive):
+                child.remove()
         if self.is_empty(recursive):
-            self.remove()
+                self.remove()
 
     def remove_extra_shapes(self, recursive=True):
         """Removes all extra shapes from this node"""
