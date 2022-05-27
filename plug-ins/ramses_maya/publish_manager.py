@@ -134,10 +134,6 @@ def publish_node( published_node, publish_options, publish_info ):
     # Move to center of the scene
     node.move_to_zero()
 
-    # Lock transform
-    if get_option("lock_transform", publish_options, True):
-        node.lock_transform(True, lock_children=True)
-
     # Remove hidden
     if get_option("remove_hidden_nodes", publish_options, True):
         node.remove_hidden_children()
@@ -241,6 +237,9 @@ def publish_maya_scene(node, options, extension, publish_info, name):
     # Lock hidden
     if get_option("lock_hidden_nodes", options, True):
         node.lock_visibility(True, lock_children=True, only_hidden=True)
+
+    if get_option("lock_transformations", options, True):
+        node.lock_transform(True, lock_children=True)
 
     # Get path and save
     file_path = get_publish_file_path( publish_info, extension, name )

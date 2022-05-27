@@ -7,4 +7,5 @@ import ramses_maya as ram
 import ramses
 import dumaf as maf
 
-maf.Plugin.load("AbcExport")
+ui = ram.ui_publish.PublishDialog()
+ui.show()

@@ -228,7 +228,7 @@ class PublishDialog(QDialog):
         pre_publish_layout.addRow("", self.__ui_remove_extra_shapes_box)
 
         self.__ui_remove_empty_groups_box = QCheckBox("Remove empty groups")
-        pre_publish_layout.addRow("", self.__ui_remove_empty_groups)
+        pre_publish_layout.addRow("", self.__ui_remove_empty_groups_box)
 
         self.__ui_remove_animation_box = QCheckBox("Remove animation")
         pre_publish_layout.addRow("", self.__ui_remove_animation_box)
@@ -277,6 +277,9 @@ class PublishDialog(QDialog):
 
         self.__ui_maya_hidden_nodes_box = QCheckBox("Lock visibility")
         maya_layout.addRow("Hidden nodes:", self.__ui_maya_hidden_nodes_box)
+
+        self.__ui_maya_lock_transform_box = QCheckBox("Lock transformations")
+        maya_layout.addRow("Node transform:", self.__ui_maya_lock_transform_box)
 
         self.__ui_maya_hide_joints_box = QComboBox()
         self.__ui_maya_hide_joints_box.addItem("Disable draw", "disable")
@@ -369,12 +372,14 @@ class PublishDialog(QDialog):
         self.__ui_freeze_white_list_case_box.toggled.connect( self.__update_preset )
         self.__ui_types_box.currentIndexChanged.connect( self.__update_preset )
         self.__ui_types_edit.textChanged.connect( self.__update_preset )
+        self.__ui_remove_empty_groups_box.toggled.connect( self.__update_preset )
         # nodes
         self.__ui_select_no_nodes.toggled.connect( self.__ui_nodes_tree.clearSelection )
         self.__ui_select_all_nodes.toggled.connect( self.__ui_nodes_tree.selectAll )
         # maya
         self.__ui_maya_format_box.currentIndexChanged.connect( self.__update_preset )
         self.__ui_maya_hide_joints_box.currentIndexChanged.connect( self.__update_preset )
+        self.__ui_maya_lock_transform_box.toggled.connect( self.__update_preset )
         self.__ui_maya_hidden_nodes_box.toggled.connect( self.__update_preset )
         # maya shaders
         self.__ui_shaders_format_box.currentIndexChanged.connect( self.__update_preset )
@@ -416,6 +421,7 @@ class PublishDialog(QDialog):
         else:
             self.__ui_maya_format_box.setCurrentIndex(1)
         self.__ui_maya_hide_joints_box.setCurrentIndex(0)
+        self.__ui_maya_lock_transform_box.setChecked(False)
         self.__ui_maya_hidden_nodes_box.setChecked(True)
 
     def __set_alembic_defaults(self):
@@ -547,6 +553,7 @@ class PublishDialog(QDialog):
         maya = {}
 
         maya["lock_hidden_nodes"] = self.__ui_maya_hidden_nodes_box.isChecked()
+        maya["lock_transformations"] = self.__ui_maya_lock_transform_box.isChecked()
         maya["joints"] = self.__ui_maya_hide_joints_box.currentData(Qt.UserRole)
                  
         options[ self.__ui_maya_format_box.currentData(Qt.UserRole) ] = maya
@@ -719,6 +726,7 @@ class PublishDialog(QDialog):
 
                     self.__ui_maya_scene_box.setChecked(True)
                     self.__load_bool_preset( "lock_hidden_nodes", frmt, self.__ui_maya_hidden_nodes_box, True )
+                    self.__load_bool_preset( "lock_transformations", frmt, self.__ui_maya_lock_transform_box, False )
                     self.__load_enum_preset( "joints", frmt, self.__ui_maya_hide_joints_box, "disable" )
 
                 # <-- ALEMBIC -->
