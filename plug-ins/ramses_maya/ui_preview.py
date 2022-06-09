@@ -215,37 +215,7 @@ class PreviewDialog( QDialog ):
         self.done(2)
 
     def _loadCameras(self):
-        cameras = cmds.ls(type='camera')
-        renderableCameras = []
-        perspCameras = []
-        orthoCameras = []
-        for camera in cameras:
-            # get the transform node
-            camera = cmds.listRelatives(camera, parent=True, f=True, type='transform')[0]
-            if cmds.getAttr( camera + '.renderable'):
-                renderableCameras.append(camera)
-                continue
-            if cmds.camera(camera, orthographic=True, query=True):
-                orthoCameras.append(camera)
-                continue
-            perspCameras.append(camera)
-                
-        numRenderCam = len(renderableCameras)
-        if numRenderCam > 0:
-            for camera in renderableCameras:
-                cameraName = maf.Path.baseName(camera)
-                self.cameraBox.addItem( cameraName, camera)
-            self.cameraBox.insertSeparator( numRenderCam )
-        numPerspCam = len( perspCameras )
-        if numPerspCam > 0:
-            for camera in perspCameras:
-                cameraName = maf.Path.baseName(camera)
-                self.cameraBox.addItem( cameraName, camera)
-            self.cameraBox.insertSeparator( numRenderCam+numPerspCam )
-
-        for camera in orthoCameras:
-            cameraName = maf.Path.baseName(camera)
-            self.cameraBox.addItem( cameraName, camera)
+        maf.ui.update_cam_combobox(self.cameraBox)
 
     def comment(self):
         """Returns the comment added by the user"""

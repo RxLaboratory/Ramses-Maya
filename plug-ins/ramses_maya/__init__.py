@@ -10,6 +10,7 @@ from .import_manager import importer
 from . import utils
 from . import ui_publish
 from . import ui_import
+from . import ui_scene_setup
 
 RAMSES = Ramses.instance()
 

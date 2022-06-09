@@ -110,7 +110,7 @@ def publisher(item, step, publish_info, edit_settings):
         maf.Namespace.removeAll()
     # Remove animation
     if get_option("remove_animation", publish_options, False):
-        maf.Animation.removeAll()
+        maf.animation.removeAll()
 
     progress_dialog.setMaximum(len(publish_nodes) + 1)
     progress_dialog.setText("Publishing nodes...")
