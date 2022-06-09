@@ -591,7 +591,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 step = project.step(currentStep)
                 RAMSES.setCurrentProject(project)
             if step is not None:
-                RAMSES.publish( currentItem, step, publish_info.copy(), self.edit_publish_settings )
+                RAMSES.publish( currentItem, step, publish_info.copy(), editPublishSettings=self.edit_publish_settings )
 
         if self.preview:
             cmds.ramPreview()

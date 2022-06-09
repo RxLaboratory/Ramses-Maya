@@ -71,6 +71,7 @@ class PublishDialog(Dialog):
         self.__setup_menu()
         self.__connect_events()
         self.set_preset_folder("")
+        self.__ui_preset_box.setCurrentIndex(-1)
         self.__update_preset()
 
     # <== PRIVATE METHODS ==>
@@ -427,6 +428,8 @@ class PublishDialog(Dialog):
 
     @Slot(int)
     def __ui_preset_box_current_changed(self, index):
+        if index < 0:
+            return
         file_path = self.__ui_preset_box.itemData(index, Qt.UserRole)
         self.load_preset_file( file_path )
 
