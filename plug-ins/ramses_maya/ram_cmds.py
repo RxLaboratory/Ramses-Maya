@@ -13,7 +13,7 @@ import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 import maya.mel as mel # pylint: disable=import-error
 
-import dumaf as maf
+import dumaf
 
 from .ui_settings import SettingsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_status import StatusDialog # pylint: disable=import-error,no-name-in-module
@@ -226,13 +226,13 @@ def setup_scene( ramItem ):
     """Setup the current scene according to the given item.
     Returns False if the user cancelled the operation."""
 
-    maf.sets.create_if_not_exists("Ramses_Publish")
-    maf.sets.create_if_not_exists("Ramses_DelOnPublish")
+    dumaf.sets.create_if_not_exists("Ramses_Publish")
+    dumaf.sets.create_if_not_exists("Ramses_DelOnPublish")
 
     if not ramItem:
         return True
 
-    dlg = SceneSetupDialog()
+    dlg = SceneSetupDialog( dumaf.ui.getMayaWindow() )
     ok = dlg.setItem( ramItem )
     if not ok:
         if not dlg.exec_():
@@ -243,7 +243,7 @@ def setup_scene( ramItem ):
 class RamSaveCmd( om.MPxCommand ):
     """ramSave Maya cmd"""
     name = "ramSave"
-    
+
     def __init__(self):
         om.MPxCommand.__init__(self)
         self.newComment = ''
@@ -279,7 +279,7 @@ class RamSaveCmd( om.MPxCommand ):
             latestVersionFile = ram.RamFileManager.getLatestVersionFilePath( saveFilePath )
             currentComment = ram.RamMetaDataManager.getComment( latestVersionFile )
             # Ask for comment
-            commentDialog = CommentDialog(maf.ui.getMayaWindow())
+            commentDialog = CommentDialog(dumaf.ui.getMayaWindow())
             commentDialog.setComment( currentComment )
             if not commentDialog.exec_():
                 return False
@@ -296,6 +296,7 @@ class RamSaveCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the save command"""
         ram.log("Saving file...")
 
         # The current maya file
@@ -403,7 +404,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
         step = get_step( currentFilePath )
         item = ram.RamItem.fromPath( currentFilePath )
 
-        saveAsDialog = SaveAsDialog(maf.ui.getMayaWindow())
+        saveAsDialog = SaveAsDialog(dumaf.ui.getMayaWindow())
         if project is not None:
             saveAsDialog.setProject( project )
         if step is not None:
@@ -536,7 +537,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         if self.updateSatus:
             # Show status dialog
-            status_dialog = StatusDialog(maf.ui.getMayaWindow())
+            status_dialog = StatusDialog(dumaf.ui.getMayaWindow())
             if not SETTINGS.online or currentItem.itemType() == ram.ItemType.GENERAL:
                 status_dialog.setOffline(True)
             else:
@@ -664,13 +665,13 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='No other version found.', pos='midBottom', fade=True )
             return
 
-        versionDialog = VersionDialog(maf.ui.getMayaWindow())
+        versionDialog = VersionDialog(dumaf.ui.getMayaWindow())
         versionDialog.setVersions( versionFiles )
         if not versionDialog.exec_():
             return
 
          # If the current file needs to be saved
-        if not maf.Scene.checkSaveState():
+        if not dumaf.Scene.checkSaveState():
             return
         
         versionFile = ram.RamFileManager.restoreVersionFile( versionDialog.getVersion() )
@@ -713,7 +714,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Prepare the dialog
-        publishDialog = PublishTemplateDialog(maf.ui.getMayaWindow())
+        publishDialog = PublishTemplateDialog(dumaf.ui.getMayaWindow())
         if not SETTINGS.online:
             publishDialog.setOffline()
 
@@ -792,7 +793,7 @@ class RamOpenCmd( om.MPxCommand ):
         self.parseArgs(args)
 
         # Let's show the dialog
-        importDialog = ImportDialog(maf.ui.getMayaWindow())
+        importDialog = ImportDialog(dumaf.ui.getMayaWindow())
         importDialog.setMode( self.mode )
         # Get some info from current scene
         currentFilePath = cmds.file( q=True, sn=True )
@@ -816,7 +817,7 @@ class RamOpenCmd( om.MPxCommand ):
 
         if result == 1: # open
             # If the current file needs to be saved
-            if not maf.Scene.checkSaveState():
+            if not dumaf.Scene.checkSaveState():
                 return
             # Get the file, check if it's a version
             file = importDialog.getFile()
@@ -839,7 +840,7 @@ class RamOpenCmd( om.MPxCommand ):
                 RAMSES.importItem(
                     item,
                     filePaths,
-                    step                
+                    step
                 )
                 return
 
@@ -889,13 +890,13 @@ class RamOpenCmd( om.MPxCommand ):
                     if re.match(regex, itemShortName):
                         itemShortName = ram.ItemType.GENERAL + itemShortName
 
-                group = maf.Node.get_create_group(groupName)
+                group = dumaf.Node.get_create_group(groupName)
 
                 # Import the file
-                newNodes = maf.Scene.importFile(filePath, itemShortName)
+                newNodes = dumaf.Scene.importFile(filePath, itemShortName)
                 
                 # Add a group for the imported asset
-                itemGroup = maf.Node.get_create_group( itemShortName, group)
+                itemGroup = dumaf.Node.get_create_group( itemShortName, group)
                 # Parent the imported nodes
                 for node in newNodes:
                     # only the root transform nodes
@@ -980,7 +981,7 @@ class RamPreviewCmd( om.MPxCommand ):
         currentAO = cmds.getAttr('hardwareRenderingGlobals.ssaoEnable')
 
         # show UI
-        dialog = PreviewDialog( maf.ui.getMayaWindow() )
+        dialog = PreviewDialog( dumaf.ui.getMayaWindow() )
         result = dialog.exec_()
         if not result:
             return
@@ -1008,7 +1009,7 @@ class RamPreviewCmd( om.MPxCommand ):
                 itemName = 'Asset: ' + itemName
             else:
                 itemName = 'Item: ' + itemName
-            camName = maf.paths.baseName(cam)
+            camName = dumaf.paths.baseName(cam)
             focalLength = str(round(cmds.getAttr(cam + '.focalLength'))) + ' mm'
             if cmds.keyframe(cam, at='focalLength', query=True, keyframeCount=True):
                 focalLength = 'Animated'
@@ -1119,7 +1120,7 @@ class RamPreviewCmd( om.MPxCommand ):
 class RamSettingsCmd( om.MPxCommand ):
     name = "ramSettings"
 
-    settingsDialog = SettingsDialog( maf.ui.getMayaWindow() )
+    settingsDialog = SettingsDialog( dumaf.ui.getMayaWindow() )
 
     def __init__(self):
         om.MPxCommand.__init__(self)

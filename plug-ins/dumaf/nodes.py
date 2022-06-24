@@ -21,6 +21,7 @@
 
 import re
 import maya.cmds as cmds  # pylint: disable=import-error
+from .paths import baseName
 
 class Node():
     """A wrapper class for maya nodes"""
@@ -471,6 +472,13 @@ class Node():
         cmds.setAttr(nodePath + '.ty', 0)
         cmds.setAttr(nodePath + '.tz', 0)
 
+    def nodes_with_same_shader( self ):
+        """Returns the transform nodes using the same shader"""
+        shape = cmds.listRelatives(self.path(), type="mesh")
+        shading_engine = cmds.listConnections(shape, type="shadingEngine")
+        meshes = cmds.listConnections(shading_engine, type="mesh")
+        return meshes
+
     def parent(self):
         """Gets the parent node"""
         if not self.exists():
@@ -615,6 +623,23 @@ class Node():
         if not self.exists():
             return
         cmds.select(self.path(), add=True)
+
+    def sets( self ):
+        """Gets the sets this node (and its children) belongs to"""
+        if not self.exists():
+            return ()
+        # We need to transfer the deformers and rendering sets to the new geo
+        current_nodes = cmds.listRelatives(self.path(), ad = True, f=True)
+        if current_nodes is None:
+            return {}
+        node_sets = {}
+        for node in current_nodes:
+            sets = cmds.listSets(object=node, ets= True)
+            if sets is not None:
+                node_name = baseName(node, True)
+                node_sets[node_name] = sets
+
+        return node_sets
 
     def shapes(self):
         """Gets all the shapes of this node"""

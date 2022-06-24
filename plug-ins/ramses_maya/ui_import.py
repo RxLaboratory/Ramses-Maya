@@ -366,7 +366,7 @@ class ImportDialog( QDialog ):
             item = QListWidgetItem( n )
             item.setData( Qt.UserRole, step )
             self.stepList.addItem( item )
-        
+
     @Slot()
     def __update_items(self):
 

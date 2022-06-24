@@ -144,14 +144,14 @@ def is_ramses_managed(node):
     """Checks if the node must be managed by Ramses (if the RamsesAttribute.MANAGED is checked)"""
     return get_ramses_attr( node, RamsesAttribute.MANAGED )
 
-def list_ramses_nodes(node_type='transform', selectedOnly=False):
+def list_ramses_nodes(node_type='transform', selected_only=False):
     """Lists all the nodes managed by Ramses in the scene"""
     # Scan all transform nodes
     scene_nodes = ()
     if node_type == '':
-        scene_nodes = cmds.ls( long=True, selection=selectedOnly )
+        scene_nodes = cmds.ls( long=True, selection=selected_only )
     else:
-        scene_nodes = cmds.ls( type=node_type, long=True, selection=selectedOnly )
+        scene_nodes = cmds.ls( type=node_type, long=True, selection=selected_only )
 
     nodes = []
 
