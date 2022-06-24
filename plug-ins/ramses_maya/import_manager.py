@@ -10,18 +10,19 @@ from .ui_import import ImportSettingsDialog
 from .utils_options import get_option
 from .utils_attributes import RamsesAttribute, get_ramses_attr, set_import_attributes, is_ramses_managed
 
-def importer( item, file_paths, step, edit_import_settings):
+def importer( item, file_paths, step, import_options=None, show_import_options=False):
     """The entry point for importing assets"""
 
     # Get options
-    import_options = {}
-    import_options_str = step.importSettings()
-    if import_options_str != "":
-        import_options = yaml.safe_load( import_options_str )
+    if not import_options:
+        import_options_str = step.importSettings()
+        if import_options_str != "":
+            import_options = yaml.safe_load( import_options_str )
 
-    if edit_import_settings or import_options_str == "":
+    if not import_options or show_import_options:
         import_dialog = ImportSettingsDialog()
-        import_dialog.set_options(import_options)
+        if import_options:
+            import_dialog.set_options(import_options)
         if step:
             import_dialog.set_incoming_step_name(step.shortName())
         if not import_dialog.exec_():

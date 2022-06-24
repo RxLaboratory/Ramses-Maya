@@ -468,7 +468,7 @@ class Node():
         if lock_children:
             children = self.children(transform_only=True)
             for child in children:
-                child.lockVisibility(lock_node, only_hidden)
+                child.lock_visibility(lock_node, only_hidden)
 
         node_path = self.path()
         if not cmds.attributeQuery('visibility', n=node_path, exists=True):
