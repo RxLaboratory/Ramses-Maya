@@ -403,6 +403,29 @@ class Node():
             return False
         return cmds.nodeType(self.path()) == 'transform'
 
+    def is_transform_locked(self, recursive=False):
+        """Checks if the transformation are locked"""
+        if not self.exists():
+            return True
+        if not self.is_transform():
+            return True
+
+        node_path = self.path()
+
+        if recursive:
+            children = cmds.listRelatives(node_path, type='transform', ad=True)
+            if children:
+                for child in children:
+                    child = Node(child)
+                    if not child.is_transform_locked():
+                        return False
+
+        for attr in ['.tx', '.ty', '.tz', '.rx', '.ry', '.rz', '.sx', '.sy', '.sz']:
+            locked = cmds.getAttr(node_path + attr, lock=True)
+            if not locked:
+                return False
+        return True
+
     def is_visible(self):
         """Checks if the node is visible.
         Note that if it does not have a visibility attribute,

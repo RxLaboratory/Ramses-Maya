@@ -12,18 +12,19 @@ from .update_manager import update
 from .ui_import import ImportSettingsDialog
 from .import_manager import get_import_group, get_import_namespace, import_file
 
-def replacer(item, file_path, step, edit_import_settings):
+def replacer(item, file_path, step, import_options, show_import_options=False):
     """Runs a few checks and replaces selected nodes with the ones from the filepath"""
 
     # Get options
-    import_options = {}
-    import_options_str = step.importSettings()
-    if import_options_str != "":
-        import_options = yaml.safe_load( import_options_str )
+    if not import_options:
+        import_options_str = step.importSettings()
+        if import_options_str != "":
+            import_options = yaml.safe_load( import_options_str )
 
-    if edit_import_settings or import_options_str == "":
+    if not import_options or show_import_options:
         import_dialog = ImportSettingsDialog()
-        import_dialog.set_options(import_options)
+        if import_options:
+            import_dialog.set_options(import_options)
         if step:
             import_dialog.set_incoming_step_name(step.shortName())
         if not import_dialog.exec_():

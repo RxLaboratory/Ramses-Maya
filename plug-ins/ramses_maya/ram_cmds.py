@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Maya commands"""
 
+from dataclasses import replace
 import os
 import re
 import platform
@@ -24,6 +25,9 @@ from .ui_import import ImportDialog # pylint: disable=import-error,no-name-in-mo
 from .ui_saveas import SaveAsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-module
 from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-name-in-module
+from .utils_attributes import get_item, get_step, set_import_attributes
+from .ui_update import UpdateDialog
+from .replace_manager import replacer
 
 import ramses as ram
 # Keep the ramses and the SETTINGS instances at hand
@@ -81,7 +85,7 @@ def get_current_project( filePath ):
 
     return project
 
-def get_step( filePath ):
+def get_step_for_file( filePath ):
     """Returns the RamStep for this file"""
     project = get_current_project( filePath )
     nm = ram.RamFileInfo()
@@ -401,7 +405,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
 
         # Info
         project = get_current_project( currentFilePath )
-        step = get_step( currentFilePath )
+        step = get_step_for_file( currentFilePath )
         item = ram.RamItem.fromPath( currentFilePath )
 
         saveAsDialog = SaveAsDialog(dumaf.ui.getMayaWindow())
@@ -720,7 +724,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
         # Set the project and step
         project = get_current_project( currentFilePath )
-        step = get_step( currentFilePath )
+        step = get_step_for_file( currentFilePath )
         # Set
         if project is not None:
             publishDialog.setProject( project )
@@ -1182,7 +1186,7 @@ class RamSetupSceneCmd( om.MPxCommand ):
     @staticmethod
     def createCommand():
         return RamSetupSceneCmd()
-    
+
     @staticmethod
     def createSyntax():
         syntax = om.MSyntax()
@@ -1216,6 +1220,105 @@ class RamSetupSceneCmd( om.MPxCommand ):
         if ok:
             cmds.inViewMessage( msg='Scene ready!', pos='midCenter', fade=True )
 
+class RamUpdateCmd( om.MPxCommand ):
+    name = "ramUpdate"
+
+    def __init__(self):
+        om.MPxCommand.__init__(self)
+
+    @staticmethod
+    def createCommand():
+        return RamUpdateCmd()
+
+    @staticmethod
+    def createSyntax():
+        syntax = om.MSyntax()
+        return syntax
+
+    def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if SETTINGS.debugMode:
+                raise
+
+    def run(self, args):
+        # The current maya file
+        currentFilePath = cmds.file( q=True, sn=True )
+
+        # Check if the Daemon is available if Ramses is set to be used "online"
+        if not check_daemon():
+            return
+
+        # Get the save path 
+        save_filepath = get_save_filepath( currentFilePath )
+        if save_filepath == '':
+            return
+
+        updateDialog = UpdateDialog(dumaf.ui.getMayaWindow())
+        result = updateDialog.exec_()
+        if result == 0:
+            return
+
+        nodes = []
+        if result == 1:
+            nodes = updateDialog.getAllNodes()
+        else:
+            nodes = updateDialog.getSelectedNodes()
+
+        progressDialog = dumaf.ProgressDialog()
+        progressDialog.setText("Updating items...")
+        progressDialog.setMaximum(len(nodes))
+        progressDialog.show()
+
+        for n in nodes:
+            node = n[0]
+            updateFile = n[1]
+
+            # Get the item and step
+            ram_item = get_item( node )
+            ram_step = get_step( node )
+
+            progressDialog.setText("Updating: " + dumaf.paths.baseName(node) )
+            ram.log("Updating: " + dumaf.paths.baseName(node) + "\nwith: " + updateFile )
+            progressDialog.increment()
+
+            # Let's update!
+
+            # A node may have been updated twice
+            if not cmds.objExists( node ): continue
+
+            children = cmds.listRelatives( node, ad=True, type='transform')
+            if children and len(children) > 0:
+                child = children[0]
+                # Check if this is a reference, in which case, just replace it
+                if cmds.referenceQuery(child, isNodeReferenced=True):
+                    # Get the reference node
+                    rNode = cmds.referenceQuery( child, referenceNode=True)
+                    # Reload new file
+                    cmds.file( updateFile, loadReference=rNode )
+                    # Set new version
+                    set_import_attributes(node, ram_item, ram_step, updateFile)
+                    continue
+                lock_transform = True
+                for child in children:
+                    child = dumaf.Node(child)
+                    if not child.is_transform_locked(recursive=True):
+                        lock_transform = False
+                        break
+
+            # Set the options
+            options = {
+                'lock_transformations': lock_transform,
+                'as_reference': False
+            }
+
+            # Replace
+            replacer(ram_item, updateFile, ram_step, import_options=options, show_import_options=False)
+
+        progressDialog.close()
+
 cmds_classes = (
     RamSaveCmd,
     RamSaveAsCmd,
@@ -1227,6 +1330,7 @@ cmds_classes = (
     RamSettingsCmd,
     RamOpenRamsesCmd,
     RamSetupSceneCmd,
+    RamUpdateCmd,
 )
 
 cmds_menuItems = []
