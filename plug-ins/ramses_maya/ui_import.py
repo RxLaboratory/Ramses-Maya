@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""UI for opening/importing/replacing items"""
+
 
 import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
@@ -33,19 +35,19 @@ from .utils_options import (
 RAMSES = ram.Ramses.instance()
 
 class ImportDialog( QDialog ):
-
+    """The main open/import/replace dialog"""
     # <== CONSTRUCTOR ==>
 
     def __init__(self, parent=None):
         super(ImportDialog,self).__init__(parent)
 
-        self.__setupUi()
-        self.__loadProjects()
-        self.__connectEvents()
+        self.__setup_ui()
+        self.__load_projects()
+        self.__connect_events()
 
     # <== PRIVATE METHODS ==>
 
-    def __setupUi(self):
+    def __setup_ui(self):
         """Creates the dialog UI"""
 
         checkableButtonCSS = """
@@ -130,7 +132,6 @@ class ImportDialog( QDialog ):
         self.replaceButton.setIcon(icon("ramreplaceitem"))
         self.replaceButton.setCheckable(True)
         self.replaceButton.setStyleSheet(checkableButtonCSS)
-        self.replaceButton.hide() # Not available yet
         actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
@@ -209,73 +210,73 @@ class ImportDialog( QDialog ):
 
         self.setLayout( mainLayout )
 
-    def __connectEvents(self):
-        self.projectBox.currentIndexChanged.connect( self.__projectChanged )
+    def __connect_events(self):
+        self.projectBox.currentIndexChanged.connect( self.__project_changed )
 
-        self.assetButton.clicked.connect( self.__assetButtonClicked )
-        self.shotButton.clicked.connect( self.__shotButtonClicked )
-        self.templateButton.clicked.connect( self.__templateButtonClicked )
-        self.assetButton.clicked.connect( self.__typeChanged )
-        self.shotButton.clicked.connect( self.__typeChanged )
-        self.templateButton.clicked.connect( self.__typeChanged )
+        self.assetButton.clicked.connect( self.__asset_button_clicked )
+        self.shotButton.clicked.connect( self.__shot_button_clicked )
+        self.templateButton.clicked.connect( self.__template_button_clicked )
+        self.assetButton.clicked.connect( self.__type_changed )
+        self.shotButton.clicked.connect( self.__type_changed )
+        self.templateButton.clicked.connect( self.__type_changed )
 
-        self.openButton.clicked.connect( self.__openButtonClicked )
-        self.importButton.clicked.connect( self.__importButtonClicked )
-        self.replaceButton.clicked.connect( self.__replaceButtonClicked )
-        self.openButton.clicked.connect( self.__actionChanged )
-        self.importButton.clicked.connect( self.__actionChanged )
-        self.replaceButton.clicked.connect( self.__actionChanged )
+        self.openButton.clicked.connect( self.__open_button_clicked )
+        self.importButton.clicked.connect( self.__import_button_clicked )
+        self.replaceButton.clicked.connect( self.__replace_button_clicked )
+        self.openButton.clicked.connect( self.__action_changed )
+        self.importButton.clicked.connect( self.__action_changed )
+        self.replaceButton.clicked.connect( self.__action_changed )
 
         self._cancelButton.clicked.connect( self.reject )
         self._openButton.clicked.connect( self.accept )
         self._importButton.clicked.connect( self.__import )
         self._replaceButton.clicked.connect( self.__replace )
-        self.itemList.currentRowChanged.connect( self.__updateResources )
-        self.stepList.currentRowChanged.connect( self.__updateResources )
-        self.resourceList.currentRowChanged.connect( self.__resourceChanged )
-        self.versionList.currentRowChanged.connect( self.__versionChanged )
-        self.groupBox.currentIndexChanged.connect( self.__updateItems )
-        self.itemSearchField.textChanged.connect( self.__searchItem )
-        self.versionSearchField.textChanged.connect( self.__searchVersion )
-        self.publishVersionBox.currentIndexChanged.connect( self.__updatePublishedFiles )
+        self.itemList.currentRowChanged.connect( self.__update_resources )
+        self.stepList.currentRowChanged.connect( self.__update_resources )
+        self.resourceList.currentRowChanged.connect( self.__resource_changed )
+        self.versionList.currentRowChanged.connect( self.__version_changed )
+        self.groupBox.currentIndexChanged.connect( self.__update_items )
+        self.itemSearchField.textChanged.connect( self.__search_item )
+        self.versionSearchField.textChanged.connect( self.__search_version )
+        self.publishVersionBox.currentIndexChanged.connect( self.__update_published_files )
 
     @Slot()
-    def __assetButtonClicked(self):
+    def __asset_button_clicked(self):
         self.assetButton.setChecked(True)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(False)
 
     @Slot()
-    def __shotButtonClicked(self):
+    def __shot_button_clicked(self):
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(True)
         self.templateButton.setChecked(False)
 
     @Slot()
-    def __templateButtonClicked(self):
+    def __template_button_clicked(self):
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(True)
 
     @Slot()
-    def __openButtonClicked(self):
+    def __open_button_clicked(self):
         self.openButton.setChecked(True)
         self.importButton.setChecked(False)
         self.replaceButton.setChecked(False)
 
     @Slot()
-    def __importButtonClicked(self):
+    def __import_button_clicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(True)
         self.replaceButton.setChecked(False)
 
     @Slot()
-    def __replaceButtonClicked(self):
+    def __replace_button_clicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(False)
         self.replaceButton.setChecked(True)
 
-    def __loadProjects(self):
+    def __load_projects(self):
         # Load projects
         projects = RAMSES.projects()
         self.projectBox.clear()
@@ -292,7 +293,7 @@ class ImportDialog( QDialog ):
         self.projectBox.setCurrentIndex(-1)
 
     @Slot()
-    def __projectChanged(self, index):
+    def __project_changed(self, index):
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(False)
@@ -300,7 +301,7 @@ class ImportDialog( QDialog ):
         if index == -1: return
 
     @Slot()
-    def __typeChanged( self ):
+    def __type_changed( self ):
         shot = self.shotButton.isChecked()
         asset = self.assetButton.isChecked()
         template = self.templateButton.isChecked()
@@ -367,7 +368,7 @@ class ImportDialog( QDialog ):
             self.stepList.addItem( item )
         
     @Slot()
-    def __updateItems(self):
+    def __update_items(self):
 
         project = self.projectBox.currentData()
         if not project: return
@@ -385,7 +386,7 @@ class ImportDialog( QDialog ):
             self.itemList.addItem( listItem )
 
     @Slot()
-    def __searchItem(self, text):
+    def __search_item(self, text):
         text = text.lower()
         for i in range(0, self.itemList.count()):
             item = self.itemList.item(i)
@@ -394,16 +395,16 @@ class ImportDialog( QDialog ):
                 )
 
     @Slot()
-    def __searchVersion(self, text):
+    def __search_version(self, text):
         text = text.lower()
         for i in range(0, self.versionList.count()):
             item = self.versionList.item(i)
             item.setHidden(
                 text != '' and text not in item.text().lower()
                 )
-    
+
     @Slot()
-    def __actionChanged(self):
+    def __action_changed(self):
         if self.openButton.isChecked():
             self._importButton.hide()
             self._replaceButton.hide()
@@ -423,11 +424,11 @@ class ImportDialog( QDialog ):
             self._openButton.hide()
             self.versionsLabel.setText("File:")
             self.publishVersionBox.setVisible(True)
-        self.__updateResources()
-        self.__resourceChanged( self.resourceList.currentRow() )
-    
+        self.__update_resources()
+        self.__resource_changed( self.resourceList.currentRow() )
+
     @Slot()
-    def __updateResources(self):
+    def __update_resources(self):
 
         def listTemplateResources(step):
             folder = step.templatesFolderPath()
@@ -527,14 +528,14 @@ class ImportDialog( QDialog ):
 
         # If import asset or shot, list all subfolders
         elif self.assetButton.isChecked() or self.shotButton.isChecked():
-            self.__listPublishedVersions()
+            self.__list_published_versions()
         # If import template, list resources
         else:
             self.resourceList.show()
             self.resourcesLabel.show()
             listTemplateResources(step)
-        
-    def __listPublishedVersions(self):
+
+    def __list_published_versions(self):
         self.publishVersionBox.clear()
         folders = []
         currentItem = self.getItem()
@@ -558,10 +559,10 @@ class ImportDialog( QDialog ):
                 title = " | ".join(folderName)
 
             self.publishVersionBox.addItem(title, f)
-            self.__updatePublishedFiles()
+            self.__update_published_files()
 
     @Slot()
-    def __updatePublishedFiles(self):
+    def __update_published_files(self):
         self.versionList.clear()
         # List available files
         folder = self.publishVersionBox.currentData()
@@ -579,13 +580,13 @@ class ImportDialog( QDialog ):
             self.versionList.addItem(item)
 
     @Slot()
-    def __resourceChanged(self, row):
+    def __resource_changed(self, row):
 
         # Import, list publish files for templates
         if self.importButton.isChecked():
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 return
-            self.__listPublishedVersions()
+            self.__list_published_versions()
             return
 
         # Open, list versions
@@ -627,7 +628,7 @@ class ImportDialog( QDialog ):
             self.versionList.addItem(item)
 
     @Slot()
-    def __versionChanged(self, row):
+    def __version_changed(self, row):
         self._importButton.setEnabled(row >= 0)
         self._replaceButton.setEnabled(row >= 0)
 
@@ -644,12 +645,12 @@ class ImportDialog( QDialog ):
     def setMode(self, mode="open"):
         """Sets the mode of the window, either open, import or replace"""
         if mode == "import":
-            self.__importButtonClicked()
+            self.__import_button_clicked()
         elif mode == "replace":
-            self.__replaceButtonClicked()
+            self.__replace_button_clicked()
         else:
-            self.__openButtonClicked()
-        self.__actionChanged()
+            self.__open_button_clicked()
+        self.__action_changed()
 
     def setProject(self, project):
         
@@ -671,7 +672,7 @@ class ImportDialog( QDialog ):
             self.assetButton.setChecked(True)
         elif itemType == ram.ItemType.SHOT:
             self.shotButton.setChecked(True)
-        self.__typeChanged()
+        self.__type_changed()
 
     def setItem(self, itemShortName ):
         self.groupBox.setCurrentIndex(0)
@@ -679,7 +680,7 @@ class ImportDialog( QDialog ):
             listItem = self.itemList.item(i)
             if listItem.data(Qt.UserRole).shortName() == itemShortName:
                 self.itemList.setCurrentItem(listItem)
-                self.__updateResources()
+                self.__update_resources()
                 return
 
     def setStep(self, stepShortName):
@@ -687,7 +688,7 @@ class ImportDialog( QDialog ):
             listItem = self.stepList.item(i)
             if listItem.data(Qt.UserRole).shortName == stepShortName:
                 self.stepList.setCurrentItem(listItem)
-                self.__updateResources()
+                self.__update_resources()
                 return
 
     def getProject(self):
@@ -711,7 +712,7 @@ class ImportDialog( QDialog ):
         item = self.stepList.currentItem()
         if not item: return None
         return item.data(Qt.UserRole)
-    
+
     def getResource(self):
 
         item = self.resourceList.currentItem()
@@ -749,7 +750,7 @@ class ImportDialog( QDialog ):
             if file != "": return file
             file = currentItem.stepFilePath("", "mb", step) # or MB
             return file
-       
+
     def getFiles(self):
         if self.versionList.count() == 0: return ( self.getFiles )
 
