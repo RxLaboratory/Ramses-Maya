@@ -2,7 +2,6 @@
 """The entry point for publishing scenes"""
 
 import os
-import time
 import yaml
 import ramses as ram
 import dumaf as maf
@@ -43,7 +42,7 @@ def set_export_metadata( filepath, publish_info ):
     ram.RamMetaDataManager.setState( filepath, publish_info.state )
     ram.RamMetaDataManager.setResource( filepath, publish_info.resource )
 
-def publisher(item, step, publish_info, publish_options=None, show_publish_options=False):
+def publisher(item, step, file_path, publish_options=None, show_publish_options=False):
     """The publish entry point"""
 
     # Get options
@@ -76,6 +75,22 @@ def publisher(item, step, publish_info, publish_options=None, show_publish_optio
             maf_node = maf.Node(node)
             node_name = maf_node.name().replace("_", " ")
             publish_nodes.append((node, node_name))
+
+    # Backup file
+    publish_info = ram.RamFileManager.getPublishInfo( file_path )
+    # Prepare the file for backup in the published folder
+    currentFilePath = cmds.file( q=True, sn=True )
+    backup_info = publish_info.copy()
+    backup_info.version = -1
+    backup_info.state = ''
+    # Save
+    published_filepath = backup_info.filePath()
+    cmds.file( rename = published_filepath )
+    cmds.file( save=True, options="v=1;" )
+    ram.RamMetaDataManager.appendHistoryDate( published_filepath )
+    # Reopen initial file
+    cmds.file(currentFilePath,o=True,f=True)
+    ram.RamMetaDataManager.setVersion( published_filepath, publish_info.version )
 
     if "formats" not in publish_options or len(publish_options["formats"]) == 0:
         return

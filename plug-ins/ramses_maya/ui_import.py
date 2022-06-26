@@ -17,7 +17,9 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QLineEdit,
     QAbstractItemView,
     QCheckBox,
-    QTextEdit
+    QTextEdit,
+    QStackedLayout,
+    QRadioButton
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
     Slot,
@@ -88,23 +90,14 @@ class ImportDialog( QDialog ):
         typeLayout = QVBoxLayout()
         typeLayout.setContentsMargins(0,0,0,0)
         typeLayout.setSpacing(3)
-        self.assetButton = QPushButton()
+        self.assetButton = QRadioButton()
         self.assetButton.setText("Asset")
-        self.assetButton.setIcon(icon("ramasset"))
-        self.assetButton.setCheckable(True)
-        self.assetButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.assetButton)
-        self.shotButton = QPushButton()
+        self.shotButton = QRadioButton()
         self.shotButton.setText("Shot")
-        self.shotButton.setIcon(icon("ramshot"))
-        self.shotButton.setCheckable(True)
-        self.shotButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.shotButton)
-        self.templateButton = QPushButton()
+        self.templateButton = QRadioButton()
         self.templateButton.setText("Template")
-        self.templateButton.setIcon(icon("ramtemplateitem"))
-        self.templateButton.setCheckable(True)
-        self.templateButton.setStyleSheet(checkableButtonCSS)
         typeLayout.addWidget(self.templateButton)
         self.typeWidget.setLayout(typeLayout)
         self.typeWidget.setEnabled(False)
@@ -114,27 +107,26 @@ class ImportDialog( QDialog ):
         actionLayout = QVBoxLayout()
         actionLayout.setContentsMargins(0,0,0,0)
         actionLayout.setSpacing(3)
-        self.openButton = QPushButton()
+        self.openButton = QRadioButton()
         self.openButton.setText("Open item")
-        self.openButton.setIcon(icon("ramopenscene"))
-        self.openButton.setCheckable(True)
         self.openButton.setChecked(True)
-        self.openButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.openButton)
-        self.importButton = QPushButton()
+        self.importButton = QRadioButton()
         self.importButton.setText("Import item")
-        self.importButton.setIcon(icon("ramimportitem"))
-        self.importButton.setCheckable(True)
-        self.importButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.importButton)
-        self.replaceButton = QPushButton()
+        self.replaceButton = QRadioButton()
         self.replaceButton.setText("Replace selected items")
-        self.replaceButton.setIcon(icon("ramreplaceitem"))
-        self.replaceButton.setCheckable(True)
-        self.replaceButton.setStyleSheet(checkableButtonCSS)
         actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
+
+        self.optionsWidget = QWidget()
+        optionsLayout = QVBoxLayout(self.optionsWidget)
+        optionsLayout.setContentsMargins(0,0,0,0)
+        optionsLayout.setSpacing(3)
+        self.__show_import_options = QCheckBox("Edit import options")
+        optionsLayout.addWidget(self.__show_import_options)
+        topLayout.addRow( "Settings:", self.optionsWidget )
 
         midLayout.addLayout( topLayout )
 
@@ -263,18 +255,22 @@ class ImportDialog( QDialog ):
         self.openButton.setChecked(True)
         self.importButton.setChecked(False)
         self.replaceButton.setChecked(False)
+        self.__show_import_options.setEnabled(False)
+        self.__show_import_options.setChecked(False)
 
     @Slot()
     def __import_button_clicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(True)
         self.replaceButton.setChecked(False)
+        self.__show_import_options.setEnabled(True)
 
     @Slot()
     def __replace_button_clicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(False)
         self.replaceButton.setChecked(True)
+        self.__show_import_options.setEnabled(True)
 
     def __load_projects(self):
         # Load projects
@@ -765,6 +761,9 @@ class ImportDialog( QDialog ):
             files.append( item.data(Qt.UserRole) )
         return files
 
+    def show_import_options(self):
+        return self.__show_import_options.isChecked()
+
 class ImportSettingsDialog( Dialog ):
     """
     The Dialog to edit import settings
@@ -778,7 +777,7 @@ class ImportSettingsDialog( Dialog ):
         self.__setup_ui()
         self.__connect_events()
         self.__incoming_step_name = ""
-        self.__update_preset()
+        self.__settings_widgets = []
 
     # <== PRIVATE METHODS ==>
 
@@ -788,6 +787,88 @@ class ImportSettingsDialog( Dialog ):
         uber_layout = QHBoxLayout()
         uber_layout.setSpacing(3)
         self.main_layout.addLayout(uber_layout)
+
+        self.__ui_files_box = QListWidget()
+        self.__ui_files_box.setMaximumWidth( 150 )
+        uber_layout.addWidget(self.__ui_files_box)
+
+        self.__ui_stacked_layout = QStackedLayout()
+        uber_layout.addLayout(self.__ui_stacked_layout)
+
+        # <-- BOTTOM BUTTONS -->
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(2)
+        self.main_layout.addLayout(buttons_layout)
+
+        self.__ui_import_button = QPushButton("Import")
+        buttons_layout.addWidget( self.__ui_import_button )
+        self.__ui_cancel_button = QPushButton("Cancel")
+        buttons_layout.addWidget( self.__ui_cancel_button )
+
+    def __connect_events(self):
+        self.__ui_files_box.currentRowChanged.connect( self.__ui_stacked_layout.setCurrentIndex )
+        self.__ui_import_button.clicked.connect( self.accept )
+        self.__ui_cancel_button.clicked.connect( self.reject )
+
+    def __add_file(self, file_dict):
+        # Add entry
+        self.__ui_files_box.addItem(file_dict["format"])
+        # Add widget
+        widget = ImportSettingsWidget( self )
+        self.__ui_stacked_layout.addWidget(widget)
+        self.__settings_widgets.append(widget)
+        widget.set_options(file_dict)
+
+    # <== PUBLIC METHODS ==>
+
+    def get_options(self):
+        """Gets the import options as a dict"""
+
+        options = { }
+        formats = []
+        for w in self.__settings_widgets:
+            formats.append( w.get_options() )
+
+        options['formats'] = formats
+        return options
+
+    def set_options(self, options):
+        """Loads options from a preset"""
+
+        self.__ui_files_box.clear()
+        for w in self.__settings_widgets:
+            self.__ui_stacked_layout.removeWidget(w)
+        self.__settings_widgets = []
+
+        # Add default
+        default =  {
+            "format": "*"
+        }
+        self.__add_file(default)
+
+        if not "formats" in options:
+            return
+
+        for f in options['formats']:
+            self.__add_file(f)
+
+class ImportSettingsWidget( QWidget ):
+    """
+    The Dialog to edit import settings for a single pipe
+    """
+    # <== CONSTRUCTOR ==>
+
+    def __init__(self, parent=None): # pylint: disable=useless-super-delegation
+        super(ImportSettingsWidget, self).__init__(parent)
+        # <-- Setup -->
+        self.__setup_ui()
+        self.__connect_events()
+        self.__format = "*"
+        self.__update_preset()
+
+    def __setup_ui(self):
+        uber_layout = QHBoxLayout(self)
 
         # <-- GENERAL -->
 
@@ -814,27 +895,13 @@ class ImportSettingsDialog( Dialog ):
         preset_layout.setContentsMargins(3,3,3,3)
         uber_layout.addWidget(preset_widget)
 
-        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for steps.")
+        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for pipes.")
         preset_layout.addWidget(preset_label)
         self.__ui_preset_edit = QTextEdit()
         self.__ui_preset_edit.setReadOnly(True)
         preset_layout.addWidget(self.__ui_preset_edit)
 
-        # <-- BOTTOM BUTTONS -->
-
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(2)
-        self.main_layout.addLayout(buttons_layout)
-
-        self.__ui_import_button = QPushButton("Import")
-        buttons_layout.addWidget( self.__ui_import_button )
-        self.__ui_cancel_button = QPushButton("Cancel")
-        buttons_layout.addWidget( self.__ui_cancel_button )
-
     def __connect_events(self):
-        self.__ui_import_button.clicked.connect( self.accept )
-        self.__ui_cancel_button.clicked.connect( self.reject )
-
         self.__ui_reference_box.toggled.connect( self.__ui_reference_box_clicked )
         self.__ui_lock_transform_box.toggled.connect( self.__update_preset )
         self.__ui_apply_shaders_box.toggled.connect( self.__update_preset )
@@ -853,14 +920,12 @@ class ImportSettingsDialog( Dialog ):
             self.__ui_lock_transform_box.setChecked(False)
         self.__update_preset()
 
-    # <== PUBLIC METHODS ==>
-
     def get_options(self):
         """Gets the import options as a dict"""
 
         options = {}
-        if self.__incoming_step_name != "":
-            options["incoming_step"] = self.__incoming_step_name
+        if self.__format != "":
+            options["format"] = self.__format
         
         as_ref = self.__ui_reference_box.isChecked()
         options["as_reference"] = as_ref
@@ -880,9 +945,6 @@ class ImportSettingsDialog( Dialog ):
         load_bool_preset("as_reference", options, self.__ui_reference_box, False)
         load_bool_preset("apply_shaders", options, self.__ui_apply_shaders_box, True)
 
-        self.__incoming_step_name = get_option("incoming_step", options, "")
+        self.__format = get_option("format", options, "*")
 
-    def set_incoming_step_name(self, name):
-        """Sets the name of the incoming step, to be used in the preset/options"""
-        self.__incoming_step_name = name
         self.__update_preset()

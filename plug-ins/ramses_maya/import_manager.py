@@ -9,22 +9,46 @@ from dumaf import ProgressDialog, Node, Plugin
 from .ui_import import ImportSettingsDialog
 from .utils_options import get_option
 from .utils_attributes import RamsesAttribute, get_ramses_attr, set_import_attributes, is_ramses_managed
+from .utils_files import get_current_project, get_step_for_file
 
 def importer( item, file_paths, step, import_options=None, show_import_options=False):
     """The entry point for importing assets"""
 
+    # Try to find the current step
+    current_scene_file = cmds.file( q=True, sn=True )
+    current_step = get_step_for_file( current_scene_file )
+
     # Get options
     if not import_options:
-        import_options_str = step.importSettings()
-        if import_options_str != "":
-            import_options = yaml.safe_load( import_options_str )
+        import_options = { "formats": [] }
+        for p in step.outputPipes():
+            ram.log("Checking pipe: " + str(p), ram.LogLevel.Debug)
+            if current_step is None or current_step.shortName() == p.inputStepShortName():
+                for f in p.pipeFiles():
+                    options_str = f.customSettings()
+                    ram.log("Found options:\n" + options_str, ram.LogLevel.Debug)
+                    if options_str != "":
+                        options = yaml.safe_load( options_str )
+                        import_options['formats'].append( options )
 
-    if not import_options or show_import_options:
+    if len(import_options['formats']) == 0 or show_import_options:
         import_dialog = ImportSettingsDialog()
-        if import_options:
+        if len(import_options['formats']) != 0:
             import_dialog.set_options(import_options)
-        if step:
-            import_dialog.set_incoming_step_name(step.shortName())
+        else:
+            # Set defaults from file paths
+            import_options = {}
+            formats = []
+            for f in file_paths:
+                ext = os.path.splitext(f)[1]
+                if ext != "":
+                    o = {
+                        'format': ext[1:]
+                    }
+                    formats.append(o)
+            import_options['formats'] = formats
+            import_dialog.set_options(import_options)
+
         if not import_dialog.exec_():
             return
         import_options = import_dialog.get_options()
@@ -32,11 +56,7 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
     # Progress
     progress_dialog = ProgressDialog()
     progress_dialog.show()
-    as_reference = get_option("as_reference", import_options, False)
-    if as_reference:
-        progress_dialog.setText("Referencing items...")
-    else:
-        progress_dialog.setText("Importing items...")
+    progress_dialog.setText("Importing items...")
     progress_dialog.setMaximum(len(file_paths) + 1)
     progress_dialog.increment()
 
@@ -65,7 +85,12 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
     for file_path in file_paths:
         progress_dialog.setText("Importing: " + os.path.basename(file_path))
         progress_dialog.increment()
-        lock_transform = get_option("lock_transformations", import_options, True)
+
+        # Get options
+        options = get_format_options(file_path, import_options)
+        lock_transform = get_option("lock_transformations", options, True)
+        as_reference = get_option("as_reference", options, False)
+
         new_nodes = import_file(file_path, as_reference, lock_transform, item, item_namespace, item_group, step)
         geo_nodes = geo_nodes + new_nodes
 
@@ -73,6 +98,11 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
     for shader_file in shader_files:
         progress_dialog.setText("Importing: " + os.path.basename(file_path))
         progress_dialog.increment()
+
+        # Get options
+        options = get_format_options(shader_file, import_options)
+        as_reference = get_option("as_reference", options, False)
+
         new_nodes = import_file(shader_file, as_reference, False, item, item_namespace, item_group, step)
         # Apply shaders to the geo nodes
         # Get the shaders
@@ -243,3 +273,21 @@ def apply_shaders(shaders, geo_nodes):
                 if name in shaded_objects:
                     ram.log("> Found this shader " + shader + "\n> for " + name, ram.LogLevel.Debug)
                     cmds.sets(mesh, e=True, forceElement=shader)
+
+def get_format_options( file_path, options ):
+    ext = os.path.splitext(file_path)[1]
+    if ext != "":
+        ext = ext[1:]
+    ram.log("Checking options for format: " + ext, ram.LogLevel.Debug)
+    for o in options["formats"]:
+        if o['format'] == ext:
+            ram.log("Found these options:", ram.LogLevel.Debug)
+            ram.log(o, ram.LogLevel.Debug)
+            return o
+
+    # Find default
+    for o in options["formats"]:
+        if o['format'] == "*":
+            return o
+
+    return { 'format': "*" }

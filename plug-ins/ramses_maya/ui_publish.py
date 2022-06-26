@@ -323,7 +323,7 @@ class PublishDialog(Dialog):
         alembic_layout.addRow("", self.__ui_alembic_filter_euler_box)
 
     def __connect_events(self):
-        self.__ui_sections_box.currentRowChanged.connect( self.__ui_sections_box_row_changed )
+        self.__ui_sections_box.currentRowChanged.connect( self.__ui_stacked_layout.setCurrentIndex )
         self.__ui_publish_button.clicked.connect( self.__ui_publish_button_clicked )
         self.__ui_cancel_button.clicked.connect( self.__ui_cancel_button_clicked )
         # menu
@@ -393,10 +393,6 @@ class PublishDialog(Dialog):
     @Slot()
     def __ui_cancel_button_clicked(self):
         self.reject()
-
-    @Slot(int)
-    def __ui_sections_box_row_changed(self, row):
-        self.__ui_stacked_layout.setCurrentIndex(row)
 
     @Slot(bool)
     def __ui_maya_scene_box_clicked(self, checked):
