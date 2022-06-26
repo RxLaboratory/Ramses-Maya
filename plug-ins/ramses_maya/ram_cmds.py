@@ -819,7 +819,7 @@ class RamOpenCmd( om.MPxCommand ):
                     filePath,
                     step,
                     importOptions=None,
-                    showImportOptions=show_optionsm
+                    showImportOptions=show_options
                 )
                 return
 
