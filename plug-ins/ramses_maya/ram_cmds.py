@@ -28,6 +28,7 @@ from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-n
 from .utils_attributes import get_item, get_step, set_import_attributes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
+from .utils_files import get_current_project, get_step_for_file
 
 import ramses as ram
 # Keep the ramses and the SETTINGS instances at hand
@@ -69,30 +70,6 @@ def get_save_filepath( filePath ):
         return ''
 
     return saveFilePath
-
-def get_current_project( filePath ):
-    """Returns the RamProject for this file"""
-    nm = ram.RamFileInfo()
-    nm.setFilePath( filePath )
-    # Set the project and step
-    project = None
-    if nm.project != '':
-        project = RAMSES.project( nm.project )
-        RAMSES.setCurrentProject( project )
-    # Try to get the current project
-    if project is None:
-        project = RAMSES.currentProject()
-
-    return project
-
-def get_step_for_file( filePath ):
-    """Returns the RamStep for this file"""
-    project = get_current_project( filePath )
-    nm = ram.RamFileInfo()
-    nm.setFilePath( filePath )
-    if nm.step != '':
-        return project.step( nm.step )
-    return None
 
 def get_name_manager( filePath ):
     """Returns a RamFileInfo for the file"""
@@ -604,20 +581,6 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Publish
         if self.publish:
-            publish_info = ram.RamFileManager.getPublishInfo( save_filepath )
-            # Prepare the file for backup in the published folder
-            backup_info = publish_info.copy()
-            backup_info.version = -1
-            backup_info.state = ''
-            # Save
-            published_filepath = backup_info.filePath()
-            cmds.file( rename = published_filepath )
-            cmds.file( save=True, options="v=1;" )
-            ram.RamMetaDataManager.appendHistoryDate( published_filepath )
-            # Reopen initial file
-            cmds.file(save_filepath,o=True,f=True)
-            ram.RamMetaDataManager.setVersion( published_filepath, newVersion )
-            ram.RamMetaDataManager.setVersionFilePath( published_filepath, backupFilePath )
             # We need the RamStep, get it from the project
             project = currentItem.project()
             step = None
@@ -625,7 +588,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 step = project.step(currentStep)
                 RAMSES.setCurrentProject(project)
             if step is not None:
-                RAMSES.publish( currentItem, step, publish_info.copy(), publishOptions=None, showPublishOptions=self.edit_publish_settings )
+                RAMSES.publish( currentItem, step, save_filepath, publishOptions=None, showPublishOptions=self.edit_publish_settings )
 
         if self.preview:
             cmds.ramPreview()
@@ -829,103 +792,37 @@ class RamOpenCmd( om.MPxCommand ):
                 file = ram.RamFileManager.restoreVersionFile( file )
             # Open
             cmds.file(file, open=True, force=True)
-        elif result == 2: # import
+        else:
             # Get Data
             item = importDialog.getItem()
             if item is None:
                 return
             step = importDialog.getStep()
-            filePaths = importDialog.getFiles()
-            itemShortName = item.shortName()
-            resource = importDialog.getResource()
+            show_options = importDialog.show_import_options()
 
-            # Let's import only if there's no user-defined import scripts
-            if len( RAMSES.importScripts ) > 0:
+            if result == 2: # import
+                filePaths = importDialog.getFiles()
                 RAMSES.importItem(
                     item,
                     filePaths,
-                    step
+                    step,
+                    importOptions=None,
+                    showImportOptions=show_options
                 )
                 return
 
-            for filePath in filePaths:
+            if result == 3: # replace
+                filePath = importDialog.getFile()
 
-                # If file path is empty, let's import the default
-                if filePath == "":
-                    publishFolder = item.publishFolderPath( step )
-                    nm = ram.RamFileInfo()
-                    nm.project = item.projectShortName()
-                    nm.step = step.shortName()
-                    nm.ramType = item.itemType()
-                    nm.shortName = item.shortName()
-                    publishFileName = nm.fileName()
-                    filePath = ram.RamFileManager.buildPath((
-                        publishFolder,
-                        publishFileName
-                    ))
-                    testFilePath = filePath + '.ma'
-                    if not os.path.isfile(testFilePath):
-                        testFilePath = filePath + '.mb'
-                        if not os.path.isfile(testFilePath):
-                            ram.log("Sorry, I can't find anything to import...")
-                            return
-                    filePath = testFilePath
-
-                # We're going to import in a group
-                groupName = ''
-
-                # Prepare names
-                # Check if the short name is not made only of numbers
-                regex = re.compile('^\\d+$')
-                # If it's an asset, let's get the asset group
-                itemType = item.itemType()
-                if itemType == ram.ItemType.ASSET:
-                    groupName = 'RamASSETS_' + item.group()
-                    if re.match(regex, itemShortName):
-                        itemShortName = ram.ItemType.ASSET + itemShortName
-                # If it's a shot, let's store in the shots group
-                elif itemType == ram.ItemType.SHOT:
-                    groupName = 'RamSHOTS'
-                    if re.match(regex, itemShortName):
-                        itemShortName = ram.ItemType.SHOT + itemShortName
-                # If it's a general item, store in a group named after the step
-                else:
-                    groupName = 'RamITEMS'
-                    if re.match(regex, itemShortName):
-                        itemShortName = ram.ItemType.GENERAL + itemShortName
-
-                group = dumaf.Node.get_create_group(groupName)
-
-                # Import the file
-                newNodes = dumaf.Scene.importFile(filePath, itemShortName)
-                
-                # Add a group for the imported asset
-                itemGroup = dumaf.Node.get_create_group( itemShortName, group)
-                # Parent the imported nodes
-                for node in newNodes:
-                    # only the root transform nodes
-                    if node.isTransform() and not node.hasParent():
-                        node.parentTo(itemGroup)
-        elif result == 3: # replace
-            # Get Data
-            item = importDialog.getItem()
-            if item is None:
-                return
-            step = importDialog.getStep()
-            filePath = importDialog.getFile()
-            itemShortName = item.shortName()
-            resource = importDialog.getResource()
-
-            # Let's import only if there's no user-defined import scripts
-            if len( RAMSES.replaceScripts ) > 0:
                 RAMSES.replaceItem(
                     item,
                     filePath,
-                    step
+                    step,
+                    importOptions=None,
+                    showImportOptions=show_optionsm
                 )
                 return
 
-            #TODO Implement default replacement method when the publish/import has been updated
 
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
