@@ -90,6 +90,10 @@ class Dialog(QDialog):
         """Loads the options. This is a virtual method"""
         pass
 
+    def get_options(self):
+        """Returns the options as a dict. This is a virtual method"""
+        pass
+
     @Slot()
     def load_preset(self):
         """Prompts the user to select a preset file to load"""
@@ -128,3 +132,8 @@ class Dialog(QDialog):
         """Loads the preset files.
         This is a virtual function."""
         pass
+
+    def get_preset(self):
+        """Returns the current options as a string"""
+        options = self.get_options()
+        return yaml.dump(options)

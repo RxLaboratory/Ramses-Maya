@@ -43,6 +43,7 @@ from .utils_options import (
     load_enum_preset,
     load_number_preset
 )
+from .ui_stepComboBox import StepComboBox
 
 # NOTE
 # formats to implement: abc, ma, mb, ma shaders, mb shaders, ass
@@ -108,7 +109,7 @@ class PublishDialog(Dialog):
         preset_layout.setContentsMargins(3,3,3,3)
         content_layout.addWidget(preset_widget)
 
-        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for pipes or steps.")
+        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for steps.")
         preset_layout.addWidget(preset_label)
         self.__ui_preset_edit = QTextEdit()
         self.__ui_preset_edit.setReadOnly(True)
@@ -131,6 +132,12 @@ class PublishDialog(Dialog):
         general_layout = QFormLayout(general_widget)
         general_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         general_layout.setSpacing(3)
+
+        self.__ui_step_box = StepComboBox()
+        self.__ui_step_label = QLabel("Step:")
+        self.__ui_step_box.hide()
+        self.__ui_step_label.hide()
+        general_layout.addRow(self.__ui_step_label, self.__ui_step_box)
 
         self.__ui_preset_box = QComboBox()
         general_layout.addRow("Preset:", self.__ui_preset_box)
@@ -322,6 +329,7 @@ class PublishDialog(Dialog):
         self.__ui_publish_button.clicked.connect( self.__ui_publish_button_clicked )
         self.__ui_cancel_button.clicked.connect( self.__ui_cancel_button_clicked )
         # format
+        self.__ui_step_box.currentIndexChanged.connect( self.__ui_step_box_changed )
         self.__ui_maya_scene_box.toggled.connect( self.__ui_maya_scene_box_clicked )
         self.__ui_maya_shaders_box.toggled.connect( self.__ui_maya_shaders_box_clicked )
         self.__ui_alembic_box.toggled.connect( self.__ui_alembic_box_clicked )
@@ -428,7 +436,17 @@ class PublishDialog(Dialog):
         options_str = yaml.dump(options)
         self.__ui_preset_edit.setText(options_str)
 
-    # <== PUBLIC SLOTS ==>
+    @Slot()
+    def __ui_step_box_changed(self):
+        current_step = self.__ui_step_box.current_step()
+        if current_step is None:
+            self.__ui_publish_button.setText("Save settings")
+            self.__ui_publish_button.setEnabled(False)
+        else:
+            self.__ui_publish_button.setText("Save settings for: " + current_step.name())
+            self.__ui_publish_button.setEnabled(True)
+
+    # <== PUBLIC ==>
 
     def get_options(self):
         """Gets the publish options as a dict"""
@@ -675,3 +693,16 @@ class PublishDialog(Dialog):
         for item in self.__ui_nodes_tree.selectedItems():
             nodes.append((item.data(0, Qt.UserRole), item.text(1)))
         return nodes
+
+    def set_steps(self, steps):
+        """Sets the steps"""
+        self.__ui_step_box.set_steps(steps)
+        # Show the row
+        self.__ui_step_label.show()
+        self.__ui_step_box.show()
+
+    def get_step(self):
+        return self.__ui_step_box.current_step()
+
+    def set_step(self, step):
+        self.__ui_step_box.set_step(step)

@@ -898,8 +898,6 @@ class ImportSettingsDialog( Dialog ):
             }
             self.__add_file(default)
 
-
-
 class ImportSettingsWidget( QWidget ):
     """
     The Dialog to edit import settings for a single pipe

@@ -29,6 +29,7 @@ from .utils_attributes import get_item, get_step, set_import_attributes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
 from .utils_files import get_current_project, get_step_for_file
+from .ui_publish import PublishDialog
 
 import ramses as ram
 # Keep the ramses and the SETTINGS instances at hand
@@ -823,7 +824,6 @@ class RamOpenCmd( om.MPxCommand ):
                 )
                 return
 
-
 class RamPreviewCmd( om.MPxCommand ):
     name = "ramPreview"
 
@@ -1216,6 +1216,56 @@ class RamUpdateCmd( om.MPxCommand ):
 
         progressDialog.close()
 
+class RamPublishSettings( om.MPxCommand ):
+    name = "ramPublishSettings"
+
+    def __init__(self):
+        om.MPxCommand.__init__(self)
+
+    @staticmethod
+    def createCommand():
+        return RamPublishSettings()
+
+    @staticmethod
+    def createSyntax():
+        syntax = om.MSyntax()
+        return syntax
+
+    def doIt(self, args):
+        try:
+            self.run(args)
+        except:
+            ram.printException()
+            if SETTINGS.debugMode:
+                raise
+
+    def run(self, args):
+        # The current maya file
+        current_file_path = cmds.file( q=True, sn=True )
+        
+        # Check if the Daemon is available if Ramses is set to be used "online"
+        if not check_daemon():
+            return
+
+        # Get current info
+        step = get_step_for_file( current_file_path )
+
+        publish_dialog = PublishDialog()
+        project = get_current_project(current_file_path)
+        if project:
+            publish_dialog.set_steps( project.steps() )
+        if step:
+            publish_dialog.set_step(step)
+        if not publish_dialog.exec_():
+            return
+
+        settings = publish_dialog.get_preset()
+        step = publish_dialog.get_step()
+
+        ram.log("Saving settings for: " + str(step) + "\n" + settings)
+
+        step.setPublishSettings(settings)
+
 cmds_classes = (
     RamSaveCmd,
     RamSaveAsCmd,
@@ -1228,6 +1278,7 @@ cmds_classes = (
     RamOpenRamsesCmd,
     RamSetupSceneCmd,
     RamUpdateCmd,
+    RamPublishSettings,
 )
 
 cmds_menuItems = []
