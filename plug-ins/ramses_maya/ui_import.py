@@ -33,6 +33,7 @@ from .utils_options import (
     load_bool_preset,
     get_option
 )
+from .utils import IMPORT_PRESETS_PATH
 
 RAMSES = ram.Ramses.instance()
 
@@ -775,8 +776,10 @@ class ImportSettingsDialog( Dialog ):
         super(ImportSettingsDialog, self).__init__(parent)
         # <-- Setup -->
         self.__setup_ui()
+        self._dialog_add_preset_actions()
         self.__connect_events()
-        self.__incoming_step_name = ""
+        self.set_preset_folder(IMPORT_PRESETS_PATH)
+        self.__ui_preset_box.setCurrentIndex(-1)
         self.__settings_widgets = []
 
     # <== PRIVATE METHODS ==>
@@ -795,6 +798,16 @@ class ImportSettingsDialog( Dialog ):
         self.__ui_stacked_layout = QStackedLayout()
         uber_layout.addLayout(self.__ui_stacked_layout)
 
+        preset_widget = QWidget()
+        preset_layout = QFormLayout(preset_widget)
+        preset_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        preset_layout.setSpacing(3)
+
+        self.__ui_preset_box = QComboBox()
+        preset_layout.addRow("Preset:", self.__ui_preset_box)
+        
+        self.__ui_stacked_layout.addWidget(preset_widget)
+
         # <-- BOTTOM BUTTONS -->
 
         buttons_layout = QHBoxLayout()
@@ -808,12 +821,28 @@ class ImportSettingsDialog( Dialog ):
 
     def __connect_events(self):
         self.__ui_files_box.currentRowChanged.connect( self.__ui_stacked_layout.setCurrentIndex )
+        self.__ui_preset_box.currentIndexChanged.connect( self.__ui_preset_box_current_changed )
         self.__ui_import_button.clicked.connect( self.accept )
         self.__ui_cancel_button.clicked.connect( self.reject )
 
+    # <== PRIVATE SLOTS ==>
+
+    @Slot(int)
+    def __ui_preset_box_current_changed(self, index):
+        if index < 0:
+            return
+        file_path = self.__ui_preset_box.itemData(index, Qt.UserRole)
+        self.load_preset_file( file_path )
+
+    # <== PRIVATE METHODS ==>
+
     def __add_file(self, file_dict):
         # Add entry
-        self.__ui_files_box.addItem(file_dict["format"])
+        format = file_dict["format"]
+        if format == "*" or format == "":
+            self.__ui_files_box.addItem("Format: Default (*)")
+        else:
+            self.__ui_files_box.addItem("Format: " + file_dict["format"])
         # Add widget
         widget = ImportSettingsWidget( self )
         self.__ui_stacked_layout.addWidget(widget)
@@ -821,6 +850,15 @@ class ImportSettingsDialog( Dialog ):
         widget.set_options(file_dict)
 
     # <== PUBLIC METHODS ==>
+
+    def update_preset_files(self, preset_files):
+        """Loads the preset files."""
+        if len(preset_files) > 0:
+            self.__ui_preset_box.clear()
+            for preset_file in preset_files:
+                name = os.path.basename(preset_file)
+                name = os.path.splitext(name)[0]
+                self.__ui_preset_box.addItem(name, preset_file)
 
     def get_options(self):
         """Gets the import options as a dict"""
@@ -841,17 +879,26 @@ class ImportSettingsDialog( Dialog ):
             self.__ui_stacked_layout.removeWidget(w)
         self.__settings_widgets = []
 
-        # Add default
-        default =  {
-            "format": "*"
-        }
-        self.__add_file(default)
+        # Add Presets
+        self.__ui_files_box.addItem("Select: Preset")
 
         if not "formats" in options:
             return
 
+        has_default = False
         for f in options['formats']:
             self.__add_file(f)
+            if f['format'] == "*":
+                has_default = True
+
+        if not has_default:
+            # Add default
+            default =  {
+                "format": "*"
+            }
+            self.__add_file(default)
+
+
 
 class ImportSettingsWidget( QWidget ):
     """

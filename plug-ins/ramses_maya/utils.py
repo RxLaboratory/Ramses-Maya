@@ -20,6 +20,7 @@ MODULE_PATH = os.path.dirname(os.path.realpath(__file__))
 PLUGIN_PATH = os.path.dirname(MODULE_PATH)
 ICON_PATH = os.path.dirname(PLUGIN_PATH) + "/icons/"
 PUBLISH_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/publish_presets/"
+IMPORT_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/import_presets/"
 
 def icon(name):
     """Gest QIcon for an icon from its name (without extension)"""
