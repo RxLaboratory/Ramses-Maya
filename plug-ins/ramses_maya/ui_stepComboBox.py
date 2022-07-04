@@ -9,6 +9,7 @@ from PySide2.QtWidgets import (
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
     Qt,
+    Signal,
 )
 from ramses import RamStep
 

@@ -73,9 +73,8 @@ class PublishDialog(Dialog):
         self.__connect_events()
         self.set_preset_folder(PUBLISH_PRESETS_PATH)
         self.__ui_preset_box.setCurrentIndex(-1)
-        self.__update_preset()
+        self.__update_preset() 
         
-
     # <== PRIVATE METHODS ==>
 
     def __setup_ui(self):
@@ -445,6 +444,11 @@ class PublishDialog(Dialog):
         else:
             self.__ui_publish_button.setText("Save settings for: " + current_step.name())
             self.__ui_publish_button.setEnabled(True)
+            # Load step options
+            options = current_step.publishSettings()
+            if options != "":
+                options = yaml.safe_load( options )
+                self.set_options(options)
 
     # <== PUBLIC ==>
 
