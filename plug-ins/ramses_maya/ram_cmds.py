@@ -491,15 +491,16 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the command"""
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
         ram.log("Saving file: " + currentFilePath)
-        
-        # Check if the Daemon is available if Ramses is set to be used "online"
+
+        # Check if the Daemon is available
         if not check_daemon():
             return
 
-        # Get the save path 
+        # Get the save path
         save_filepath = get_save_filepath( currentFilePath )
         if save_filepath == '':
             return
@@ -507,16 +508,14 @@ class RamSaveVersionCmd( om.MPxCommand ):
         self.parseArgs(args)
 
         # Update status
-        saveFileName = os.path.basename( save_filepath )
-        nm = ram.RamFileInfo()
-        nm.setFileName( saveFileName )
-        currentStep = nm.step
+        currentStep = ram.RamStep.fromPath( save_filepath )
         currentItem = ram.RamItem.fromPath( save_filepath )
         if not setup_scene(currentItem):
             return
-        if currentItem is None:
+        if currentItem is None or currentStep is None:
             cmds.warning( ram.Log.NotAnItem )
             cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
+            return
         currentStatus = currentItem.currentStatus( currentStep )
         status = None
 
@@ -546,14 +545,18 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Backup / Increment
         state = RAMSES.defaultState
         if status is not None:
-            state = status.state
+            state = status.state()
         elif currentStatus is not None:
-            state = currentStatus.state
+            state = currentStatus.state()
+
+        stateShortName = 'v'
+        if state:
+            stateShortName = state.shortName()
 
         backupFilePath = ram.RamFileManager.copyToVersion(
             save_filepath,
             True,
-            state.shortName()
+            stateShortName
             )
         backupFileName = os.path.basename( backupFilePath )
         nm = ram.RamFileInfo()
