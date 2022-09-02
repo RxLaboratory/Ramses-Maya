@@ -444,6 +444,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
     # Defaults
     updateSatus = True
     publish = False
+    preview = False
     edit_publish_settings = False
 
     def __init__(self):
@@ -529,12 +530,30 @@ class RamSaveVersionCmd( om.MPxCommand ):
             if update == 0:
                 return
             if update == 1:
-                status = ram.RamStatus(
-                    status_dialog.getState(),
-                    status_dialog.getComment(),
-                    status_dialog.getCompletionRatio()
-                )
-                status.published = status_dialog.publish()
+                # If the user of the current status is not us,
+                # Create a new one
+                createNew = False
+                currentUser = RAMSES.currentUser()
+                if currentStatus and currentStatus.user() != currentUser:
+                    createNew = True
+                elif not currentStatus:
+                    createNew = True
+
+                data = currentStatus.data()
+                data['user'] = currentUser.uuid()
+                data['state'] = status_dialog.getState().uuid()
+                data['comment'] = status_dialog.getComment()
+                data['completionRatio'] = status_dialog.getCompletionRatio()
+                data['published'] = status_dialog.publish()
+                data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")
+
+                if createNew:
+                    status = ram.RamStatus( data=data, create=True )
+                    currentItem.setStatus( status, currentStep )
+                else:
+                    currentStatus.setData( data )
+                    status = currentStatus
+
                 self.publish = status_dialog.publish()
                 self.preview = status_dialog.preview()
                 self.edit_publish_settings = status_dialog.edit_publish_settings()
@@ -565,17 +584,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         if status is not None:
-            status.version = newVersion
-            # We need the RamStep, get it from the project
-            project = currentItem.project()
-            step = None
-            if project is not None:
-                step = project.step(currentStep)
-                RAMSES.setCurrentProject(project)
-                
-            if step is not None:
-                currentItem.setStatus(status, step)
-                RAMSES.updateStatus(currentItem, status, step)
+            status.setVersion(newVersion)
 
         # Alert
         newVersionStr = str( newVersion )
