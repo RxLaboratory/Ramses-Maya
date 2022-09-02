@@ -44,7 +44,6 @@ class SaveAsDialog( QDialog ):
         top_layout.setSpacing(3)
 
         self.project_box = QComboBox()
-        self.project_box.setEditable(True)
         top_layout.addRow( "Project:", self.project_box )
 
         typeWidget = QWidget()
@@ -62,16 +61,13 @@ class SaveAsDialog( QDialog ):
         top_layout.addRow("Type:", typeWidget)
 
         self.stepBox = QComboBox()
-        self.stepBox.setEditable(True)
         top_layout.addRow( "Step:", self.stepBox )
 
         self.assetGroupBox = QComboBox()
-        self.assetGroupBox.setEditable(True)
         self.assetGroupLabel = QLabel("Asset Group:")
         top_layout.addRow( self.assetGroupLabel, self.assetGroupBox )
 
         self.itemBox = QComboBox()
-        self.itemBox.setEditable(True)
         self.itemLabel = QLabel("Item:")
         top_layout.addRow( self.itemLabel, self.itemBox )
 
@@ -148,7 +144,8 @@ class SaveAsDialog( QDialog ):
     def _loadSteps(self):
         self.stepBox.clear()
         project = self.getProject()
-        if not project: return
+        if not project:
+            return
 
         steps = []
         if self.assetButton.isChecked():
@@ -392,10 +389,8 @@ class SaveAsDialog( QDialog ):
         return self.extensionBox.currentData()
 
     def getProject(self):
+        """Returns the selected project"""
         p = self.project_box.currentData()
-        if not p:
-            pShortName = self.project_box.currentText()
-            p = RAMSES.project( pShortName )
         return p
 
     def getStep(self):

@@ -13,4 +13,3 @@ subprocess.Popen((
     "-noAutoloadPlugins"
     ), stdin=None, stdout=None, stderr=None, close_fds=True)
 print("Done!")
-exit()

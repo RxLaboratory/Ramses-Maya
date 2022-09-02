@@ -38,17 +38,16 @@ SETTINGS = ram.RamSettings.instance()
 
 def check_daemon():
     """Checks if the Daemon is available (if the SETTINGS tell we have to work with it)"""
-    if SETTINGS.online:
-        if not RAMSES.connect():
-            cmds.confirmDialog(
-                title="No User",
-                message="You must log in Ramses first!",
-                button=["OK"],
-                icon="warning"
-                )
-            RAMSES.showClient()
-            cmds.error( "User not available: You must log in Ramses first!" )
-            return False
+    if not RAMSES.connect():
+        cmds.confirmDialog(
+            title="No User",
+            message="You must log in Ramses first!",
+            button=["OK"],
+            icon="warning"
+            )
+        RAMSES.showClient()
+        cmds.error( "User not available: You must log in Ramses first!" )
+        return False
 
     return True
 
@@ -200,7 +199,7 @@ def create_playblast(filePath, size):
     elif platform.system() == "Linux":
         subprocess.call(["xdg-open", filePath])
 
-def create_thumbnial(filePath):
+def create_thumbnail(filePath):
     """Saves a thumbnail for the current viewport at filepath"""
     cmds.refresh(cv=True, fn = filePath)
 
@@ -349,22 +348,27 @@ class RamSaveCmd( om.MPxCommand ):
             ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because ' + incrementReason )
             ram.log("I've incremented the version for you because it was " + incrementReason)
 
-class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement browse button
+class RamSaveAsCmd( om.MPxCommand ):
+    """ramSaveAs Maya cmd"""
+
     name = "ramSaveAs"
 
-    def __init__(self):
+    def __init__(self): # pylint: disable=invalid-name
         om.MPxCommand.__init__(self)
 
     @staticmethod
-    def createCommand():
+    def createCommand(): # pylint: disable=invalid-name
+        """Creates and returns the command"""
         return RamSaveAsCmd()
 
     @staticmethod
-    def createSyntax():
+    def createSyntax(): # pylint: disable=invalid-name
+        """Creates and returns the Mel syntax"""
         syntax = om.MSyntax()
         return syntax
 
-    def doIt(self, args):
+    def doIt(self, args): # pylint: disable=invalid-name
+        """Runs the command or throw an error if it fails"""
         try:
             self.run(args)
         except:
@@ -373,7 +377,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
                 raise
 
     def run(self, args):
-
+        """Runs the command"""
         # We need the daemon
         if not check_daemon():
             return
@@ -393,7 +397,7 @@ class RamSaveAsCmd( om.MPxCommand ): #TODO Set offline if offline and implement 
             saveAsDialog.setStep( step )
         if item is not None:
             saveAsDialog.setItem(item)
-            
+
         if not saveAsDialog.exec_():
             self.setResult( False )
             return
@@ -520,10 +524,6 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if self.updateSatus:
             # Show status dialog
             status_dialog = StatusDialog(dumaf.ui.getMayaWindow())
-            if not SETTINGS.online or currentItem.itemType() == ram.ItemType.GENERAL:
-                status_dialog.setOffline(True)
-            else:
-                status_dialog.setOffline(False)
             status_dialog.setPublish( self.publish )
             if currentStatus is not None:
                 status_dialog.setStatus( currentStatus )
@@ -683,8 +683,6 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
         # Prepare the dialog
         publishDialog = PublishTemplateDialog(dumaf.ui.getMayaWindow())
-        if not SETTINGS.online:
-            publishDialog.setOffline()
 
         # Set the project and step
         project = get_current_project( currentFilePath )
@@ -998,7 +996,7 @@ class RamPreviewCmd( om.MPxCommand ):
             ))
             # Attempt to set window size
             dialog.setWindowSize()
-            create_thumbnial(pbFilePath)
+            create_thumbnail(pbFilePath)
 
         # Hide window
         dialog.hideRenderer()
