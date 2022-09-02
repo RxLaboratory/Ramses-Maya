@@ -33,29 +33,33 @@ class StateBox( QComboBox ):
 
         # Populate states from Ramses
         for state in RAMSES.states():
-            self.addItem( state.shortName(), state.color() )
+            self.addItem( state.shortName(), state )
 
         self.setState( RAMSES.defaultState )
+        self.indexChanged( self.currentIndex() )
         self.currentIndexChanged.connect( self.indexChanged )
 
     @Slot()
     def indexChanged(self, i):
-        color = self.itemData(i)
-        color = QColor.fromRgb( color[0], color[1], color[2] )
+        """Sets the color of the box"""
+        color = self.itemData(i).color()
+        color = QColor( color )
         pal = self.palette()
         pal.setColor(QPalette.Button, color)
         self.setPalette(pal)
 
     def setState(self, state):
+        """Sets the current state"""
         i = 0
         while i < self.count():
-            if self.itemText( i ) == state.shortName():
+            if self.itemData( i ) == state:
                 self.setCurrentIndex( i )
                 return
             i = i+1
 
     def getState(self):
-        return RAMSES.state( self.currentText() )
+        """Gets the current state"""
+        return self.itemData( self.currentIndex() )
 
 class StatusDialog( QDialog ):
     """The Dialog for editing the status"""
@@ -127,28 +131,33 @@ class StatusDialog( QDialog ):
     def __conect_evenhts(self):
         self.__ui_completion_slider.valueChanged.connect( self.__ui_completion_box.setValue )
         self.__ui_completion_box.valueChanged.connect( self.__ui_completion_slider.setValue )
-        self.__ui_state_box.currentTextChanged.connect(self.stateChanged )
+        self.__ui_state_box.currentIndexChanged.connect(self.stateChanged )
         self.__ui_save_button.clicked.connect( self.accept )
         self.__ui_cancel_button.clicked.connect( self.reject )
         self.__ui_skip_button.clicked.connect( self.skip )
         self.__ui_publish_box.clicked[bool].connect( self.__ui_publish_settings_box.setEnabled )
 
-    def stateChanged(self, s):
-        state = RAMSES.state( s )
+    def stateChanged(self, i):
+        """Updates the completion according to the state"""
+        state = self.__ui_state_box.itemData(i)
         self.__ui_completion_box.setValue( state.completionRatio() )
 
     def setStatus( self, status):
-        self.__ui_state_box.setState( status.state )
-        self.__ui_completion_box.setValue( status.completionRatio )
-        self.__ui_comment_edit.setPlainText( status.comment )
+        """Sets the status in the dialog"""
+        self.__ui_state_box.setState( status.state() )
+        self.__ui_completion_box.setValue( status.completionRatio() )
+        self.__ui_comment_edit.setPlainText( status.comment() )
 
     def getState(self):
+        """Returns the chosen state"""
         return self.__ui_state_box.getState()
 
     def getCompletionRatio(self):
+        """Returns the completion ratio"""
         return self.__ui_completion_box.value()
 
     def getComment(self):
+        """Returns the comment"""
         return self.__ui_comment_edit.toPlainText()
 
     def publish(self):
@@ -160,19 +169,15 @@ class StatusDialog( QDialog ):
         return self.__ui_publish_settings_box.isChecked()
 
     def skip(self):
+        """Skip the status update and just save"""
         self.done(2)
 
-    def setOffline(self, offline):
-        online = not offline
-        self.__ui_completion_slider.setVisible(online)
-        self.__ui_completion_box.setVisible(online)
-        self.__ui_comment_edit.setVisible(online)
-        self.__ui_comment_label.setVisible(online)
-
     def setPublish(self, pub=True):
+        """Checks the publish box"""
         self.__ui_publish_box.setChecked(pub)
 
     def preview(self):
+        """Checks the preview box"""
         return self.__ui_preview_box.isChecked()
 
 if __name__ == '__main__':
