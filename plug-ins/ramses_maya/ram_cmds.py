@@ -45,7 +45,6 @@ def check_daemon():
             button=["OK"],
             icon="warning"
             )
-        RAMSES.showClient()
         cmds.error( "User not available: You must log in Ramses first!" )
         return False
 
