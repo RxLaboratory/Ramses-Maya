@@ -299,7 +299,7 @@ class SaveAsDialog( QDialog ):
         if self.assetButton.isChecked():
             # Load asset groups
             for ag in project.assetGroups():
-                self.assetGroupBox.addItem(ag)
+                self.assetGroupBox.addItem(ag.name(), ag)
             # No selection, to make things faster and load steps & items only once needed
             self.assetGroupBox.setCurrentIndex(-1)
             self._loadAssets()
@@ -317,9 +317,10 @@ class SaveAsDialog( QDialog ):
         self.itemBox.clear()
 
         project = self.getProject()
-        if not project: return
+        if not project:
+            return
 
-        ag = self.assetGroupBox.currentText() 
+        ag = self.assetGroupBox.currentData()
         for asset in project.assets( ag ):
             self.itemBox.addItem(str(asset), asset)
         # No selection, to make things faster and load steps & items only once needed
