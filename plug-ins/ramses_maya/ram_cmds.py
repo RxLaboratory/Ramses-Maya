@@ -526,6 +526,8 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if self.updateSatus:
             # Show status dialog
             status_dialog = StatusDialog(dumaf.ui.getMayaWindow())
+            if currentItem.virtual():
+                status_dialog.setVirtual()
             status_dialog.setPublish( self.publish )
             if currentStatus is not None:
                 status_dialog.setStatus( currentStatus )
@@ -544,23 +546,17 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
                 if currentStatus:
                     data = currentStatus.data()
-                    data['state'] = status_dialog.getState().uuid()
-                    data['comment'] = status_dialog.getComment()
-                    data['completionRatio'] = status_dialog.getCompletionRatio()
-                    data['published'] = status_dialog.publish()
-                    data['user'] = currentUser.uuid()
-                    data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")                    
                 else:
                     data = {}
-                    data['user'] = currentUser.uuid()
-                    if RAMSES.defaultState:
-                        data['state'] = RAMSES.defaultState.uuid()
-                        data['completionRatio'] = RAMSES.defaultState.completionRatio()
-                    else:
-                        data['completionRatio'] = 50
-                    data['comment'] = ""
-                    data['published'] = status_dialog.publish()
-                    data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")
+
+                data['state'] = status_dialog.getState().uuid()
+                data['comment'] = status_dialog.getComment()
+                data['completionRatio'] = status_dialog.getCompletionRatio()
+                data['published'] = status_dialog.publish()
+                data['user'] = currentUser.uuid()
+                data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")
+
+                if not currentStatus:
                     data["step"] = currentStep.uuid()
                     data['item'] = currentItem.uuid()
                     if currentItem.itemType() == ram.ItemType.ASSET:

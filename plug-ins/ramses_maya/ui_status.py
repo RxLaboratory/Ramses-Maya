@@ -137,6 +137,20 @@ class StatusDialog( QDialog ):
         self.__ui_skip_button.clicked.connect( self.skip )
         self.__ui_publish_box.clicked[bool].connect( self.__ui_publish_settings_box.setEnabled )
 
+    def setVirtual(self):
+        """
+        Sets the dialog to edit a virtual item status
+        (no comment, no completion ratio)
+        """
+        self.__ui_completion_slider.hide()
+        self.__ui_completion_box.hide()
+        self.__ui_comment_label.hide()
+        self.__ui_comment_edit.hide()
+        # Use names in statebox
+        for i in range(self.__ui_state_box.count() ):
+            state = self.__ui_state_box.itemData(i)
+            self.__ui_state_box.setItemText( i, state.name() )
+
     def stateChanged(self, i):
         """Updates the completion according to the state"""
         state = self.__ui_state_box.itemData(i)
@@ -147,6 +161,13 @@ class StatusDialog( QDialog ):
         self.__ui_state_box.setState( status.state() )
         self.__ui_completion_box.setValue( status.completionRatio() )
         self.__ui_comment_edit.setPlainText( status.comment() )
+
+    def setState( self, state ):
+        """Sets a state in the dialog"""
+        stateName = ram.RamObject.getShortName( state )
+        for i in range(self.__ui_state_box.count() ):
+            if stateName == self.__ui_state_box.itemData(i).shortName():
+                self.__ui_state_box.setCurrentIndex(i)
 
     def getState(self):
         """Returns the chosen state"""
@@ -182,5 +203,6 @@ class StatusDialog( QDialog ):
 
 if __name__ == '__main__':
     statusDialog = StatusDialog()
+    statusDialog.setVirtual()
     ok = statusDialog.exec_()
     print(ok)
