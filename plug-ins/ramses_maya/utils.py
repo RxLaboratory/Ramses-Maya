@@ -23,7 +23,7 @@ PUBLISH_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/publish_presets/"
 IMPORT_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/import_presets/"
 
 def icon(name):
-    """Gest QIcon for an icon from its name (without extension)"""
+    """Gets QIcon for an icon from its name (without extension)"""
     return QIcon(ICON_PATH + name + ".png")
 
 @Slot()

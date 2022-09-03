@@ -73,8 +73,8 @@ class PublishDialog(Dialog):
         self.__connect_events()
         self.set_preset_folder(PUBLISH_PRESETS_PATH)
         self.__ui_preset_box.setCurrentIndex(-1)
-        self.__update_preset() 
-        
+        self.__update_preset()
+
     # <== PRIVATE METHODS ==>
 
     def __setup_ui(self):

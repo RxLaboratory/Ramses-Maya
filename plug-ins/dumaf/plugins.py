@@ -11,4 +11,3 @@ class Plugin():
             cmds.loadPlugin(pluginName)
             return True
         return False
-    

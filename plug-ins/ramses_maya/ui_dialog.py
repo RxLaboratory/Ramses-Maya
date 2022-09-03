@@ -22,6 +22,7 @@ from .utils import (
     about_ramses,
     open_api_reference
 )
+from dumaf.utils import checkUpdate
 
 class Dialog(QDialog):
     """
@@ -46,6 +47,7 @@ class Dialog(QDialog):
         self.__help_action = help_menu.addAction("Ramses Maya Add-on help...")
         self.__about_ramses_action = help_menu.addAction("Ramses general help...")
         self.__api_reference_action = help_menu.addAction("Ramses API reference...")
+        self.__update_action = help_menu.addAction("Check for update")
         self.__help_action.setShortcut(QKeySequence("F1"))
 
     def __dialog_setup_ui(self):
@@ -62,6 +64,7 @@ class Dialog(QDialog):
         self.__help_action.triggered.connect( open_help )
         self.__about_ramses_action.triggered.connect( about_ramses )
         self.__api_reference_action.triggered.connect( open_api_reference )
+        self.__update_action.triggered.connect( self.check_update )
 
     # <== PROTECTED METHODS ==>
 
@@ -136,3 +139,8 @@ class Dialog(QDialog):
         """Returns the current options as a string"""
         options = self.get_options()
         return yaml.dump(options)
+
+    def check_update(self):
+        """Checks if an update is available"""
+        from ramses_maya import TOOL_NAME, VERSION, IS_PRERELEASE
+        checkUpdate( TOOL_NAME, VERSION, discreet=False, preRelease=IS_PRERELEASE )

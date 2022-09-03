@@ -17,19 +17,18 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QPushButton,
     QComboBox,
     QListWidget,
-    QWidget,
-    QSizePolicy,
 )
 from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
     QUrl,
-    Qt
 )
 
+import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram
 import dumaf as maf
-import maya.cmds as cmds # pylint: disable=import-error
+from ramses_maya.ui_dialog import Dialog
+
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 
@@ -57,7 +56,8 @@ if not ok:
 cmds.ramSaveAs()
 """
 
-class SettingsDialog( QMainWindow ):
+class SettingsDialog( Dialog ):
+    """The dialog to change the module settings"""
 
     def __init__( self, parent=None ):
         super(SettingsDialog, self).__init__(parent)
@@ -69,10 +69,6 @@ class SettingsDialog( QMainWindow ):
     def __setupUi(self):
         self.setWindowTitle("Ramses Add-ons settings")
         self.setMinimumWidth( 500 )
-
-        mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
-        mainLayout.setSpacing(12)
 
         secondaryLayout = QHBoxLayout()
         secondaryLayout.setSpacing(3)
@@ -161,7 +157,7 @@ class SettingsDialog( QMainWindow ):
 
         secondaryLayout.addLayout(self.stackedLayout)
 
-        mainLayout.addLayout( secondaryLayout )
+        self.main_layout.addLayout( secondaryLayout )
         secondaryLayout.setStretch(0, 0)
         secondaryLayout.setStretch(1, 100)
 
@@ -173,19 +169,11 @@ class SettingsDialog( QMainWindow ):
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
-        mainLayout.addLayout( buttonsLayout )
-
-        mainWidget = QWidget()
-        mainWidget.setLayout( mainLayout )
-        self.setCentralWidget( mainWidget )
+        self.main_layout.addLayout( buttonsLayout )
 
     def __setupMenu(self):
-        editMenu = self.menuBar().addMenu("Edit")
-        self._revertToSavedAction = editMenu.addAction("Revert to Saved")
-        self._restoreDefaultsAction = editMenu.addAction("Restore Default Settings")
-
-        helpMenu = self.menuBar().addMenu("Help")
-        self._helpAction = helpMenu.addAction("Help on Ramses Add-ons...")
+        self._revertToSavedAction = self.edit_menu.addAction("Revert to Saved")
+        self._restoreDefaultsAction = self.edit_menu.addAction("Restore Default Settings")
 
     def __connectEvents(self):
         self.sectionsBox.currentRowChanged.connect(self.stackedLayout.setCurrentIndex)
@@ -194,14 +182,15 @@ class SettingsDialog( QMainWindow ):
         self._cancelButton.clicked.connect( self.cancel )
         self._revertToSavedAction.triggered.connect( self.revert )
         self._restoreDefaultsAction.triggered.connect( self.restoreDefaults )
-        self._helpAction.triggered.connect( self.help )
 
     @Slot()
     def cancel(self):
+        """Cancels"""
         self.close()
 
     @Slot()
     def save(self):
+        """Saves the settings"""
         settings.ramsesClientPath = self._clientPathEdit.text()
         settings.ramsesClientPort = self._clientPortBox.value()
         settings.logLevel = self._logLevelBox.currentData()

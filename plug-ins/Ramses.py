@@ -6,9 +6,6 @@ The Rx Asset Management System (Ramses) Maya Plugin
 import ramses_maya as ram
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
-VENDOR = "RxLaboratory"
-VERSION = "0.5.0-Alpha"
-
 def maya_useNewAPI(): # pylint: disable=invalid-name
     """
     The presence of this function tells Maya that the plugin produces, and
@@ -85,7 +82,7 @@ def initializePlugin( obj ):
     """
     Initializes the plugin, loads the classes for maya commands
     """
-    plugin = om.MFnPlugin(obj, VENDOR, VERSION)
+    plugin = om.MFnPlugin(obj, ram.VENDOR, ram.VERSION)
 
     ram.log( "Hi, I'm Ramses, the Rx Asset Management System... I'm loading!" )
 
@@ -104,7 +101,7 @@ def uninitializePlugin( obj ):
     """
     Unitializes the plugin, unloads the classes for maya commands
     """
-    plugin = om.MFnPlugin(obj, VENDOR, VERSION)
+    plugin = om.MFnPlugin(obj, ram.VENDOR, ram.VERSION)
 
     # Rstore hotkeys
     ram.maf.HotKey.restoreSaveSceneHotkey()

@@ -34,6 +34,11 @@ import ramses as ram
 RAMSES = ram.Ramses.instance()
 SETTINGS = ram.RamSettings.instance()
 
+def check_update():
+    """Checks if an update is available"""
+    from ramses_maya import TOOL_NAME, VERSION, IS_PRERELEASE
+    dumaf.utils.checkUpdate( TOOL_NAME, VERSION, discreet=True, preRelease=IS_PRERELEASE )
+
 def check_daemon():
     """Checks if the Daemon is available (if the SETTINGS tell we have to work with it)"""
     if not RAMSES.connect():
@@ -279,6 +284,7 @@ class RamSaveCmd( om.MPxCommand ):
         return True
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
@@ -379,6 +385,7 @@ class RamSaveAsCmd( om.MPxCommand ):
 
     def doIt(self, args): # pylint: disable=invalid-name
         """Runs the command or throw an error if it fails"""
+        check_update()
         try:
             self.run(args)
         except:
@@ -499,6 +506,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
     def doIt(self, args):
         """Runs the command or raise an error"""
+        check_update()
         try:
             self.run(args)
         except:
@@ -652,6 +660,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
@@ -706,6 +715,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
@@ -790,6 +800,7 @@ class RamOpenCmd( om.MPxCommand ):
 
     def doIt(self, args):
         """Runs or raise the error"""
+        check_update()
         try:
             self.run(args)
         except:
@@ -889,6 +900,7 @@ class RamPreviewCmd( om.MPxCommand ):
 
     def doIt(self, args):
         """Runs or raises an error if debug mode"""
+        check_update()
         try:
             self.run(args)
         except:
@@ -1098,6 +1110,7 @@ class RamSettingsCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
@@ -1125,6 +1138,7 @@ class RamOpenRamsesCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
@@ -1152,6 +1166,7 @@ class RamSetupSceneCmd( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
@@ -1199,6 +1214,7 @@ class RamUpdateCmd( om.MPxCommand ):
 
     def doIt(self, args):
         """Runs the command or raise an error in debug mode"""
+        check_update()
         try:
             self.run(args)
         except:
@@ -1300,6 +1316,7 @@ class RamPublishSettings( om.MPxCommand ):
         return syntax
 
     def doIt(self, args):
+        check_update()
         try:
             self.run(args)
         except:
