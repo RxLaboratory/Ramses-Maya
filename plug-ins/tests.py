@@ -13,5 +13,5 @@ DAEMON = RAMSES.daemonInterface()
 
 maf.mayapy.reset_script_session( ram.utils.PLUGIN_PATH )
 
-item = ramses.RamItem.fromPath( "C:/Users/duduf/Ramses/Projects/P1/04-ASSETS/Main Characters/P1_A_TRI/P1_A_TRI_Mod/P1_A_TRI_Mod.mb" )
-print (ramses.RamFileManager.copyToVersion( "C:/Users/duduf/Ramses/Projects/P1/04-ASSETS/Main Characters/P1_A_TRI/P1_A_TRI_Mod/P1_A_TRI_Mod.mb", True ) )
+item = ramses.RamItem.fromPath( "C:/Users/duduf/Ramses/Projects/P1/02-PROD/P1_G_Mod/Templates/P1_G_Mod_Template/P1_G_Mod_Template.mb", True )
+print ( item )

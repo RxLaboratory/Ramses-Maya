@@ -512,7 +512,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Update status
         currentStep = ram.RamStep.fromPath( save_filepath )
-        currentItem = ram.RamItem.fromPath( save_filepath )
+        currentItem = ram.RamItem.fromPath( save_filepath, True )
 
         if not setup_scene(currentItem):
             return
@@ -542,17 +542,38 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 elif not currentStatus:
                     createNew = True
 
-                data = currentStatus.data()
-                data['user'] = currentUser.uuid()
-                data['state'] = status_dialog.getState().uuid()
-                data['comment'] = status_dialog.getComment()
-                data['completionRatio'] = status_dialog.getCompletionRatio()
-                data['published'] = status_dialog.publish()
-                data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")
+                if currentStatus:
+                    data = currentStatus.data()
+                    data['state'] = status_dialog.getState().uuid()
+                    data['comment'] = status_dialog.getComment()
+                    data['completionRatio'] = status_dialog.getCompletionRatio()
+                    data['published'] = status_dialog.publish()
+                    data['user'] = currentUser.uuid()
+                    data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")                    
+                else:
+                    data = {}
+                    data['user'] = currentUser.uuid()
+                    if RAMSES.defaultState:
+                        data['state'] = RAMSES.defaultState.uuid()
+                        data['completionRatio'] = RAMSES.defaultState.completionRatio()
+                    else:
+                        data['completionRatio'] = 50
+                    data['comment'] = ""
+                    data['published'] = status_dialog.publish()
+                    data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")
+                    data["step"] = currentStep.uuid()
+                    data['item'] = currentItem.uuid()
+                    if currentItem.itemType() == ram.ItemType.ASSET:
+                        data['itemType'] = "asset"
+                    elif currentItem.itemType() == ram.ItemType.SHOT:
+                        data['itemType'] = "shot"
+                    else:
+                        data['itemType'] = "item"
 
                 if createNew:
                     status = ram.RamStatus( data=data, create=True )
-                    currentItem.setStatus( status, currentStep )
+                    if status:
+                        currentItem.setStatus( status, currentStep )
                 else:
                     currentStatus.setData( data )
                     status = currentStatus
