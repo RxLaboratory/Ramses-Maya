@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Maya commands"""
 
-from dataclasses import replace
 import os
-import re
 import platform
 import subprocess
 import tempfile
@@ -452,10 +450,12 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
+        """Creates the command"""
         return RamSaveVersionCmd()
 
     @staticmethod
     def createSyntax():
+        """Creates the Mel Syntax"""
         syntax = om.MSyntax()
         syntax.addFlag('-us', "-updateStatus", om.MSyntax.kBoolean )
         syntax.addFlag('-p', "-publish", om.MSyntax.kBoolean )
@@ -464,6 +464,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         return syntax
 
     def parseArgs(self, args):
+        """Parses the Mel args"""
         parser = om.MArgParser( self.syntax(), args)
 
         if parser.isFlagSet( '-us' ):
@@ -484,6 +485,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
             self.preview = False
 
     def doIt(self, args):
+        """Runs the command or raise an error"""
         try:
             self.run(args)
         except:
@@ -594,13 +596,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if self.publish:
             # We need the RamStep, get it from the project
-            project = currentItem.project()
-            step = None
-            if project is not None:
-                step = project.step(currentStep)
-                RAMSES.setCurrentProject(project)
-            if step is not None:
-                RAMSES.publish( currentItem, step, save_filepath, publishOptions=None, showPublishOptions=self.edit_publish_settings )
+            if currentStep is not None:
+                RAMSES.publish( currentItem, currentStep, save_filepath, publishOptions=None, showPublishOptions=self.edit_publish_settings )
+            else:
+                ram.log( "I can't publish this item, I don't know which step it is.", ram.LogLevel.Critical )
+                cmds.inViewMessage( msg="Can't publish: unknown step.", pos='midCenterBot', fade=True )
 
         if self.preview:
             cmds.ramPreview()
