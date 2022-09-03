@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """UI for opening/importing/replacing items"""
 
-
+from ast import Import
 import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QDialog,
@@ -27,13 +27,13 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
 )
 import yaml
 import ramses as ram
-from .utils import icon
-from .ui_dialog import Dialog
-from .utils_options import (
+from ramses_maya.utils import icon
+from ramses_maya.ui_dialog import Dialog
+from ramses_maya.utils_options import (
     load_bool_preset,
     get_option
 )
-from .utils import IMPORT_PRESETS_PATH
+from ramses_maya.utils import IMPORT_PRESETS_PATH
 
 RAMSES = ram.Ramses.instance()
 
@@ -295,7 +295,8 @@ class ImportDialog( QDialog ):
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(False)
         self.typeWidget.setEnabled(index != -1)
-        if index == -1: return
+        if index == -1:
+            return
 
     @Slot()
     def __type_changed( self ):
@@ -309,8 +310,10 @@ class ImportDialog( QDialog ):
             self.itemList.show()
             self.itemSearchField.show()
             self.groupBox.show()
-            if asset: self.itemLabel.setText("Asset:")
-            else: self.itemLabel.setText("Shot:")
+            if asset:
+                self.itemLabel.setText("Asset:")
+            else:
+                self.itemLabel.setText("Shot:")
         else:
             self.itemLabel.hide()
             self.itemList.hide()
@@ -324,10 +327,12 @@ class ImportDialog( QDialog ):
         self.versionList.clear()
         self.groupBox.clear()
 
-        if not shot and not asset and not template: return
+        if not shot and not asset and not template:
+            return
 
         project = self.projectBox.currentData()
-        if not project: return
+        if not project:
+            return
 
         steps = ()
 
@@ -338,7 +343,7 @@ class ImportDialog( QDialog ):
             self.groupBox.addItem("All", "")
             # Add groups
             for group in groups:
-                self.groupBox.addItem(group, group)
+                self.groupBox.addItem(group.name(), group)
             self.groupBox.setCurrentIndex(-1)
             self.groupBox.blockSignals(False)
             steps = project.steps( ram.StepType.ASSET_PRODUCTION )
@@ -349,7 +354,7 @@ class ImportDialog( QDialog ):
             self.groupBox.addItem("All", "")
             # Add sequences
             for group in groups:
-                self.groupBox.addItem(group, group)
+                self.groupBox.addItem(group.name(), group)
             self.groupBox.setCurrentIndex(-1)
             self.groupBox.blockSignals(False)
             steps = project.steps( ram.StepType.SHOT_PRODUCTION )
@@ -368,11 +373,14 @@ class ImportDialog( QDialog ):
     def __update_items(self):
 
         project = self.projectBox.currentData()
-        if not project: return
+        if not project:
+            return
 
         items = ()
-        if self.shotButton.isChecked(): items = project.shots( sequence = self.groupBox.currentData() )
-        elif self.assetButton.isChecked(): items = project.assets( self.groupBox.currentData() )
+        if self.shotButton.isChecked():
+            items = project.shots( sequence = self.groupBox.currentData() )
+        elif self.assetButton.isChecked():
+            items = project.assets( self.groupBox.currentData() )
         else: return
 
         self.itemList.clear()
@@ -429,7 +437,8 @@ class ImportDialog( QDialog ):
 
         def listTemplateResources(step):
             folder = step.templatesFolderPath()
-            if folder == '': return
+            if folder == '':
+                return
 
             for f in os.listdir( folder ):
                 # Template must be a folder
@@ -449,7 +458,7 @@ class ImportDialog( QDialog ):
 
                 if nm.step != step.shortName():
                     continue
-                
+
                 for t in os.listdir( fPath ):
                     # Resource must be a file
                     resource = ram.RamFileManager.buildPath((
@@ -461,11 +470,12 @@ class ImportDialog( QDialog ):
 
                     if not nm.setFileName( t ):
                         continue
-                    
+
                     res = nm.resource
 
                     if nm.isRestoredVersion:
-                        if res != '': res = res + " | "
+                        if res != '':
+                            res = res + " | "
                         res = res + "v" + str(nm.restoredVersion) + " (restored)"
 
                     if res == "":
@@ -482,9 +492,10 @@ class ImportDialog( QDialog ):
 
         self.resourceList.clear()
         self.versionList.clear()
-        
+
         stepItem = self.stepList.currentItem()
-        if not stepItem: return
+        if not stepItem:
+            return
         step = stepItem.data(Qt.UserRole)
 
         currentItem = self.getItem()
@@ -495,25 +506,28 @@ class ImportDialog( QDialog ):
             self.resourcesLabel.show()
             # Shots and Assets
             if self.assetButton.isChecked() or self.shotButton.isChecked():
-                if not currentItem: return
+                if not currentItem:
+                    return
                 # List resources
                 resources = currentItem.stepFilePaths( step )
 
                 for resource in resources:
                     nm = ram.RamFileInfo()
                     nm.setFilePath(resource)
-                    if nm.project == '': continue
+                    if nm.project == '':
+                        continue
 
                     res = nm.resource
 
                     if nm.isRestoredVersion:
-                        if res != '': res = res + " | "
+                        if res != '':
+                            res = res + " | "
                         res = res + "v" + str(nm.restoredVersion) + " (restored)"
 
                     if res == "":
                         res = "Main (" + nm.extension + ")"
                         self._openButton.setEnabled(True)
-                                       
+
                     item = QListWidgetItem( res )
                     item.setData( Qt.UserRole, resource )
                     self.resourceList.addItem( item )
@@ -536,9 +550,11 @@ class ImportDialog( QDialog ):
         self.publishVersionBox.clear()
         folders = []
         currentItem = self.getItem()
-        if not currentItem: return
+        if not currentItem:
+            return
         step = self.getStep()
-        if not step: return
+        if not step:
+            return
         folders = currentItem.publishedVersionFolderPaths( step )
 
         for f in reversed(folders): # list more recent first
@@ -567,9 +583,11 @@ class ImportDialog( QDialog ):
         for f in files:
             nm = ram.RamFileInfo()
             fileName = os.path.basename(f)
-            if not nm.setFileName(fileName): continue
+            if not nm.setFileName(fileName):
+                continue
             resource = nm.resource
-            if resource == "": resource = "Main"
+            if resource == "":
+                resource = "Main"
             title = resource + " (" + nm.extension + ")"
             item = QListWidgetItem( title )
             item.setData(Qt.UserRole, f)
@@ -595,13 +613,15 @@ class ImportDialog( QDialog ):
         self.versionList.clear()
 
         currentItem = self.getItem()
-        if not currentItem: return
-        
+        if not currentItem:
+            return
+
         # List versions
         versionFiles = ()
         versionFiles = currentItem.versionFilePaths( self.getResource(), self.getStep() )
 
-        if len(versionFiles) == 0: return
+        if len(versionFiles) == 0:
+            return
 
         versionFiles.reverse()    
 
@@ -650,13 +670,14 @@ class ImportDialog( QDialog ):
         self.__action_changed()
 
     def setProject(self, project):
-        
+        """Sets the selected project"""
         if project is None:
             self.projectBox.setCurrentIndex(-1)
             return
         for i in range(self.projectBox.count()):
             testProject = self.projectBox.itemData(i)
-            if not testProject: continue
+            if not testProject:
+                continue
             if testProject == project:
                 self.projectBox.setCurrentIndex(i)
                 return
@@ -665,6 +686,7 @@ class ImportDialog( QDialog ):
         self.projectBox.setCurrentIndex( self.projectBox.count() - 1)
 
     def setType( self, itemType):
+        """Sets the type of item (asset, shot, template)"""
         if itemType == ram.ItemType.ASSET:
             self.assetButton.setChecked(True)
         elif itemType == ram.ItemType.SHOT:
@@ -672,6 +694,7 @@ class ImportDialog( QDialog ):
         self.__type_changed()
 
     def setItem(self, itemShortName ):
+        """Selects a specific item"""
         self.groupBox.setCurrentIndex(0)
         for i in range( 0, self.itemList.count()):
             listItem = self.itemList.item(i)
@@ -681,37 +704,43 @@ class ImportDialog( QDialog ):
                 return
 
     def setStep(self, stepShortName):
+        """Selects a specific step"""
         for i in range(0, self.stepList.count()):
             listItem = self.stepList.item(i)
-            if listItem.data(Qt.UserRole).shortName == stepShortName:
+            if listItem.data(Qt.UserRole).shortName() == stepShortName:
                 self.stepList.setCurrentItem(listItem)
                 self.__update_resources()
                 return
 
     def getProject(self):
+        """Returns the selected project"""
         return self.projectBox.currentData()
 
     def getItem(self):
         """Returns the Item (RamAsset, RamShot or RamItem if template) currently selected."""
-        
+
         # if it's an asset or a shot, get from itemList
         if self.shotButton.isChecked() or self.assetButton.isChecked():
             item = self.itemList.currentItem()
-            if not item: return None
+            if not item:
+                return None
             return item.data(Qt.UserRole)
 
-        # if it's a template, get the item from the path of the selected resource (or version if import)        
+        # if it's a template, gets a virtual item from the path of the selected resource (or version if import)
         item = self.resourceList.currentItem()
-        if not item: return None
-        return ram.RamItem.fromPath( item.data(Qt.UserRole) )
+        if not item:
+            return None
+        return ram.RamItem.fromPath( item.data(Qt.UserRole), True )
 
     def getStep(self):
+        """Returns the selected step"""
         item = self.stepList.currentItem()
-        if not item: return None
+        if not item:
+            return None
         return item.data(Qt.UserRole)
 
     def getResource(self):
-
+        """Returns the selected resource string if any"""
         item = self.resourceList.currentItem()
         if not item: return ""
 
@@ -720,7 +749,7 @@ class ImportDialog( QDialog ):
         return nm.resource
 
     def getFile(self):
-
+        """Returns the selected file"""
         # return the selected version if it's not  the current
         rowForCurrent = -1
         if self.openButton.isChecked(): rowForCurrent = 0
@@ -733,7 +762,8 @@ class ImportDialog( QDialog ):
 
         # return the selected resource if any
         item = self.resourceList.currentItem()
-        if item: return item.data(Qt.UserRole)
+        if item:
+            return item.data(Qt.UserRole)
 
         # If it's an asset or a shot which is selected, return the default (no resource)
         if self.assetButton.isChecked() or self.shotButton.isChecked():
@@ -749,20 +779,24 @@ class ImportDialog( QDialog ):
             return file
 
     def getFiles(self):
-        if self.versionList.count() == 0: return ( self.getFiles )
+        """Returns the selected files"""
+        if self.versionList.count() == 0:
+            return ()
 
         # De-select the item 0, which is basically "no version"
-        if self.openButton.isChecked(): self.versionList.item(0).setSelected(False)
+        if self.openButton.isChecked():
+            self.versionList.item(0).setSelected(False)
         items = self.versionList.selectedItems()
         if len(items) == 0:
-            return ( self.getFile() )
-        
+            return self.getFile()
+
         files = []
         for item in items:
             files.append( item.data(Qt.UserRole) )
         return files
 
     def show_import_options(self):
+        """Tells if the import options must be shown first"""
         return self.__show_import_options.isChecked()
 
 class ImportSettingsDialog( Dialog ):
@@ -993,3 +1027,9 @@ class ImportSettingsWidget( QWidget ):
         self.__format = get_option("format", options, "*")
 
         self.__update_preset()
+
+
+if __name__ == '__main__':
+    dialog = ImportDialog()
+    ok = dialog.exec_()
+    print(ok)

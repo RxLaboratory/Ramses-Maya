@@ -736,16 +736,19 @@ class RamOpenCmd( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
+        """Creates the command"""
         return RamOpenCmd()
 
     @staticmethod
     def createSyntax():
+        """Creates the Mel Syntax"""
         syntax = om.MSyntax()
         syntax.addFlag('-i', "-import", om.MSyntax.kBoolean )
         syntax.addFlag('-r', "-replace", om.MSyntax.kBoolean )
         return syntax
 
     def parseArgs(self, args):
+        """Parses Mel arguments"""
         parser = om.MArgParser( self.syntax(), args)
         if parser.isFlagSet( '-i' ):
             self.mode = "import"
@@ -755,6 +758,7 @@ class RamOpenCmd( om.MPxCommand ):
             self.mode = "open"
 
     def doIt(self, args):
+        """Runs or raise the error"""
         try:
             self.run(args)
         except:
@@ -763,6 +767,7 @@ class RamOpenCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the comma,d"""
         # Check if the Daemon is available if Ramses is set to be used "online"
         if not check_daemon():
             return
@@ -799,7 +804,7 @@ class RamOpenCmd( om.MPxCommand ):
             # Get the file, check if it's a version
             file = importDialog.getFile()
             if ram.RamFileManager.inVersionsFolder( file ):
-                file = ram.RamFileManager.restoreVersionFile( file )
+                file = ram.RamFileManager.restoreVersionFile( file, False )
             # Open
             cmds.file(file, open=True, force=True)
         else:
