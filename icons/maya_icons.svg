@@ -7,7 +7,7 @@
    id="svg8"
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
    sodipodi:docname="maya_icons.svg"
-   inkscape:export-filename="D:\RxLab\Src\RxOT\Ramses\Ramses-Maya\icons\ramsaveincremental.png"
+   inkscape:export-filename="D:\RxLab\Src\RxOT\Ramses\Ramses-Maya\icons\ramcomment.png"
    inkscape:export-xdpi="96.000008"
    inkscape:export-ydpi="96.000008"
    inkscape:label="savestatus"
@@ -531,7 +531,7 @@
 </style>
   <path
      id="path2224"
-     style="display:none;fill:#d588f1;fill-opacity:1;stroke-width:0.00972609"
+     style="display:inline;fill:#d588f1;fill-opacity:1;stroke-width:0.00972609"
      d="M 6.521285,2.1291908 H 1.9453818 c -0.3433285,0 -0.6224651,0.2791359 -0.6224651,0.622466 v 1.9905807 c 0,0.3433243 0.2791366,0.6224601 0.6224651,0.6224601 h 0.9336977 v 1.1328803 c 0,0.095318 0.1089314,0.1507593 0.1857669,0.094347 L 4.279626,5.3646976 h 2.241659 c 0.3433284,0 0.6224655,-0.2791358 0.6224655,-0.6224601 V 2.7516568 c 0,-0.3433301 -0.2791371,-0.622466 -0.6224655,-0.622466 z"
      inkscape:label="savecomment"
      sodipodi:nodetypes="ssssscsccssss" />
@@ -542,7 +542,7 @@
      inkscape:label="publishtemplate" />
   <path
      id="path1413"
-     style="display:inline;fill:#d588f1;fill-opacity:1;stroke-width:0.0113671"
+     style="display:none;fill:#d588f1;fill-opacity:1;stroke-width:0.0113671"
      d="m 1.8647176,1.3063803 c -0.1511823,0 -0.2728609,0.1216745 -0.2728609,0.2728609 v 5.2742459 c 0,0.1511863 0.1216786,0.2728609 0.2728609,0.2728609 h 3.8193428 c 0.1511826,0 0.2725056,-0.1398787 0.2725056,-0.2728609 0,-2.179981 -0.00141,-2.7225573 0,-4.1614848 0,-0.071613 -0.028431,-0.1406967 -0.079584,-0.1918554 L 4.7642204,1.3859647 C 4.7130686,1.3347442 4.6436936,1.3063803 4.570944,1.3063803 Z"
      sodipodi:nodetypes="sssssccccss"
      inkscape:label="save" />
