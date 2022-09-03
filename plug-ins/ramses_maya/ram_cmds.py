@@ -123,7 +123,8 @@ def create_playblast(filePath, size):
     h = cmds.getAttr("defaultResolution.height") * size
     w = w - w % 4
     h = h - h % 4
-    imageFile = cmds.playblast( filename=imageFile,
+    imageFile = cmds.playblast(
+        filename=imageFile,
         format='image',
         clearCache=True,
         framePadding= 5,
@@ -133,7 +134,8 @@ def create_playblast(filePath, size):
         compression="jpg",
         quality=50, 
         width = w,
-        height = h )
+        height = h
+        )
 
     # if there's sound, create a sound file
     soundFile = ''
@@ -144,7 +146,18 @@ def create_playblast(filePath, size):
         # And sounds are used by the timeline
         if cmds.timeControl(timeCtrl, displaySound=True, query=True):
             soundFile = tempDir + '/' + 'blast.avi'
-            soundFile = cmds.playblast(filename=soundFile, format='avi', clearCache=True, useTraxSounds=True, framePadding= 5, viewer=False, showOrnaments=False, percent=10,compression="none", quality=10)
+            soundFile = cmds.playblast(
+                filename=soundFile,
+                format='avi',
+                clearCache=True,
+                useTraxSounds=True,
+                framePadding= 5,
+                viewer=False,
+                showOrnaments=False,
+                percent=10,
+                compression="none",
+                quality=10
+                )
 
     # Get framerate
     framerate = mel.eval('float $fps = `currentTimeUnitToFPS`') # It's not in cmds!!
@@ -917,6 +930,9 @@ class RamPreviewCmd( om.MPxCommand ):
         # Keep current SETTINGS
         currentAA = cmds.getAttr('hardwareRenderingGlobals.multiSampleEnable')
         currentAO = cmds.getAttr('hardwareRenderingGlobals.ssaoEnable')
+        prevCam = cmds.lookThru( q=True )
+        # Because the first call seems to be ignored...
+        cmds.lookThru( prevCam )
 
         # show UI
         dialog = PreviewDialog( dumaf.ui.getMayaWindow() )
@@ -932,13 +948,16 @@ class RamPreviewCmd( om.MPxCommand ):
         thumbnail = dialog.thumbnail()
         pb = dialog.playblast()
 
+        # Set the cam
+        cmds.lookThru( cam )
+
         # Remove all current HUD
         currentHuds = cmds.headsUpDisplay(listHeadsUpDisplays=True)
         if currentHuds:
             for hud in currentHuds:
                 cmds.headsUpDisplay(hud, remove=True)
         # Add ours
-        if (hud):
+        if hud:
             # Collect info
             itemName = currentItem.name()
             if itemName == '':
@@ -1027,7 +1046,9 @@ class RamPreviewCmd( om.MPxCommand ):
                 previewFolder,
                 pbNM.fileName()
             ))
+            cmds.refresh()
             create_playblast(pbFilePath, size)
+
         if thumbnail:
             pbNM.extension = 'png'
             # path
@@ -1045,6 +1066,8 @@ class RamPreviewCmd( om.MPxCommand ):
         # Set back render SETTINGS
         cmds.setAttr('hardwareRenderingGlobals.multiSampleEnable',currentAA)
         cmds.setAttr('hardwareRenderingGlobals.ssaoEnable',currentAO)
+        cmds.lookThru( prevCam )
+        mel.eval("lookThroughModelPanel " + prevCam + " modelPanel4;")
 
         # Remove all current HUD
         currentHuds = cmds.headsUpDisplay(listHeadsUpDisplays=True)

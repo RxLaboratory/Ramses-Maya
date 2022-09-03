@@ -19,6 +19,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Qt
 )
 
+import maya.mel as mel  # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 import dumaf as maf
 
@@ -150,8 +151,9 @@ class PreviewDialog( QDialog ):
         self.sizeEdit.valueChanged.connect( self.sizeSlider.setValue )
 
     def _updateRenderer(self):
+        cam = self.cameraBox.currentData()
         cmds.modelEditor(self.modelEditor,
-            camera=self.cameraBox.currentData(), 
+            camera=self.cameraBox.currentData(),
             displayAppearance=self.displayAppearenceBox.currentData(),
             displayLights= self.useLightsBox.currentData(),
             displayTextures=self.displayTexturesBox.isChecked(),
@@ -161,6 +163,11 @@ class PreviewDialog( QDialog ):
 
         cmds.setAttr('hardwareRenderingGlobals.multiSampleEnable',self.aaBox.isChecked() ) # AA
         cmds.setAttr('hardwareRenderingGlobals.ssaoEnable', self.aoBox.isChecked() ) # AO
+        # JUST BRUTE FORCE
+        # Otherwise Maya just doesn't understand
+        cmds.lookThru(cam)
+        mel.eval("lookThroughModelPanel " + cam + " modelPanel4;")
+        cmds.refresh()
 
     def showRenderer(self):
         """Shows the renderer window / Maya viewport for capturing the preview"""
@@ -193,8 +200,7 @@ class PreviewDialog( QDialog ):
         self.modelEditor = cmds.modelPanel(self.modelPanel, modelEditor=True, query=True)
         # Adjust render setting
         cmds.modelEditor(self.modelEditor, activeView=True, edit=True)
-        self._updateRenderer()
-        
+
         # Adjust cam
         cmds.camera(self.cameraBox.currentData(),e=True,displayFilmGate=False,displayResolution=False,overscan=1.0)
         # Clear selection
@@ -202,6 +208,7 @@ class PreviewDialog( QDialog ):
 
         # Show window
         cmds.showWindow( self.pbWin )
+        self._updateRenderer()
 
     def _ok(self):
         if self.onlyPolyBox.isChecked():
