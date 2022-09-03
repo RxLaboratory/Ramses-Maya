@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """The entry point for importing assets"""
 
-import re, os
+import re
+import os
 from maya import cmds # pylint: disable=import-error
 import yaml
 import ramses as ram
@@ -227,7 +228,6 @@ def import_file(file_path, as_reference, lock_transform, item, item_namespace, i
         cmds.setAttr(ctrl_shape+'.overrideColor', 18)
         cmds.setAttr(ctrl.path()+'.useOutlinerColor',1)
         color = step.color()
-        print(color)
         cmds.setAttr( ctrl.path()+'.outlinerColor', color[0]/255, color[1]/255, color[2]/255 )
 
         # Parent to the item group
@@ -249,11 +249,10 @@ def import_file(file_path, as_reference, lock_transform, item, item_namespace, i
 
     return root_nodes
 
-def apply_shaders(shaders, geo_nodes):
+def apply_shaders(shaders, geo_nodes, ignore_namespace=True):
     """Applies the shaders to the nodes, using the name of the objects stored by Ramses"""
     ram.log("Applying shaders to geometry")
     for node in geo_nodes:
-        print(node)
         ram.log("checking: " + node, ram.LogLevel.Debug)
         # For all mesh
         meshes = cmds.listRelatives( node, ad=True, type='mesh', f=True)
@@ -264,7 +263,7 @@ def apply_shaders(shaders, geo_nodes):
             # Get the transform node (which has the name we're looking for)
             transform_node = cmds.listRelatives(mesh, p=True, type='transform')[0]
             transform_node = Node(transform_node)
-            name = transform_node.name()
+            name = transform_node.name(keep_namespace = not ignore_namespace)
             # Look for a shader
             for shader in shaders:
                 shaded_objects = get_ramses_attr(shader, RamsesAttribute.SHADED_OBJECTS)
@@ -276,6 +275,7 @@ def apply_shaders(shaders, geo_nodes):
                     cmds.sets(mesh, e=True, forceElement=shader)
 
 def get_format_options( file_path, options ):
+    """Returns the options for the given file"""
     ext = os.path.splitext(file_path)[1]
     if ext != "":
         ext = ext[1:]

@@ -19,13 +19,14 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
     Qt,
 )
 from maya import cmds # pylint: disable=import-error
-from .utils_attributes import list_ramses_nodes, get_item, get_state, get_step, get_ramses_attr, RamsesAttribute
+from ramses_maya.utils_attributes import list_ramses_nodes, get_item, get_state, get_step, get_ramses_attr, RamsesAttribute
 import ramses
 import dumaf
 
 RAMSES = ramses.Ramses.instance()
 
 class UpdateDialog( QDialog ):
+    """The Dialog to update items in the scene"""
 
     def __init__(self, parent = None):
         super(UpdateDialog, self).__init__(parent)
@@ -114,6 +115,7 @@ class UpdateDialog( QDialog ):
 
     Slot()
     def selectionChanged(self):
+        """Updates displayed info according to the selection"""
         items = self.itemList.selectedItems()
         self._updateSelectedButton.setEnabled(len(items) > 0)
         self.updateList.clear()
@@ -129,9 +131,14 @@ class UpdateDialog( QDialog ):
             ))
             self.currentDetailsLabel.setText( currentDetails )
 
+            state = currentItem.data(Qt.UserRole + 8)
+            stateName = "- Not Found -"
+            if state:
+                stateName = state.name()
+
             updateDetails = '\n'.join((
                 "Latest version: " + str( currentItem.data(Qt.UserRole + 7) ),
-                "Latest state: " + currentItem.data(Qt.UserRole + 8).name()
+                "Latest state: " + stateName
             ))
             self.updateDetailsLabel.setText( updateDetails )
 
@@ -198,6 +205,7 @@ class UpdateDialog( QDialog ):
             
 
     def __listItems(self):
+        """List the items found in the scene"""
         nodes = list_ramses_nodes('')
         if len(nodes) == 0:
             self._updateButton.setEnabled(False)
@@ -227,11 +235,12 @@ class UpdateDialog( QDialog ):
             listItem.setData(Qt.UserRole + 5, sourceFile )
             listItem.setData(Qt.UserRole + 6, resource )
             listItem.setData(Qt.UserRole + 7, '-Not found-')
-            listItem.setData(Qt.UserRole + 8, ramses.RamState('-Not found-', '-NF-') )
+            listItem.setData(Qt.UserRole + 8, None )
             listItem.setToolTip( node )
 
             itemText = ramItem.name() + ' | ' + ramStep.name()
-            if resource != '': itemText = itemText + ' | ' + resource
+            if resource != '':
+                itemText = itemText + ' | ' + resource
             itemText = itemText + ' (' + nodeName + ')'
 
             updated = False
@@ -284,5 +293,7 @@ if __name__ == '__main__':
     updateDialog = UpdateDialog()
     ok = updateDialog.exec_()
     print(ok)
-    if ok == 1: print( updateDialog.getAllNodes() )
-    elif ok == 2: print( updateDialog.getSelectedNodes() )
+    if ok == 1:
+        print( updateDialog.getAllNodes() )
+    elif ok == 2:
+        print( updateDialog.getSelectedNodes() )

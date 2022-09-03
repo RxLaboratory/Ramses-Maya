@@ -285,7 +285,7 @@ class RamSaveCmd( om.MPxCommand ):
         # if not checkDaemon():
         #     return
 
-        # Get the save path 
+        # Get the save path
         saveFilePath = get_save_filepath( currentFilePath )
         if saveFilePath == '':
             return
@@ -310,7 +310,7 @@ class RamSaveCmd( om.MPxCommand ):
 
         # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment
         # to be sure to not lose the previous working file.
-        
+
         if ram.RamFileManager.inReservedFolder( currentFilePath ) and not increment:
             increment = True
             incrementReason = "the file was misplaced."
@@ -513,6 +513,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Update status
         currentStep = ram.RamStep.fromPath( save_filepath )
         currentItem = ram.RamItem.fromPath( save_filepath )
+
         if not setup_scene(currentItem):
             return
         if currentItem is None or currentStep is None:
@@ -1132,6 +1133,7 @@ class RamSetupSceneCmd( om.MPxCommand ):
             cmds.inViewMessage( msg='Scene ready!', pos='midCenter', fade=True )
 
 class RamUpdateCmd( om.MPxCommand ):
+    """The command to update Ramses nodes in the scene with other versions"""
     name = "ramUpdate"
 
     def __init__(self):
@@ -1139,14 +1141,17 @@ class RamUpdateCmd( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
+        """"Creates the command"""
         return RamUpdateCmd()
 
     @staticmethod
     def createSyntax():
+        """Creates the Mel Syntax"""
         syntax = om.MSyntax()
         return syntax
 
     def doIt(self, args):
+        """Runs the command or raise an error in debug mode"""
         try:
             self.run(args)
         except:
@@ -1155,6 +1160,7 @@ class RamUpdateCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the command"""
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
 
@@ -1198,7 +1204,8 @@ class RamUpdateCmd( om.MPxCommand ):
             # Let's update!
 
             # A node may have been updated twice
-            if not cmds.objExists( node ): continue
+            if not cmds.objExists( node ):
+                continue
 
             children = cmds.listRelatives( node, ad=True, type='transform')
             if children and len(children) > 0:
