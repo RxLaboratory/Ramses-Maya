@@ -77,7 +77,6 @@ class Dialog(QDialog):
 
     def load_preset_file(self, file_path):
         """Loads a preset file"""
-        print(file_path)
         if not os.path.isfile(file_path):
             return
 
@@ -127,7 +126,7 @@ class Dialog(QDialog):
                 preset_files.append(self.__preset_folder + file_name)
 
         self.update_preset_files(preset_files)
-    
+
     def update_preset_files(self, preset_files):
         """Loads the preset files.
         This is a virtual function."""

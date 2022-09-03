@@ -809,12 +809,12 @@ class ImportSettingsDialog( Dialog ):
     def __init__(self, parent=None): # pylint: disable=useless-super-delegation
         super(ImportSettingsDialog, self).__init__(parent)
         # <-- Setup -->
+        self.__settings_widgets = []
         self.__setup_ui()
         self._dialog_add_preset_actions()
         self.__connect_events()
         self.set_preset_folder(IMPORT_PRESETS_PATH)
         self.__ui_preset_box.setCurrentIndex(-1)
-        self.__settings_widgets = []
 
     # <== PRIVATE METHODS ==>
 
@@ -907,10 +907,10 @@ class ImportSettingsDialog( Dialog ):
 
     def set_options(self, options):
         """Loads options from a preset"""
-
         self.__ui_files_box.clear()
-        for w in self.__settings_widgets:
-            self.__ui_stacked_layout.removeWidget(w)
+        if self.__settings_widgets:
+            for w in self.__settings_widgets:
+                self.__ui_stacked_layout.removeWidget(w)
         self.__settings_widgets = []
 
         # Add Presets

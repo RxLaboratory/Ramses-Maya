@@ -227,7 +227,8 @@ def import_file(file_path, as_reference, lock_transform, item, item_namespace, i
         cmds.setAttr(ctrl_shape+'.overrideColor', 18)
         cmds.setAttr(ctrl.path()+'.useOutlinerColor',1)
         color = step.color()
-        cmds.setAttr( ctrl.path()+'.outlinerColor', color[0], color[1], color[2] )
+        print(color)
+        cmds.setAttr( ctrl.path()+'.outlinerColor', color[0]/255, color[1]/255, color[2]/255 )
 
         # Parent to the item group
         ctrl.parent_to( item_group )

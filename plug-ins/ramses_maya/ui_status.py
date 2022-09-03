@@ -42,8 +42,8 @@ class StateBox( QComboBox ):
     @Slot()
     def indexChanged(self, i):
         """Sets the color of the box"""
-        color = self.itemData(i).color()
-        color = QColor( color )
+        colorName = self.itemData(i).colorName()
+        color = QColor( colorName )
         pal = self.palette()
         pal.setColor(QPalette.Button, color)
         self.setPalette(pal)
