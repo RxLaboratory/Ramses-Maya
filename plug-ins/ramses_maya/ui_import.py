@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """UI for opening/importing/replacing items"""
 
-from ast import Import
 import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QDialog,
@@ -27,7 +26,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
 )
 import yaml
 import ramses as ram
-from ramses_maya.utils import icon
+from ramses_maya.ui_object_combobox import RamObjectBox
 from ramses_maya.ui_dialog import Dialog
 from ramses_maya.utils_options import (
     load_bool_preset,
@@ -84,7 +83,7 @@ class ImportDialog( QDialog ):
 
         topLayout.addRow(QLabel("Info:"))
 
-        self.projectBox = QComboBox()
+        self.projectBox = RamObjectBox()
         topLayout.addRow( "Project:", self.projectBox )
 
         self.typeWidget = QWidget()
@@ -136,7 +135,7 @@ class ImportDialog( QDialog ):
         self.itemLabel = QLabel("Item")
         self.itemLabel.hide()
         itemLayout.addWidget(self.itemLabel)
-        self.groupBox = QComboBox()
+        self.groupBox = RamObjectBox()
         self.groupBox.hide()
         itemLayout.addWidget(self.groupBox)
         self.itemSearchField = QLineEdit()

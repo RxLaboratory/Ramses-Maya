@@ -18,6 +18,8 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 )
 
 import ramses as ram
+from ramses_maya.ui_object_combobox import RamObjectBox
+
 RAMSES = ram.Ramses.instance()
 
 class SaveAsDialog( QDialog ):
@@ -43,7 +45,7 @@ class SaveAsDialog( QDialog ):
         top_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
         top_layout.setSpacing(3)
 
-        self.project_box = QComboBox()
+        self.project_box = RamObjectBox()
         top_layout.addRow( "Project:", self.project_box )
 
         typeWidget = QWidget()
@@ -60,14 +62,14 @@ class SaveAsDialog( QDialog ):
         typeWidget.setLayout(typeLayout)
         top_layout.addRow("Type:", typeWidget)
 
-        self.stepBox = QComboBox()
+        self.stepBox = RamObjectBox()
         top_layout.addRow( "Step:", self.stepBox )
 
-        self.assetGroupBox = QComboBox()
+        self.assetGroupBox = RamObjectBox()
         self.assetGroupLabel = QLabel("Asset Group:")
         top_layout.addRow( self.assetGroupLabel, self.assetGroupBox )
 
-        self.itemBox = QComboBox()
+        self.itemBox = RamObjectBox()
         self.itemLabel = QLabel("Item:")
         top_layout.addRow( self.itemLabel, self.itemBox )
 
@@ -406,3 +408,8 @@ class SaveAsDialog( QDialog ):
     def getItem(self):
         i = self.itemBox.currentData()
         return i
+
+if __name__ == '__main__':
+    dialog = SaveAsDialog()
+    ok = dialog.exec_()
+    print(ok)

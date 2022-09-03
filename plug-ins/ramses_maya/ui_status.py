@@ -7,26 +7,21 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QFormLayout,
     QHBoxLayout,
     QVBoxLayout,
-    QComboBox,
     QSlider,
     QSpinBox,
     QTextEdit,
     QPushButton,
     QCheckBox,
 )
-from PySide2.QtGui import (  # pylint: disable=no-name-in-module
-    QColor,
-    QPalette,
-    )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
     Qt
 )
+from ramses_maya.ui_object_combobox import RamObjectBox
 
 import ramses as ram
 RAMSES = ram.Ramses.instance()
 
-class StateBox( QComboBox ):
+class StateBox( RamObjectBox ):
     """A Combobox to show states, whcih changes color according to the state"""
     def __init__(self, parent = None):
         super(StateBox,self).__init__(parent)
@@ -36,30 +31,14 @@ class StateBox( QComboBox ):
             self.addItem( state.shortName(), state )
 
         self.setState( RAMSES.defaultState )
-        self.indexChanged( self.currentIndex() )
-        self.currentIndexChanged.connect( self.indexChanged )
-
-    @Slot()
-    def indexChanged(self, i):
-        """Sets the color of the box"""
-        colorName = self.itemData(i).colorName()
-        color = QColor( colorName )
-        pal = self.palette()
-        pal.setColor(QPalette.Button, color)
-        self.setPalette(pal)
 
     def setState(self, state):
         """Sets the current state"""
-        i = 0
-        while i < self.count():
-            if self.itemData( i ) == state:
-                self.setCurrentIndex( i )
-                return
-            i = i+1
+        self.setObject(state)
 
     def getState(self):
         """Gets the current state"""
-        return self.itemData( self.currentIndex() )
+        return self.getObject()
 
 class StatusDialog( QDialog ):
     """The Dialog for editing the status"""
