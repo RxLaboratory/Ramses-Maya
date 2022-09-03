@@ -857,6 +857,7 @@ class RamOpenCmd( om.MPxCommand ):
                 return
 
 class RamPreviewCmd( om.MPxCommand ):
+    """The command to generate a playblast or a thumbnail"""
     name = "ramPreview"
 
     def __init__(self):
@@ -864,14 +865,17 @@ class RamPreviewCmd( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
+        """Creates the command"""
         return RamPreviewCmd()
 
     @staticmethod
     def createSyntax():
+        """Creates the Mel Syntax"""
         syntax = om.MSyntax()
         return syntax
 
     def doIt(self, args):
+        """Runs or raises an error if debug mode"""
         try:
             self.run(args)
         except:
@@ -880,6 +884,7 @@ class RamPreviewCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the command"""
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Get the save path
@@ -895,7 +900,7 @@ class RamPreviewCmd( om.MPxCommand ):
         nm = ram.RamFileInfo()
         nm.setFilePath( saveFilePath )
         currentStep = nm.step
-        
+
         # Item info
         nm = get_name_manager( saveFilePath )
         if nm is None:
@@ -924,6 +929,8 @@ class RamPreviewCmd( om.MPxCommand ):
         cam = dialog.camera()
         size = dialog.getSize()
         hud = dialog.showHUD()
+        thumbnail = dialog.thumbnail()
+        pb = dialog.playblast()
 
         # Remove all current HUD
         currentHuds = cmds.headsUpDisplay(listHeadsUpDisplays=True)
@@ -1012,7 +1019,7 @@ class RamPreviewCmd( om.MPxCommand ):
 
         pbFilePath = ''
 
-        if result == 1:
+        if pb:
             # Extension
             pbNM.extension = 'mp4'
             # path
@@ -1021,7 +1028,7 @@ class RamPreviewCmd( om.MPxCommand ):
                 pbNM.fileName()
             ))
             create_playblast(pbFilePath, size)
-        else:
+        if thumbnail:
             pbNM.extension = 'png'
             # path
             pbFilePath = ram.RamFileManager.buildPath((

@@ -113,14 +113,19 @@ class PreviewDialog( QDialog ):
         self.commentEdit.setMaxLength(20)
         topLayout.addRow("Comment:", self.commentEdit)
 
+        self._playblastBox = QCheckBox("Playblast")
+        self._playblastBox.setChecked(True)
+        topLayout.addRow("Type:", self._playblastBox)
+        self._thumbnailBox = QCheckBox("Thumbnail")
+        self._thumbnailBox.setChecked(True)
+        topLayout.addRow("", self._thumbnailBox)
+
         mainLayout.addLayout(topLayout)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
-        self._playblastButton = QPushButton("Playblast")
-        buttonsLayout.addWidget( self._playblastButton )
-        self._thumbnailButton = QPushButton("Thumbnail")
-        buttonsLayout.addWidget( self._thumbnailButton )
+        self._renderButton = QPushButton("Render")
+        buttonsLayout.addWidget( self._renderButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
         mainLayout.addLayout( buttonsLayout )
@@ -128,10 +133,8 @@ class PreviewDialog( QDialog ):
         self.setLayout(mainLayout)
 
     def _connectEvents(self):
-        self._playblastButton.clicked.connect( self._ok )
-        self._playblastButton.clicked.connect( self.accept )
-        self._thumbnailButton.clicked.connect( self._ok )
-        self._thumbnailButton.clicked.connect( self._thumbnail )
+        self._renderButton.clicked.connect( self._ok )
+        self._renderButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
         self.rejected.connect(self.hideRenderer)
         self.displayAppearenceBox.currentIndexChanged.connect( self._updateLightsBox )
@@ -233,6 +236,14 @@ class PreviewDialog( QDialog ):
         """Returns True if the HUD has to be shown"""
         return self.showHudBox.isChecked()
 
+    def thumbnail(self):
+        """Do we have to create a thumbnail?"""
+        return self._thumbnailBox.isChecked()
+
+    def playblast(self):
+        """Do we have to create a playblast?"""
+        return self._playblastBox.isChecked()
+
     Slot()
     def hideRenderer(self):
         """Hides the Maya viewport used to capture the preview"""
@@ -246,3 +257,8 @@ class PreviewDialog( QDialog ):
         cmds.windowPref(self.pbWin, maximized=False, edit=True)
         cmds.window(self.pbWin, width=w, height=h, edit=True)
         cmds.refresh(cv=True)
+
+if __name__ == '__main__':
+    dialog = PreviewDialog( maf.ui.getMayaWindow() )
+    ok = dialog.exec_()
+    print(ok)
