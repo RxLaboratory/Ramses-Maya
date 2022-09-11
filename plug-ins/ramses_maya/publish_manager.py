@@ -109,12 +109,16 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
     # Prepare the scene
     temp_data = maf.Scene.createTempScene()
 
-    # Remove nodes to del on publish
+    # Remove nodes to del on publish (if not in publish!)
     del_nodes = get_del_on_publish_nodes()
     for node in del_nodes:
+        nodeSets = cmds.listSets(object=node)
+        if nodeSets:
+            if "Ramses_Publish" in nodeSets:
+                continue
         node = maf.Node(node)
         node.remove()
-
+    
     # Scene pre-processing
 
     progress_dialog.setText("Cleaning scene...")
