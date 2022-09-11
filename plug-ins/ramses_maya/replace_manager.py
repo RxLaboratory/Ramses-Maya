@@ -22,6 +22,9 @@ def replacer(item, file_path, step, import_options, show_import_options=False):
 
     extension = os.path.splitext(file_path)[1][1:]
 
+    if not 'formats' in import_options:
+        import_options['formats'] = ()
+
     # Get options
     if not import_options:
         import_options = { "formats": [] }
@@ -35,13 +38,7 @@ def replacer(item, file_path, step, import_options, show_import_options=False):
                             import_options['formats'].append( options )
                             break
                 break
-
-    if not 'formats' in import_options:
-        import_options['formats'] = ()
     
-    if len(import_options['formats']) == 0:
-        show_import_options = True
-
     if show_import_options:
         import_dialog = ImportSettingsDialog()
         if len(import_options['formats']) != 0:
