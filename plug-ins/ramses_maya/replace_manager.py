@@ -36,7 +36,13 @@ def replacer(item, file_path, step, import_options, show_import_options=False):
                             break
                 break
 
-    if len(import_options['formats']) == 0 or show_import_options:
+    if not 'formats' in import_options:
+        import_options['formats'] = ()
+    
+    if len(import_options['formats']) == 0:
+        show_import_options = True
+
+    if show_import_options:
         import_dialog = ImportSettingsDialog()
         if len(import_options['formats']) != 0:
             import_dialog.set_options(import_options)
