@@ -1290,9 +1290,13 @@ class RamUpdateCmd( om.MPxCommand ):
                         break
 
             # Set the options
-            options = {
-                'lock_transformations': lock_transform,
-                'as_reference': False
+            options = { 'formats': [
+                    {
+                        'format': '*',
+                        'lock_transformations': lock_transform,
+                        'as_reference': False
+                    },
+                ]
             }
 
             # Replace
