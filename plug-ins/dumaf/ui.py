@@ -87,7 +87,7 @@ class UpdateDialog( QDialog ):
         self.setLayout(mainLayout)
 
         if updateInfo.get("update", False):
-            self.setWindowTitle("" + toolName + " available!" )
+            self.setWindowTitle("New " + toolName + " available!" )
 
             latestVersionLabel = QLabel("version: " + updateInfo.get("version") )
             mainLayout.addWidget(latestVersionLabel)
