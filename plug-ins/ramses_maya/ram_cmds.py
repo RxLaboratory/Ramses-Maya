@@ -1050,17 +1050,6 @@ class RamPreviewCmd( om.MPxCommand ):
 
         pbFilePath = ''
 
-        if pb:
-            # Extension
-            pbNM.extension = 'mp4'
-            # path
-            pbFilePath = ram.RamFileManager.buildPath((
-                previewFolder,
-                pbNM.fileName()
-            ))
-            cmds.refresh()
-            create_playblast(pbFilePath, size)
-
         if thumbnail:
             pbNM.extension = 'png'
             # path
@@ -1071,6 +1060,17 @@ class RamPreviewCmd( om.MPxCommand ):
             # Attempt to set window size
             dialog.setWindowSize()
             create_thumbnail(pbFilePath)
+
+        if pb:
+            # Extension
+            pbNM.extension = 'mp4'
+            # path
+            pbFilePath = ram.RamFileManager.buildPath((
+                previewFolder,
+                pbNM.fileName()
+            ))
+            cmds.refresh()
+            create_playblast(pbFilePath, size)
 
         # Hide window
         dialog.hideRenderer()
