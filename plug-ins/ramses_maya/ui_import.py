@@ -961,6 +961,10 @@ class ImportSettingsWidget( QWidget ):
         self.__ui_lock_transform_box.setChecked(True)
         main_layout.addRow("", self.__ui_lock_transform_box)
 
+        self.__ui_no_root_shape_box = QCheckBox("Don't add shape")
+        self.__ui_no_root_shape_box.setChecked(False)
+        main_layout.addRow("Root node:", self.__ui_no_root_shape_box)
+
         self.__ui_apply_shaders_box = QCheckBox("Apply to selected nodes")
         self.__ui_apply_shaders_box.setChecked(True)
         main_layout.addRow("Shaders:", self.__ui_apply_shaders_box)
@@ -983,6 +987,7 @@ class ImportSettingsWidget( QWidget ):
         self.__ui_reference_box.toggled.connect( self.__ui_reference_box_clicked )
         self.__ui_lock_transform_box.toggled.connect( self.__update_preset )
         self.__ui_apply_shaders_box.toggled.connect( self.__update_preset )
+        self.__ui_no_root_shape_box.toggled.connect( self.__update_preset )
 
     @Slot()
     def __update_preset(self):
@@ -1013,6 +1018,8 @@ class ImportSettingsWidget( QWidget ):
             options["lock_transformations"] = False
         
         options["apply_shaders"] = self.__ui_apply_shaders_box.isChecked()
+
+        options["no_root_shape"] = self.__ui_no_root_shape_box.isChecked()
         
         return options
 
@@ -1022,11 +1029,11 @@ class ImportSettingsWidget( QWidget ):
         load_bool_preset("lock_transformations", options, self.__ui_lock_transform_box, True)
         load_bool_preset("as_reference", options, self.__ui_reference_box, False)
         load_bool_preset("apply_shaders", options, self.__ui_apply_shaders_box, True)
+        load_bool_preset("no_root_shape", options, self.__ui_no_root_shape_box, False)
 
         self.__format = get_option("format", options, "*")
 
         self.__update_preset()
-
 
 if __name__ == '__main__':
     dialog = ImportDialog()
