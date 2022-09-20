@@ -91,8 +91,9 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
         options = get_format_options(file_path, import_options)
         lock_transform = get_option("lock_transformations", options, True)
         as_reference = get_option("as_reference", options, False)
+        no_root_shape = get_option("no_root_shape", options, False)
 
-        new_nodes = import_file(file_path, as_reference, lock_transform, item, item_namespace, item_group, step)
+        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step)
         geo_nodes = geo_nodes + new_nodes
 
     # Import shaders
@@ -103,8 +104,9 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
         # Get options
         options = get_format_options(shader_file, import_options)
         as_reference = get_option("as_reference", options, False)
+        no_root_shape = get_option("no_root_shape", options, False)
 
-        new_nodes = import_file(shader_file, as_reference, False, item, item_namespace, item_group, step)
+        new_nodes = import_file(shader_file, as_reference, False, no_root_shape, item, item_namespace, item_group, step)
         # Apply shaders to the geo nodes
         # Get the shaders
         shaders = []
@@ -172,7 +174,7 @@ def get_import_namespace( item ):
 
     return import_namespace
 
-def import_file(file_path, as_reference, lock_transform, item, item_namespace, item_group, step):
+def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step):
     """Imports the items in the file"""
     ram.log("Importing: " + file_path, ram.LogLevel.Debug)
     # Check the extension to load needed plugins
@@ -221,11 +223,14 @@ def import_file(file_path, as_reference, lock_transform, item, item_namespace, i
             continue
 
         # Create root control
-        ctrl = node.create_root_controller( node.name() + '_root_' + step.shortName())
+        ctrl = node.create_root_controller( node.name() + '_root_' + step.shortName(), no_root_shape)
         # Set its color
-        ctrl_shape = cmds.listRelatives(ctrl.path(), shapes=True, f=True, type='nurbsCurve')[0]
-        cmds.setAttr(ctrl_shape+'.overrideEnabled', 1)
-        cmds.setAttr(ctrl_shape+'.overrideColor', 18)
+        ctrl_shape = cmds.listRelatives(ctrl.path(), shapes=True, f=True, type='nurbsCurve')
+        if (ctrl_shape):
+            ctrl_shape = ctrl_shape[0]
+            cmds.setAttr(ctrl_shape+'.overrideEnabled', 1)
+            cmds.setAttr(ctrl_shape+'.overrideColor', 18)
+
         cmds.setAttr(ctrl.path()+'.useOutlinerColor',1)
         color = step.color()
         cmds.setAttr( ctrl.path()+'.outlinerColor', color[0]/255, color[1]/255, color[2]/255 )

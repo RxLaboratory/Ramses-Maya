@@ -1282,6 +1282,7 @@ class RamUpdateCmd( om.MPxCommand ):
                     # Set new version
                     set_import_attributes(node, ram_item, ram_step, updateFile)
                     continue
+                # check if transforms are locked
                 lock_transform = True
                 for child in children:
                     child = dumaf.Node(child)
@@ -1289,12 +1290,19 @@ class RamUpdateCmd( om.MPxCommand ):
                         lock_transform = False
                         break
 
+            # check if there's a root shape
+            ctrl_shape = cmds.listRelatives(node, shapes=True, f=True, type='nurbsCurve')
+            no_root_shape = False
+            if not ctrl_shape:
+                no_root_shape = True
+
             # Set the options
             options = { 'formats': [
                     {
                         'format': '*',
                         'lock_transformations': lock_transform,
-                        'as_reference': False
+                        'as_reference': False,
+                        'no_root_shape': no_root_shape
                     },
                 ]
             }

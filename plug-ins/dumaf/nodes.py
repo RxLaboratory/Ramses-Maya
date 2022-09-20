@@ -241,34 +241,39 @@ class Node():
             return []
         return Node.get_nodes(children)
 
-    def create_root_controller(self, crtl_name):
+    def create_root_controller(self, ctrl_name, no_root_shape = False):
         """Creates and returns a curve to be used as a controller for this node"""
         if not self.exists():
             return None
         nodePath = self.path()
-        # Get the bounding box
-        boundingBox = cmds.exactWorldBoundingBox( nodePath )
-        xmax = boundingBox[3]
-        xmin = boundingBox[0]
-        zmax = boundingBox[5]
-        zmin = boundingBox[2]
-        # Get the 2D Projection on the floor (XZ) lengths
-        boundingWidth = xmax - xmin
-        boundingLength = zmax - zmin
-        # Compute a margin relative to mean of these lengths
-        margin = ( boundingWidth + boundingLength ) / 2.0
-        # Make it small
-        margin = margin / 20.0
-        # Create a shape using this margin and coordinates
-        cv1 = ( xmin - margin, 0, zmin - margin)
-        cv2 = ( xmax + margin, 0, zmin - margin)
-        cv3 = ( xmax + margin, 0, zmax + margin)
-        cv4 = ( xmin - margin, 0, zmax + margin)
-        cv5 = cv1
-        controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=crtl_name)
-        controller = Node(controller)
-        # Parent the node
-        self.parent_to(controller)
+        if not no_root_shape:
+            # Get the bounding box
+            boundingBox = cmds.exactWorldBoundingBox( nodePath )
+            xmax = boundingBox[3]
+            xmin = boundingBox[0]
+            zmax = boundingBox[5]
+            zmin = boundingBox[2]
+            # Get the 2D Projection on the floor (XZ) lengths
+            boundingWidth = xmax - xmin
+            boundingLength = zmax - zmin
+            # Compute a margin relative to mean of these lengths
+            margin = ( boundingWidth + boundingLength ) / 2.0
+            # Make it small
+            margin = margin / 20.0
+            # Create a shape using this margin and coordinates
+            cv1 = ( xmin - margin, 0, zmin - margin)
+            cv2 = ( xmax + margin, 0, zmin - margin)
+            cv3 = ( xmax + margin, 0, zmax + margin)
+            cv4 = ( xmin - margin, 0, zmax + margin)
+            cv5 = cv1
+            controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrl_name)
+            controller = Node(controller)
+            # Parent the node
+            self.parent_to(controller)
+        else:
+            controller = cmds.group( nodePath, name=ctrl_name )
+            controller = Node(controller)
+
         return controller
 
     def delete_history(self, recursive=False):
