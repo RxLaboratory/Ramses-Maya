@@ -223,7 +223,8 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
             continue
 
         # Create root control
-        ctrl = node.create_root_controller( node.name() + '_root_' + step.shortName(), no_root_shape)
+        rootName = node.name() + '_' + step.shortName()
+        ctrl = node.create_root_controller( rootName, no_root_shape)
         # Set its color
         ctrl_shape = cmds.listRelatives(ctrl.path(), shapes=True, f=True, type='nurbsCurve')
         if (ctrl_shape):
