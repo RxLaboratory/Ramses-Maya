@@ -163,16 +163,16 @@ def get_import_namespace( item ):
     if re.match(regex, item_short_name):
         item_short_name = item_type + item_short_name
     # And the namespace + its number
-    import_namespace = item_short_name + '_001'
+    """ import_namespace = item_short_name + '_001'
     i = 1
     while cmds.namespace( exists=import_namespace ):
         i = i+1
         i_str = str(i)
         while len(i_str) < 3:
             i_str = '0' + i_str
-        import_namespace = item_short_name + '_'  + i_str
+        import_namespace = item_short_name + '_'  + i_str"""
 
-    return import_namespace
+    return item_short_name
 
 def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step):
     """Imports the items in the file"""
@@ -191,7 +191,7 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
             file_path,
             r=True,
             ignoreVersion=True,
-            mergeNamespacesOnClash=False,
+            mergeNamespacesOnClash=True,
             returnNewNodes=True,
             ns=item_namespace
             )

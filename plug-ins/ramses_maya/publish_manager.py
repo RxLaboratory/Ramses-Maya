@@ -233,7 +233,7 @@ def publish_node( published_node, publish_options, publish_info ):
         if maya_scene:
             publish_maya_scene(node, frmt, maya_extension, publish_info, published_node[1])
         elif maya_shaders:
-            publish_maya_shaders(node, frmt, maya_extension, publish_info, published_node[1])
+            publish_maya_shaders(node, frmt, maya_extension, publish_info, published_node[1] + "_shaders")
         elif alembic:
             publish_alembic(node, frmt, publish_info, published_node[1])
         elif ass:
@@ -333,7 +333,7 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
     for shading_engine in all_shading_engines:
         shading_engine = maf.Node(shading_engine)
         # create a sphere per shader and export that
-        sphere = cmds.polySphere(name=shading_engine.name().replace("_Engine","_shader"), constructionHistory=False)[0]
+        sphere = cmds.polySphere(name=shading_engine.name().replace("_Engine","") + "_shader", constructionHistory=False)[0]
         # Assign shader
         cmds.sets(sphere, e=True, forceElement=shading_engine.path())
         # Move on the X axis
