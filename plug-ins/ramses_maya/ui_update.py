@@ -202,7 +202,6 @@ class UpdateDialog( QDialog ):
                 continue
 
             listItem.setHidden(False)
-            
 
     def __listItems(self):
         """List the items found in the scene"""
@@ -271,7 +270,6 @@ class UpdateDialog( QDialog ):
         for i in range(0, self.itemList.count()):
             item = self.itemList.item(i)
             if item.text().startswith('New: '):
-
                 nodes.append( ( item.data(Qt.UserRole), item.data(Qt.UserRole + 9)) )
         return nodes
 
