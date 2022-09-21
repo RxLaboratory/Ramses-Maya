@@ -412,4 +412,5 @@ class SaveAsDialog( QDialog ):
 if __name__ == '__main__':
     dialog = SaveAsDialog()
     ok = dialog.exec_()
-    print(ok)
+    if ok == 1:
+        print(dialog.getFilePath())
