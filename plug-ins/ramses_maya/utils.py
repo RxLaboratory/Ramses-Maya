@@ -12,9 +12,6 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 )
 from maya import cmds # pylint: disable=import-error
 
-from ramses import RamSettings
-SETTINGS = RamSettings.instance()
-
 # Some paths we need
 MODULE_PATH = os.path.dirname(os.path.realpath(__file__))
 PLUGIN_PATH = os.path.dirname(MODULE_PATH)
@@ -29,17 +26,17 @@ def icon(name):
 @Slot()
 def open_help():
     """Opens the online help for the addon"""
-    QDesktopServices.openUrl( QUrl( SETTINGS.addonsHelpUrl ) )
+    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/0.5/components/addons/maya" ) )
 
 @Slot()
 def about_ramses():
     """Opens the web page about Ramses"""
-    QDesktopServices.openUrl( QUrl( SETTINGS.generalHelpUrl ) )
+    QDesktopServices.openUrl( QUrl( "https://rxlaboratory.org/tools/ramses" ) )
 
 @Slot()
 def open_api_reference():
     """Opens the online API reference"""
-    QDesktopServices.openUrl( QUrl( SETTINGS.apiReferenceUrl ) )
+    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/0.5/dev/add-ons-reference/" ) )
 
 def end_process(temp_data, progress_dialog):
     """Ends a process on the scene (closes and removes the temp file)"""
