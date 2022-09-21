@@ -36,7 +36,7 @@ from ramses_maya.utils import IMPORT_PRESETS_PATH
 
 RAMSES = ram.Ramses.instance()
 
-class ImportDialog( QDialog ):
+class ImportDialog( Dialog ):
     """The main open/import/replace dialog"""
     # <== CONSTRUCTOR ==>
 
@@ -71,8 +71,8 @@ class ImportDialog( QDialog ):
         self.setMinimumWidth(500)
 
         mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
+        self.main_layout.addLayout(mainLayout)
 
         midLayout = QHBoxLayout()
         midLayout.setSpacing(3)
@@ -199,8 +199,6 @@ class ImportDialog( QDialog ):
         self._importButton.setEnabled(False)
 
         mainLayout.addLayout( buttonsLayout )
-
-        self.setLayout( mainLayout )
 
     def __connect_events(self):
         self.projectBox.currentIndexChanged.connect( self.__project_changed )

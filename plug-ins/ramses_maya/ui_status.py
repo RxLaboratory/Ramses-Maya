@@ -17,6 +17,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Qt
 )
 from ramses_maya.ui_object_combobox import RamObjectBox
+from ramses_maya.ui_dialog import Dialog
 
 import ramses as ram
 RAMSES = ram.Ramses.instance()
@@ -40,7 +41,7 @@ class StateBox( RamObjectBox ):
         """Gets the current state"""
         return self.getObject()
 
-class StatusDialog( QDialog ):
+class StatusDialog( Dialog ):
     """The Dialog for editing the status"""
 
     def __init__(self, parent = None):
@@ -53,8 +54,8 @@ class StatusDialog( QDialog ):
         self.setMinimumWidth( 400 )
 
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(6,6,6,6)
         main_layout.setSpacing(3)
+        self.main_layout.addLayout(main_layout)
 
         top_layout = QHBoxLayout()
         top_layout.setSpacing(3)
@@ -104,8 +105,6 @@ class StatusDialog( QDialog ):
         buttons_layout.addWidget( self.__ui_cancel_button )
 
         main_layout.addLayout( buttons_layout )
-
-        self.setLayout( main_layout )
 
     def __conect_evenhts(self):
         self.__ui_completion_slider.valueChanged.connect( self.__ui_completion_box.setValue )
@@ -182,6 +181,6 @@ class StatusDialog( QDialog ):
 
 if __name__ == '__main__':
     statusDialog = StatusDialog()
-    statusDialog.setVirtual()
+    # statusDialog.setVirtual()
     ok = statusDialog.exec_()
     print(ok)

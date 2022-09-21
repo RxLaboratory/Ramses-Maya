@@ -20,12 +20,13 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-
 )
 from maya import cmds # pylint: disable=import-error
 from ramses_maya.utils_attributes import list_ramses_nodes, get_item, get_state, get_step, get_ramses_attr, RamsesAttribute
+from ramses_maya.ui_dialog import Dialog
 import ramses
 import dumaf
 
 RAMSES = ramses.Ramses.instance()
 
-class UpdateDialog( QDialog ):
+class UpdateDialog( Dialog ):
     """The Dialog to update items in the scene"""
 
     def __init__(self, parent = None):
@@ -39,8 +40,8 @@ class UpdateDialog( QDialog ):
         self.setWindowTitle("Update Items")
 
         mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
+        self.main_layout.addLayout(mainLayout)
 
         columnLayout = QHBoxLayout()
         columnLayout.setContentsMargins(0,0,0,0)
@@ -98,8 +99,6 @@ class UpdateDialog( QDialog ):
         buttonsLayout.addWidget( self._cancelButton )
 
         mainLayout.addLayout( buttonsLayout )
-
-        self.setLayout( mainLayout )
 
     def __connectEvents(self):
         self._updateButton.clicked.connect( self.accept )

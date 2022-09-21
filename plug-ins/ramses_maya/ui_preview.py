@@ -22,8 +22,9 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 import maya.mel as mel  # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 import dumaf as maf
+from ramses_maya.ui_dialog import Dialog
 
-class PreviewDialog( QDialog ):
+class PreviewDialog( Dialog ):
     """The dialog for preview options"""
 
     def __init__(self, parent=None):
@@ -42,8 +43,8 @@ class PreviewDialog( QDialog ):
         self.setWindowTitle( "Create preview" )
 
         mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
+        self.main_layout.addLayout(mainLayout)
 
         topLayout = QFormLayout()
         topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
@@ -130,8 +131,6 @@ class PreviewDialog( QDialog ):
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
         mainLayout.addLayout( buttonsLayout )
-
-        self.setLayout(mainLayout)
 
     def _connectEvents(self):
         self._renderButton.clicked.connect( self._ok )

@@ -9,7 +9,9 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QPushButton,
 )
 
-class CommentDialog( QDialog ):
+from ramses_maya.ui_dialog import Dialog
+
+class CommentDialog( Dialog ):
     def __init__(self, parent = None):
         super(CommentDialog,self).__init__(parent)
         self.__setupUi()
@@ -20,8 +22,8 @@ class CommentDialog( QDialog ):
         self.setMinimumWidth(400)
 
         mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
+        self.main_layout.addLayout(mainLayout)
 
         self.textEdit = QLineEdit()
         mainLayout.addWidget(self.textEdit)
@@ -36,8 +38,6 @@ class CommentDialog( QDialog ):
 
         mainLayout.addLayout( buttonsLayout )
 
-        self.setLayout( mainLayout )
-
     def __connectEvents(self):
         self._saveButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
@@ -47,3 +47,8 @@ class CommentDialog( QDialog ):
 
     def setComment(self, comment):
         self.textEdit.setText(comment)
+
+if __name__ == '__main__':
+    dialog = CommentDialog()
+    ok = dialog.exec_()
+    print(ok)

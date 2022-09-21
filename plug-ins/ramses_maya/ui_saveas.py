@@ -19,10 +19,11 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 
 import ramses as ram
 from ramses_maya.ui_object_combobox import RamObjectBox
+from ramses_maya.ui_dialog import Dialog
 
 RAMSES = ram.Ramses.instance()
 
-class SaveAsDialog( QDialog ):
+class SaveAsDialog( Dialog ):
     """Save As/Create scene Dialog"""
 
     def __init__(self, parent=None):
@@ -38,8 +39,8 @@ class SaveAsDialog( QDialog ):
         self.setMinimumWidth(400)
 
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(6,6,6,6)
         main_layout.setSpacing(3)
+        self.main_layout.addLayout(main_layout)
 
         top_layout = QFormLayout()
         top_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
@@ -65,9 +66,9 @@ class SaveAsDialog( QDialog ):
         self.stepBox = RamObjectBox()
         top_layout.addRow( "Step:", self.stepBox )
 
-        self.assetGroupBox = RamObjectBox()
-        self.assetGroupLabel = QLabel("Asset Group:")
-        top_layout.addRow( self.assetGroupLabel, self.assetGroupBox )
+        self.groupBox = RamObjectBox()
+        self.groupLabel = QLabel("Asset Group:")
+        top_layout.addRow( self.groupLabel, self.groupBox )
 
         self.itemBox = RamObjectBox()
         self.itemLabel = QLabel("Item:")
@@ -111,17 +112,15 @@ class SaveAsDialog( QDialog ):
         buttonsLayout.addWidget( self._cancelButton )
         main_layout.addLayout( buttonsLayout )
 
-        self.setLayout(main_layout)
-
     def _connectEvents(self):
         self._saveButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
         self.project_box.currentTextChanged.connect( self._loadSteps )
-        self.stepBox.currentIndexChanged.connect( self._loadItems )
+        self.stepBox.currentIndexChanged.connect( self._loadGroups )
         self.assetButton.clicked.connect( self._typeChanged )
         self.shotButton.clicked.connect( self._typeChanged )
         self.otherButton.clicked.connect( self._typeChanged )
-        self.assetGroupBox.currentIndexChanged.connect( self._loadAssets )
+        self.groupBox.currentIndexChanged.connect( self._loadItems )
         self.itemBox.currentTextChanged.connect( self._buildPath )
         self.itemBox.currentIndexChanged.connect( self._buildPath )
         self.itemBox.editTextChanged.connect( self._buildPath )
@@ -161,7 +160,7 @@ class SaveAsDialog( QDialog ):
         # No selection, to make things faster and load steps & items only once needed
         self.stepBox.setCurrentIndex(-1)
 
-        self._loadItems()
+        self._loadGroups()
 
     def _buildPath(self):
         self.locationEdit.setText('')
@@ -181,7 +180,7 @@ class SaveAsDialog( QDialog ):
         if self.assetButton.isChecked():
 
             # Get the group
-            assetGroup = self.assetGroupBox.currentText()
+            assetGroup = self.groupBox.currentText()
             if assetGroup == '':
                 self.locationEdit.setText('Sorry, invalid asset group...')
                 return
@@ -279,18 +278,23 @@ class SaveAsDialog( QDialog ):
     @Slot()
     def _typeChanged(self):
         if self.assetButton.isChecked():
-            self.assetGroupBox.show()
-            self.assetGroupLabel.show()
+            self.groupBox.show()
+            self.groupLabel.show()
+            self.groupLabel.setText("Asset Group:")
+        elif self.shotButton.isChecked():
+            self.groupBox.show()
+            self.groupLabel.show()
+            self.groupLabel.setText("Sequence:")
         else:
-            self.assetGroupBox.hide()
-            self.assetGroupLabel.hide()
+            self.groupBox.hide()
+            self.groupLabel.hide()
 
         self._loadSteps()
 
     @Slot()
-    def _loadItems(self):
+    def _loadGroups(self):
         self.itemBox.clear()
-        self.assetGroupBox.clear()
+        self.groupBox.clear()
 
         project = self.getProject()
         if not project: return
@@ -301,30 +305,34 @@ class SaveAsDialog( QDialog ):
         if self.assetButton.isChecked():
             # Load asset groups
             for ag in project.assetGroups():
-                self.assetGroupBox.addItem(ag.name(), ag)
-            # No selection, to make things faster and load steps & items only once needed
-            self.assetGroupBox.setCurrentIndex(-1)
-            self._loadAssets()
+                self.groupBox.addItem(ag.name(), ag)
         elif self.shotButton.isChecked():
-            # Load shots
-            for shot in project.shots():
-                self.itemBox.addItem(str(shot), shot)
-            # No selection, to make things faster and load steps & items only once needed
-            self.itemBox.setCurrentIndex(-1)
+            # Load sequences
+            for seq in project.sequences():
+                self.groupBox.addItem(seq.name(), seq)
+
+        # No selection, to make things faster and load steps & items only once needed
+        self.groupBox.setCurrentIndex(-1)
+        self._loadItems()
 
         self._buildPath()
 
     @Slot()
-    def _loadAssets(self):
+    def _loadItems(self):
         self.itemBox.clear()
 
         project = self.getProject()
         if not project:
             return
 
-        ag = self.assetGroupBox.currentData()
-        for asset in project.assets( ag ):
-            self.itemBox.addItem(str(asset), asset)
+        if self.assetButton.isChecked():
+            ag = self.groupBox.currentData()
+            for asset in project.assets( ag ):
+                self.itemBox.addItem(str(asset), asset)
+        elif self.shotButton.isChecked():
+            seq = self.groupBox.currentData()
+            for shot in project.shots( sequence=seq ):
+                self.itemBox.addItem(str(shot), shot)
         # No selection, to make things faster and load steps & items only once needed
         self.itemBox.setCurrentIndex(-1)
 
