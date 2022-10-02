@@ -17,19 +17,18 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QPushButton,
     QComboBox,
     QListWidget,
-    QWidget,
-    QSizePolicy,
 )
 from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
     QUrl,
-    Qt
 )
 
+import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram
 import dumaf as maf
-import maya.cmds as cmds # pylint: disable=import-error
+from ramses_maya.ui_dialog import Dialog
+
 # Keep the settings at hand
 settings = ram.RamSettings.instance()
 
@@ -57,7 +56,8 @@ if not ok:
 cmds.ramSaveAs()
 """
 
-class SettingsDialog( QMainWindow ):
+class SettingsDialog( Dialog ):
+    """The dialog to change the module settings"""
 
     def __init__( self, parent=None ):
         super(SettingsDialog, self).__init__(parent)
@@ -70,16 +70,11 @@ class SettingsDialog( QMainWindow ):
         self.setWindowTitle("Ramses Add-ons settings")
         self.setMinimumWidth( 500 )
 
-        mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
-        mainLayout.setSpacing(12)
-
         secondaryLayout = QHBoxLayout()
         secondaryLayout.setSpacing(3)
 
         self.sectionsBox = QListWidget()
         self.sectionsBox.addItem("Versionning")
-        self.sectionsBox.addItem("Folders")
         self.sectionsBox.addItem("Ramses Application")
         self.sectionsBox.addItem("Development")
         self.sectionsBox.setMaximumWidth( 150 )
@@ -111,24 +106,6 @@ class SettingsDialog( QMainWindow ):
         self._openHotkeyBox = QCheckBox("Replace with the \"ramOpen\" command.")
         versionningLayout.addRow( "\"Open\" hotkey (Ctrl+O):", self._openHotkeyBox )
 
-        foldersWidget = QWidget()
-        fL = QVBoxLayout()
-        foldersWidget.setLayout(fL)
-        self.stackedLayout.addWidget( foldersWidget )
-        foldersLayout = QFormLayout()
-        foldersLayout.setSpacing(3)
-        fL.addLayout(foldersLayout)
-        fL.addStretch()
-
-        pathLabel = QLabel("Ramses data path:")       
-        pathLayout = QHBoxLayout()
-        self._ramsesPathEdit = QLineEdit( )
-        pathLayout.addWidget( self._ramsesPathEdit )
-        self._ramsesPathButton = QPushButton(text="Browse...")
-        pathLayout.addWidget( self._ramsesPathButton )
-        foldersLayout.setWidget( 1, QFormLayout.LabelRole, pathLabel)
-        foldersLayout.setLayout( 1, QFormLayout.FieldRole, pathLayout)
-
         appWidget = QWidget()
         aL = QVBoxLayout()
         appWidget.setLayout(aL)
@@ -137,10 +114,6 @@ class SettingsDialog( QMainWindow ):
         appLayout.setSpacing(3)
         aL.addLayout(appLayout)
         aL.addStretch()
-
-        connectLabel = QLabel("Use the Ramses Application:")
-        self._onlineBox = QCheckBox("Connected")
-        appLayout.addRow( connectLabel, self._onlineBox )
 
         pathLabel = QLabel("Ramses Application path:")       
         pathLayout = QHBoxLayout()
@@ -184,7 +157,7 @@ class SettingsDialog( QMainWindow ):
 
         secondaryLayout.addLayout(self.stackedLayout)
 
-        mainLayout.addLayout( secondaryLayout )
+        self.main_layout.addLayout( secondaryLayout )
         secondaryLayout.setStretch(0, 0)
         secondaryLayout.setStretch(1, 100)
 
@@ -196,43 +169,32 @@ class SettingsDialog( QMainWindow ):
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
-        mainLayout.addLayout( buttonsLayout )
-
-        mainWidget = QWidget()
-        mainWidget.setLayout( mainLayout )
-        self.setCentralWidget( mainWidget )
+        self.main_layout.addLayout( buttonsLayout )
 
     def __setupMenu(self):
-        editMenu = self.menuBar().addMenu("Edit")
-        self._revertToSavedAction = editMenu.addAction("Revert to Saved")
-        self._restoreDefaultsAction = editMenu.addAction("Restore Default Settings")
-
-        helpMenu = self.menuBar().addMenu("Help")
-        self._helpAction = helpMenu.addAction("Help on Ramses Add-ons...")
+        self._revertToSavedAction = self.edit_menu.addAction("Revert to Saved")
+        self._restoreDefaultsAction = self.edit_menu.addAction("Restore Default Settings")
 
     def __connectEvents(self):
         self.sectionsBox.currentRowChanged.connect(self.stackedLayout.setCurrentIndex)
         self._clientPathButton.clicked.connect( self.browseClientPath )
-        self._ramsesPathButton.clicked.connect( self.browseRamsesPath )
         self._saveButton.clicked.connect( self.save )
         self._cancelButton.clicked.connect( self.cancel )
         self._revertToSavedAction.triggered.connect( self.revert )
         self._restoreDefaultsAction.triggered.connect( self.restoreDefaults )
-        self._helpAction.triggered.connect( self.help )
-        self._onlineBox.clicked.connect( self.switchConnected )
 
     @Slot()
     def cancel(self):
+        """Cancels"""
         self.close()
 
     @Slot()
     def save(self):
+        """Saves the settings"""
         settings.ramsesClientPath = self._clientPathEdit.text()
         settings.ramsesClientPort = self._clientPortBox.value()
-        settings.online = self._onlineBox.isChecked()
         settings.logLevel = self._logLevelBox.currentData()
         settings.autoIncrementTimeout = self._autoIncrementBox.value()
-        settings.ramsesFolderPath = self._ramsesPathEdit.text()
         settings.debugMode = self._debugModeBox.isChecked()
         settings.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
         settings.userSettings['useRamOpenceneHotkey'] = self._openHotkeyBox.isChecked()
@@ -261,9 +223,7 @@ class SettingsDialog( QMainWindow ):
     def revert(self):
         self._clientPathEdit.setText( settings.ramsesClientPath )
         self._clientPortBox.setValue( settings.ramsesClientPort )
-        self._onlineBox.setChecked( settings.online )
         self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
-        self._ramsesPathEdit.setText( settings.ramsesFolderPath )
         self._debugModeBox.setChecked( settings.debugMode )
         save = True
         saveas = True
@@ -283,15 +243,12 @@ class SettingsDialog( QMainWindow ):
                 self._logLevelBox.setCurrentIndex( i )
                 break
             i=i+1
-        self.switchConnected( settings.online )
 
     @Slot()
     def restoreDefaults(self):
         self._clientPathEdit.setText( settings.defaultRamsesClientPath )
         self._clientPortBox.setValue( settings.defaultRamsesClientPort )
-        self._onlineBox.setChecked( settings.defaultOnline )
         self._autoIncrementBox.setValue( settings.defaultAutoIncrementTimeout )
-        self._ramsesPathEdit.setText( settings.defaultRamsesFolderPath )
         self._debugModeBox.setChecked( settings.defaultDebugMode )
         i=0
         while i < self._logLevelBox.count():
@@ -299,7 +256,6 @@ class SettingsDialog( QMainWindow ):
                 self._logLevelBox.setCurrentIndex( i )
                 break
             i=i+1
-        self.switchConnected( settings.defaultOnline )
 
     @Slot()
     def help(self):
@@ -315,22 +271,6 @@ class SettingsDialog( QMainWindow ):
             self._clientPathEdit.text(),
             filter)
         if file[0] != "": self._clientPathEdit.setText( file[0] )
-    
-    @Slot()
-    def browseRamsesPath(self):
-        folder = QFileDialog.getExistingDirectory(
-            self,
-            "Select the path to the Ramses Folder",
-            self._ramsesPathEdit.text(),
-            QFileDialog.ShowDirsOnly
-            )
-        if folder != "": self._ramsesPathEdit.setText(folder )
-
-    @Slot()
-    def switchConnected(self, checked):
-        self._clientPathEdit.setEnabled(checked)
-        self._clientPortBox.setEnabled(checked)
-        self._clientPathButton.setEnabled(checked)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

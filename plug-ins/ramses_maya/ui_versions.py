@@ -10,10 +10,10 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QComboBox,
     QPushButton,
 )
-
+from ramses_maya.ui_dialog import Dialog
 import ramses as ram
 
-class VersionDialog( QDialog ):
+class VersionDialog( Dialog ):
     def __init__(self, parent = None):
         super(VersionDialog,self).__init__(parent)
         self.__setupUi()
@@ -24,8 +24,8 @@ class VersionDialog( QDialog ):
         self.setMinimumWidth(250)
 
         mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
+        self.main_layout.addLayout(mainLayout)
 
         self._versionsBox = QComboBox()
         mainLayout.addWidget( self._versionsBox )
@@ -39,8 +39,6 @@ class VersionDialog( QDialog ):
         buttonsLayout.addWidget( self._cancelButton )
 
         mainLayout.addLayout( buttonsLayout )
-
-        self.setLayout( mainLayout )
 
     def __connectEvents(self):
         self._openButton.clicked.connect( self.accept )
@@ -64,3 +62,8 @@ class VersionDialog( QDialog ):
 
     def getVersion(self):
         return self._versionsBox.currentData()
+
+if __name__ == '__main__':
+    dialog = VersionDialog()
+    ok = dialog.exec_()
+    print(ok)

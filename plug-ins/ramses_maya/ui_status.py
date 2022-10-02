@@ -1,170 +1,186 @@
 # -*- coding: utf-8 -*-
+"""The UI for changing the scene status/publishing"""
 
-import sys
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QApplication,
     QLabel,
     QDialog,
     QFormLayout,
     QHBoxLayout,
     QVBoxLayout,
-    QComboBox,
     QSlider,
     QSpinBox,
     QTextEdit,
     QPushButton,
     QCheckBox,
 )
-from PySide2.QtGui import (  # pylint: disable=no-name-in-module
-    QColor,
-    QPalette,
-    )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
     Qt
 )
+from ramses_maya.ui_object_combobox import RamObjectBox
+from ramses_maya.ui_dialog import Dialog
 
 import ramses as ram
-ramses = ram.Ramses.instance()
+RAMSES = ram.Ramses.instance()
 
-class StateBox( QComboBox ):
+class StateBox( RamObjectBox ):
+    """A Combobox to show states, whcih changes color according to the state"""
     def __init__(self, parent = None):
         super(StateBox,self).__init__(parent)
 
         # Populate states from Ramses
-        for state in ramses.states():
-            self.addItem( state.shortName(), state.color() )
+        for state in RAMSES.states():
+            self.addItem( state.shortName(), state )
 
-        self.setState( ramses.defaultState )
-        self.currentIndexChanged.connect( self.indexChanged )
-
-    @Slot()
-    def indexChanged(self, i):
-        color = self.itemData(i)
-        color = QColor.fromRgb( color[0], color[1], color[2] )
-        pal = self.palette()
-        pal.setColor(QPalette.Button, color)
-        self.setPalette(pal)
+        self.setState( RAMSES.defaultState )
 
     def setState(self, state):
-        i = 0
-        while i < self.count():
-            if self.itemText( i ) == state.shortName():
-                self.setCurrentIndex( i )
-                return
-            i = i+1
+        """Sets the current state"""
+        self.setObject(state)
 
     def getState(self):
-        return ramses.state( self.currentText() )
+        """Gets the current state"""
+        return self.getObject()
 
-class StatusDialog( QDialog ):
-    
+class StatusDialog( Dialog ):
+    """The Dialog for editing the status"""
+
     def __init__(self, parent = None):
         super(StatusDialog,self).__init__(parent)
-        self.__setupUi()
-        self.__connectEvents()
+        self.__setup_ui()
+        self.__conect_evenhts()
 
-    def __setupUi(self):
+    def __setup_ui(self):
         self.setWindowTitle( "Incremental Save: Update Status" )
         self.setMinimumWidth( 400 )
 
-        mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
-        mainLayout.setSpacing(3)
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(3)
+        self.main_layout.addLayout(main_layout)
 
-        topLayout = QHBoxLayout()
-        topLayout.setSpacing(3)
+        top_layout = QHBoxLayout()
+        top_layout.setSpacing(3)
 
-        self.stateBox = StateBox()
-        topLayout.addWidget( self.stateBox )
+        self.__ui_state_box = StateBox()
+        top_layout.addWidget( self.__ui_state_box )
 
-        self.completionSlider = QSlider( Qt.Horizontal )
-        self.completionSlider.setMaximum(100)
-        topLayout.addWidget( self.completionSlider )
-        self.completionBox = QSpinBox( )
-        self.completionBox.setMinimum( 0 )
-        self.completionBox.setMaximum( 100 )
-        self.completionBox.setSuffix( "%" )
-        topLayout.addWidget( self.completionBox )
+        self.__ui_completion_slider = QSlider( Qt.Horizontal )
+        self.__ui_completion_slider.setMaximum(100)
+        top_layout.addWidget( self.__ui_completion_slider )
+        self.__ui_completion_box = QSpinBox( )
+        self.__ui_completion_box.setMinimum( 0 )
+        self.__ui_completion_box.setMaximum( 100 )
+        self.__ui_completion_box.setSuffix( "%" )
+        top_layout.addWidget( self.__ui_completion_box )
 
-        mainLayout.addLayout( topLayout )
+        main_layout.addLayout( top_layout )
 
-        optionsLayout = QFormLayout()
-        optionsLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
-        optionsLayout.setSpacing(3)
+        options_layout = QFormLayout()
+        options_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        options_layout.setSpacing(3)
 
-        self.publishBox = QCheckBox("Publish the current scene.")
-        optionsLayout.addRow( "Publication:", self.publishBox )
+        self.__ui_publish_box = QCheckBox("Publish the current scene.")
+        options_layout.addRow( "Publication:", self.__ui_publish_box )
 
-        self.previewBox = QCheckBox("Create preview files (thumbnail or playblast).")
-        optionsLayout.addRow( "Preview:", self.previewBox )
+        self.__ui_publish_settings_box = QCheckBox("Edit publish settings.")
+        self.__ui_publish_settings_box.setEnabled(False)
+        options_layout.addRow( "", self.__ui_publish_settings_box )
 
-        self.commentLabel = QLabel("Comment:")
-        self.commentEdit = QTextEdit()
-        optionsLayout.addRow( self.commentLabel, self.commentEdit )
+        self.__ui_preview_box = QCheckBox("Create preview files (thumbnail or playblast).")
+        options_layout.addRow( "Preview:", self.__ui_preview_box )
 
-        mainLayout.addLayout( optionsLayout )
+        self.__ui_comment_label = QLabel("Comment:")
+        self.__ui_comment_edit = QTextEdit()
+        options_layout.addRow( self.__ui_comment_label, self.__ui_comment_edit )
 
-        buttonsLayout = QHBoxLayout()
-        buttonsLayout.setSpacing(2)
+        main_layout.addLayout( options_layout )
 
-        self._saveButton = QPushButton("Update Status and Save")
-        buttonsLayout.addWidget( self._saveButton )
-        self._skipButton = QPushButton("Skip and just Save")
-        buttonsLayout.addWidget( self._skipButton )
-        self._cancelButton = QPushButton("Cancel")
-        buttonsLayout.addWidget( self._cancelButton )
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(2)
 
-        mainLayout.addLayout( buttonsLayout )
+        self.__ui_save_button = QPushButton("Update Status and Save")
+        buttons_layout.addWidget( self.__ui_save_button )
+        self.__ui_skip_button = QPushButton("Skip and just Save")
+        buttons_layout.addWidget( self.__ui_skip_button )
+        self.__ui_cancel_button = QPushButton("Cancel")
+        buttons_layout.addWidget( self.__ui_cancel_button )
 
-        self.setLayout( mainLayout )
+        main_layout.addLayout( buttons_layout )
 
-    def __connectEvents(self):
-        self.completionSlider.valueChanged.connect( self.completionBox.setValue )
-        self.completionBox.valueChanged.connect( self.completionSlider.setValue )
-        self.stateBox.currentTextChanged.connect(self.stateChanged )
-        self._saveButton.clicked.connect( self.accept )
-        self._cancelButton.clicked.connect( self.reject )
-        self._skipButton.clicked.connect( self.skip )
+    def __conect_evenhts(self):
+        self.__ui_completion_slider.valueChanged.connect( self.__ui_completion_box.setValue )
+        self.__ui_completion_box.valueChanged.connect( self.__ui_completion_slider.setValue )
+        self.__ui_state_box.currentIndexChanged.connect(self.stateChanged )
+        self.__ui_save_button.clicked.connect( self.accept )
+        self.__ui_cancel_button.clicked.connect( self.reject )
+        self.__ui_skip_button.clicked.connect( self.skip )
+        self.__ui_publish_box.clicked[bool].connect( self.__ui_publish_settings_box.setEnabled )
 
-    def stateChanged(self, s):
-        state = ramses.state( s )
-        self.completionBox.setValue( state.completionRatio() )
+    def setVirtual(self):
+        """
+        Sets the dialog to edit a virtual item status
+        (no comment, no completion ratio)
+        """
+        self.__ui_completion_slider.hide()
+        self.__ui_completion_box.hide()
+        self.__ui_comment_label.hide()
+        self.__ui_comment_edit.hide()
+        # Use names in statebox
+        for i in range(self.__ui_state_box.count() ):
+            state = self.__ui_state_box.itemData(i)
+            self.__ui_state_box.setItemText( i, state.name() )
+
+    def stateChanged(self, i):
+        """Updates the completion according to the state"""
+        state = self.__ui_state_box.itemData(i)
+        self.__ui_completion_box.setValue( state.completionRatio() )
 
     def setStatus( self, status):
-        self.stateBox.setState( status.state )
-        self.completionBox.setValue( status.completionRatio )
-        self.commentEdit.setPlainText( status.comment )
+        """Sets the status in the dialog"""
+        self.__ui_state_box.setState( status.state() )
+        self.__ui_completion_box.setValue( status.completionRatio() )
+        self.__ui_comment_edit.setPlainText( status.comment() )
+
+    def setState( self, state ):
+        """Sets a state in the dialog"""
+        stateName = ram.RamObject.getShortName( state )
+        for i in range(self.__ui_state_box.count() ):
+            if stateName == self.__ui_state_box.itemData(i).shortName():
+                self.__ui_state_box.setCurrentIndex(i)
 
     def getState(self):
-        return self.stateBox.getState()
+        """Returns the chosen state"""
+        return self.__ui_state_box.getState()
 
     def getCompletionRatio(self):
-        return self.completionBox.value()
+        """Returns the completion ratio"""
+        return self.__ui_completion_box.value()
 
     def getComment(self):
-        return self.commentEdit.toPlainText()
+        """Returns the comment"""
+        return self.__ui_comment_edit.toPlainText()
 
-    def isPublished(self):
-        return self.publishBox.isChecked()
+    def publish(self):
+        """Checks if the scene has to be published"""
+        return self.__ui_publish_box.isChecked()
+
+    def edit_publish_settings(self):
+        """Checks if the publish settings have to be edited"""
+        return self.__ui_publish_settings_box.isChecked()
 
     def skip(self):
+        """Skip the status update and just save"""
         self.done(2)
 
-    def setOffline(self, offline):
-        online = not offline
-        self.completionSlider.setVisible(online)
-        self.completionBox.setVisible(online)
-        self.commentEdit.setVisible(online)
-        self.commentLabel.setVisible(online)
-
     def setPublish(self, pub=True):
-        self.publishBox.setChecked(pub)
+        """Checks the publish box"""
+        self.__ui_publish_box.setChecked(pub)
 
     def preview(self):
-        return self.previewBox.isChecked()
+        """Checks the preview box"""
+        return self.__ui_preview_box.isChecked()
 
 if __name__ == '__main__':
     statusDialog = StatusDialog()
+    # statusDialog.setVirtual()
     ok = statusDialog.exec_()
     print(ok)

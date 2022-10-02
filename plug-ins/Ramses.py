@@ -1,18 +1,19 @@
+# pylint: disable=invalid-name
+"""
+The Rx Asset Management System (Ramses) Maya Plugin
+"""
+
 import ramses_maya as ram
-import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
-vendor = "RxLaboratory"
-version = "0.2.11-alpha"
-
-def maya_useNewAPI():
+def maya_useNewAPI(): # pylint: disable=invalid-name
     """
     The presence of this function tells Maya that the plugin produces, and
     expects to be passed, objects created using the Maya Python API 2.0.
     """
-    pass
+    #pass
 
-saveCmd = """
+SAVE_CMD = """
 import maya.cmds as cmds
 ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
 if not ok:
@@ -20,7 +21,7 @@ if not ok:
 cmds.ramSave()
 """
 
-openCmd = """
+OPEN_CMD = """
 import maya.cmds as cmds
 ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
 if not ok:
@@ -28,7 +29,7 @@ if not ok:
 cmds.ramOpen()
 """
 
-saveAsCmd = """
+SAVE_AS_CMD = """
 import maya.cmds as cmds
 ok = cmds.pluginInfo('Ramses', loaded=True, q=True)
 if not ok:
@@ -37,36 +38,58 @@ cmds.ramSaveAs()
 """
 
 def installHotkeys():
+    """
+    Registers Ramses Hotkeys
+    """
     # Register hotkeys
     settings = ram.RamSettings.instance()
-    save = True
+    registerSave = True
     if 'useRamSaveSceneHotkey' in settings.userSettings:
-        save = settings.userSettings['useRamSaveSceneHotkey']
-    open = True
+        registerSave = settings.userSettings['useRamSaveSceneHotkey']
+    registerOpen = True
     if 'useRamOpenceneHotkey' in settings.userSettings:
-        open = settings.userSettings['useRamOpenceneHotkey']
-    saveas = True
+        registerOpen = settings.userSettings['useRamOpenceneHotkey']
+    registerSaveAs = True
     if 'useRamSaveAsHotkey' in settings.userSettings:
-        saveas = settings.userSettings['useRamSaveAsHotkey']
-       
-    if save:
-        ram.maf.HotKey.createHotkey(saveCmd, 'ctrl+s', 'RamSaveScene', "Ramses Save Scene", "Ramses" )
+        registerSaveAs = settings.userSettings['useRamSaveAsHotkey']
 
-    if open:
-        ram.maf.HotKey.createHotkey(openCmd, 'ctrl+o', 'RamOpenScene', "Ramses Open Scene", "Ramses" )
+    if registerSave:
+        ram.maf.HotKey.createHotkey(
+            SAVE_CMD,
+            'ctrl+s',
+            'RamSaveScene',
+            "Ramses Save Scene",
+            "Ramses"
+            )
 
-    if saveas:
-        ram.maf.HotKey.createHotkey(saveAsCmd, 'ctrl+shift+s', 'RamSaveSceneAs', "Ramses Save Scene As", "Ramses" )
+    if registerOpen:
+        ram.maf.HotKey.createHotkey(OPEN_CMD,
+            'ctrl+o',
+            'RamOpenScene',
+            "Ramses Open Scene",
+            "Ramses"
+            )
+
+    if registerSaveAs:
+        ram.maf.HotKey.createHotkey(SAVE_AS_CMD,
+            'ctrl+shift+s',
+            'RamSaveSceneAs',
+            "Ramses Save Scene As",
+            "Ramses"
+            )
 
 def initializePlugin( obj ):
-    plugin = om.MFnPlugin(obj, vendor, version)
+    """
+    Initializes the plugin, loads the classes for maya commands
+    """
+    plugin = om.MFnPlugin(obj, ram.VENDOR, ram.VERSION)
 
     ram.log( "Hi, I'm Ramses, the Rx Asset Management System... I'm loading!" )
 
     for c in ram.cmds_classes:
         try:
             plugin.registerCommand( c.name, c.createCommand, c.createSyntax )
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             print(e)
             ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
 
@@ -75,7 +98,10 @@ def initializePlugin( obj ):
     ram.log( "I'm ready!" )
 
 def uninitializePlugin( obj ):
-    plugin = om.MFnPlugin(obj, vendor, version)
+    """
+    Unitializes the plugin, unloads the classes for maya commands
+    """
+    plugin = om.MFnPlugin(obj, ram.VENDOR, ram.VERSION)
 
     # Rstore hotkeys
     ram.maf.HotKey.restoreSaveSceneHotkey()
@@ -85,7 +111,8 @@ def uninitializePlugin( obj ):
     for c in reversed( ram.cmds_classes ):
         try:
             plugin.deregisterCommand( c.name )
-        except:
+        except Exception as e: # pylint: disable=broad-except
+            print(e)
             ram.log( "Failed to unregister command: %s\n" % c.name )
 
     ram.log( "Thanks for playing with me. Much love, See you soon." )

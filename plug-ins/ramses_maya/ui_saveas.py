@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Save As/Create scene Dialog"""
 
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QDialog,
@@ -17,33 +18,36 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
 )
 
 import ramses as ram
-ramses = ram.Ramses.instance()
+from ramses_maya.ui_object_combobox import RamObjectBox
+from ramses_maya.ui_dialog import Dialog
 
-class SaveAsDialog( QDialog ):
+RAMSES = ram.Ramses.instance()
+
+class SaveAsDialog( Dialog ):
+    """Save As/Create scene Dialog"""
 
     def __init__(self, parent=None):
         super(SaveAsDialog, self).__init__(parent)
 
-        self.__setupUi()
-        self.__loadProjects()
-        self.__connectEvents()
+        self.__setup_ui()
+        self._loadProjects()
+        self._connectEvents()
 
-    def __setupUi(self):
+    def __setup_ui(self):
         self.setWindowTitle( "Save Scene As..." )
 
         self.setMinimumWidth(400)
 
-        mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
-        mainLayout.setSpacing(3)
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(3)
+        self.main_layout.addLayout(main_layout)
 
-        topLayout = QFormLayout()
-        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
-        topLayout.setSpacing(3)
+        top_layout = QFormLayout()
+        top_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        top_layout.setSpacing(3)
 
-        self.projectBox = QComboBox()
-        self.projectBox.setEditable(True)
-        topLayout.addRow( "Project:", self.projectBox )
+        self.project_box = RamObjectBox()
+        top_layout.addRow( "Project:", self.project_box )
 
         typeWidget = QWidget()
         typeLayout = QVBoxLayout()
@@ -57,29 +61,26 @@ class SaveAsDialog( QDialog ):
         self.otherButton = QRadioButton("Other")
         typeLayout.addWidget(self.otherButton)
         typeWidget.setLayout(typeLayout)
-        topLayout.addRow("Type:", typeWidget)
+        top_layout.addRow("Type:", typeWidget)
 
-        self.stepBox = QComboBox()
-        self.stepBox.setEditable(True)
-        topLayout.addRow( "Step:", self.stepBox )
+        self.stepBox = RamObjectBox()
+        top_layout.addRow( "Step:", self.stepBox )
 
-        self.assetGroupBox = QComboBox()
-        self.assetGroupBox.setEditable(True)
-        self.assetGroupLabel = QLabel("Asset Group:")
-        topLayout.addRow( self.assetGroupLabel, self.assetGroupBox )
+        self.groupBox = RamObjectBox()
+        self.groupLabel = QLabel("Asset Group:")
+        top_layout.addRow( self.groupLabel, self.groupBox )
 
-        self.itemBox = QComboBox()
-        self.itemBox.setEditable(True)
+        self.itemBox = RamObjectBox()
         self.itemLabel = QLabel("Item:")
-        topLayout.addRow( self.itemLabel, self.itemBox )
+        top_layout.addRow( self.itemLabel, self.itemBox )
 
         self.resourceEdit = QLineEdit()
-        topLayout.addRow( "Resource:", self.resourceEdit)
+        top_layout.addRow( "Resource:", self.resourceEdit)
 
         self.extensionBox = QComboBox()
         self.extensionBox.addItem("Maya Binary (.mb)", "mb")
         self.extensionBox.addItem("Maya ASCII (.ma)", "ma")
-        topLayout.addRow("File Type:", self.extensionBox)
+        top_layout.addRow("File Type:", self.extensionBox)
 
         locationWidget = QWidget()
         locationLayout = QHBoxLayout()
@@ -96,12 +97,12 @@ class SaveAsDialog( QDialog ):
         self.browseButton.setVisible( False )
         locationLayout.addWidget( self.browseButton )
 
-        topLayout.addRow("Location:",locationWidget)
+        top_layout.addRow("Location:",locationWidget)
 
         self.fileNameLabel = QLabel()
-        topLayout.addRow("Filename:", self.fileNameLabel)
+        top_layout.addRow("Filename:", self.fileNameLabel)
 
-        mainLayout.addLayout(topLayout)
+        main_layout.addLayout(top_layout)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.setSpacing(2)
@@ -109,42 +110,43 @@ class SaveAsDialog( QDialog ):
         buttonsLayout.addWidget( self._saveButton )
         self._cancelButton = QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
-        mainLayout.addLayout( buttonsLayout )
+        main_layout.addLayout( buttonsLayout )
 
-        self.setLayout(mainLayout)
-
-    def __connectEvents(self):
+    def _connectEvents(self):
         self._saveButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
-        self.projectBox.currentTextChanged.connect( self.__loadSteps )
-        self.stepBox.currentIndexChanged.connect( self.__loadItems )
-        self.assetButton.clicked.connect( self.__typeChanged )
-        self.shotButton.clicked.connect( self.__typeChanged )
-        self.otherButton.clicked.connect( self.__typeChanged )
-        self.assetGroupBox.currentIndexChanged.connect( self.__loadAssets )
-        self.itemBox.currentTextChanged.connect( self.__buildPath )
-        self.resourceEdit.textChanged.connect( self.__buildPath )
-        self.extensionBox.currentIndexChanged.connect( self.__buildPath )
+        self.project_box.currentTextChanged.connect( self._loadSteps )
+        self.stepBox.currentIndexChanged.connect( self._loadGroups )
+        self.assetButton.clicked.connect( self._typeChanged )
+        self.shotButton.clicked.connect( self._typeChanged )
+        self.otherButton.clicked.connect( self._typeChanged )
+        self.groupBox.currentIndexChanged.connect( self._loadItems )
+        self.itemBox.currentTextChanged.connect( self._buildPath )
+        self.itemBox.currentIndexChanged.connect( self._buildPath )
+        self.itemBox.editTextChanged.connect( self._buildPath )
+        self.resourceEdit.textChanged.connect( self._buildPath )
+        self.extensionBox.currentIndexChanged.connect( self._buildPath )
 
-    def __loadProjects(self):
+    def _loadProjects(self):
         # Load projects
-        projects = ramses.projects()
-        self.projectBox.clear()
+        projects = RAMSES.projects()
+        self.project_box.clear()
         if len(projects) == 0:
             self.setOffline()
-            self.__loadSteps( )
+            self._loadSteps( )
             return
-        for project in ramses.projects():
-            self.projectBox.addItem(str(project), project)
+        for project in RAMSES.projects():
+            self.project_box.addItem(str(project), project)
         # No selection, to make things faster and load steps & items only once needed
-        self.projectBox.setCurrentIndex(-1)
-        self.__loadSteps( )
+        self.project_box.setCurrentIndex(-1)
+        self._loadSteps( )
 
     @Slot()
-    def __loadSteps(self):
+    def _loadSteps(self):
         self.stepBox.clear()
         project = self.getProject()
-        if not project: return
+        if not project:
+            return
 
         steps = []
         if self.assetButton.isChecked():
@@ -158,9 +160,9 @@ class SaveAsDialog( QDialog ):
         # No selection, to make things faster and load steps & items only once needed
         self.stepBox.setCurrentIndex(-1)
 
-        self.__loadItems()
+        self._loadGroups()
 
-    def __buildPath(self):
+    def _buildPath(self):
         self.locationEdit.setText('')
         self.fileNameLabel.setText('')
         self._saveButton.setEnabled(False)
@@ -178,7 +180,7 @@ class SaveAsDialog( QDialog ):
         if self.assetButton.isChecked():
 
             # Get the group
-            assetGroup = self.assetGroupBox.currentText()
+            assetGroup = self.groupBox.currentText()
             if assetGroup == '':
                 self.locationEdit.setText('Sorry, invalid asset group...')
                 return
@@ -274,20 +276,25 @@ class SaveAsDialog( QDialog ):
         self._saveButton.setEnabled(True)
 
     @Slot()
-    def __typeChanged(self):
+    def _typeChanged(self):
         if self.assetButton.isChecked():
-            self.assetGroupBox.show()
-            self.assetGroupLabel.show()
+            self.groupBox.show()
+            self.groupLabel.show()
+            self.groupLabel.setText("Asset Group:")
+        elif self.shotButton.isChecked():
+            self.groupBox.show()
+            self.groupLabel.show()
+            self.groupLabel.setText("Sequence:")
         else:
-            self.assetGroupBox.hide()
-            self.assetGroupLabel.hide()
+            self.groupBox.hide()
+            self.groupLabel.hide()
 
-        self.__loadSteps()
+        self._loadSteps()
 
     @Slot()
-    def __loadItems(self):
+    def _loadGroups(self):
         self.itemBox.clear()
-        self.assetGroupBox.clear()
+        self.groupBox.clear()
 
         project = self.getProject()
         if not project: return
@@ -298,29 +305,34 @@ class SaveAsDialog( QDialog ):
         if self.assetButton.isChecked():
             # Load asset groups
             for ag in project.assetGroups():
-                self.assetGroupBox.addItem(ag)
-            # No selection, to make things faster and load steps & items only once needed
-            self.assetGroupBox.setCurrentIndex(-1)
-            self.__loadAssets()
+                self.groupBox.addItem(ag.name(), ag)
         elif self.shotButton.isChecked():
-            # Load shots
-            for shot in project.shots():
-                self.itemBox.addItem(str(shot), shot)
-            # No selection, to make things faster and load steps & items only once needed
-            self.itemBox.setCurrentIndex(-1)
+            # Load sequences
+            for seq in project.sequences():
+                self.groupBox.addItem(seq.name(), seq)
 
-        self.__buildPath()
+        # No selection, to make things faster and load steps & items only once needed
+        self.groupBox.setCurrentIndex(-1)
+        self._loadItems()
+
+        self._buildPath()
 
     @Slot()
-    def __loadAssets(self):
+    def _loadItems(self):
         self.itemBox.clear()
 
         project = self.getProject()
-        if not project: return
+        if not project:
+            return
 
-        ag = self.assetGroupBox.currentText() 
-        for asset in project.assets( ag ):
-            self.itemBox.addItem(str(asset), asset)
+        if self.assetButton.isChecked():
+            ag = self.groupBox.currentData()
+            for asset in project.assets( ag ):
+                self.itemBox.addItem(str(asset), asset)
+        elif self.shotButton.isChecked():
+            seq = self.groupBox.currentData()
+            for shot in project.shots( sequence=seq ):
+                self.itemBox.addItem(str(shot), shot)
         # No selection, to make things faster and load steps & items only once needed
         self.itemBox.setCurrentIndex(-1)
 
@@ -328,13 +340,13 @@ class SaveAsDialog( QDialog ):
         pass
 
     def setProject(self, project):
-        for i in range(self.projectBox.count()):
-            if self.projectBox.itemData(i) == project:
-                self.projectBox.setCurrentIndex(i)
+        for i in range(self.project_box.count()):
+            if self.project_box.itemData(i) == project:
+                self.project_box.setCurrentIndex(i)
                 return
 
-        self.projectBox.addItem(str(project), project)
-        self.projectBox.setCurrentIndex( self.projectBox.count() - 1)
+        self.project_box.addItem(str(project), project)
+        self.project_box.setCurrentIndex( self.project_box.count() - 1)
 
     def setStep(self, step):
         for i in range( self.stepBox.count() ):
@@ -353,7 +365,7 @@ class SaveAsDialog( QDialog ):
         else:
             self.otherButton.setChecked(True)
 
-        self.__typeChanged()
+        self._typeChanged()
 
         for i in range( self.itemBox.count() ):
             if self.itemBox.itemData(i) == item:
@@ -388,10 +400,8 @@ class SaveAsDialog( QDialog ):
         return self.extensionBox.currentData()
 
     def getProject(self):
-        p = self.projectBox.currentData()
-        if not p:
-            pShortName = self.projectBox.currentText()
-            p = ramses.project( pShortName )
+        """Returns the selected project"""
+        p = self.project_box.currentData()
         return p
 
     def getStep(self):
@@ -406,3 +416,9 @@ class SaveAsDialog( QDialog ):
     def getItem(self):
         i = self.itemBox.currentData()
         return i
+
+if __name__ == '__main__':
+    dialog = SaveAsDialog()
+    ok = dialog.exec_()
+    if ok == 1:
+        print(dialog.getFilePath())

@@ -15,13 +15,15 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
 )
-
 import maya.cmds as cmds # pylint: disable=import-error
+from ramses_maya.ui_dialog import Dialog
+from ramses_maya.ui_object_combobox import RamObjectBox
+
 
 import ramses as ram
 ramses = ram.Ramses.instance()
 
-class PublishTemplateDialog( QDialog ):
+class PublishTemplateDialog( Dialog ):
 
     def __init__(self, parent=None):
         super(PublishTemplateDialog,self).__init__(parent)
@@ -35,19 +37,17 @@ class PublishTemplateDialog( QDialog ):
         self.setMinimumWidth(400)
 
         mainLayout = QVBoxLayout()
-        mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
+        self.main_layout.addLayout(mainLayout)
 
         topLayout = QFormLayout()
         topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
-        self.projectBox = QComboBox()
-        self.projectBox.setEditable(True)
+        self.projectBox = RamObjectBox()
         topLayout.addRow( "Project:", self.projectBox )
 
-        self.stepBox = QComboBox()
-        self.stepBox.setEditable(True)
+        self.stepBox = RamObjectBox()
         topLayout.addRow( "Step:", self.stepBox )
 
         self.nameEdit = QLineEdit()
@@ -91,8 +91,6 @@ class PublishTemplateDialog( QDialog ):
 
         mainLayout.addLayout( buttonsLayout )
 
-        self.setLayout( mainLayout )
-
     def __connectEvents(self):
         self.browseButton.clicked.connect( self.browse )
         self.projectBox.currentTextChanged.connect( self.__loadSteps )
@@ -111,33 +109,16 @@ class PublishTemplateDialog( QDialog ):
             self.__loadSteps( )
             return
         for project in ramses.projects():
-            n = project.name()
-            if n == "":
-                n = project.shortName()
-            self.projectBox.addItem(n, project.shortName())
+            self.projectBox.addItem(str(project), project)
         self.__loadSteps( )
-
-    def __getCurrentShortName(self, comboBox):
-        currentIndex = comboBox.currentIndex()
-        currentText = comboBox.currentText()
-        itemText = comboBox.itemText( currentIndex )
-        if currentIndex == -1:
-            return currentText
-        if currentText == itemText:
-            return comboBox.itemData( currentIndex )
-        return currentText
 
     @Slot()
     def __loadSteps(self):
-        projectShortName = self.__getCurrentShortName( self.projectBox )
-        project = ramses.project( projectShortName )
+        project = self.projectBox.getObject()
         if project is not None:
             self.stepBox.clear()
             for step in project.steps():
-                n = step.name()
-                if n == "":
-                    n = step.shortName()
-                self.stepBox.addItem(n, step.shortName())
+                self.stepBox.addItem(str(step), step)
         self.__buildPath()
 
     @Slot()
@@ -145,16 +126,16 @@ class PublishTemplateDialog( QDialog ):
         self._publishButton.setEnabled(False)
         self.locationEdit.setText("")
         self.fileNameLabel.setText("")
-        pShortName = self.__getCurrentShortName( self.projectBox )
-        project = ramses.project( pShortName )
+        project = self.projectBox.getObject()
         if project is None:
             self.locationEdit.setPlaceholderText("Sorry, Invalid project...")
             return
-        sShortName = self.__getCurrentShortName( self.stepBox )
-        step = project.step(sShortName)
+        pShortName = project.shortName()
+        step = self.stepBox.getObject()
         if step is None:
             self.locationEdit.setPlaceholderText("Sorry, Invalid step...")
             return
+        sShortName = step.shortName()
         self.locationEdit.setPlaceholderText("Location")
         # Build the subfolder name
         nm = ram.RamFileInfo()
@@ -174,8 +155,14 @@ class PublishTemplateDialog( QDialog ):
     def __buildFileName(self):
         nm = ram.RamFileInfo()
 
-        nm.project = self.__getCurrentShortName( self.projectBox )
-        nm.step = self.__getCurrentShortName( self.stepBox )
+        p = project = self.projectBox.getObject()
+        s = self.stepBox.getObject()
+        if not p:
+            return ""
+        if not s:
+            return ""
+        nm.project = p.shortName()
+        nm.step = s.shortName()
         nm.extension = self.extensionBox.currentData()
         nm.ramType = ram.ItemType.GENERAL
         nm.shortName = self.nameEdit.text()
@@ -247,4 +234,6 @@ class PublishTemplateDialog( QDialog ):
 if __name__ == '__main__':
     publishTemplateDialog = PublishTemplateDialog()
     ok = publishTemplateDialog.exec_()
-    print(ok)
+    if ok == 1:
+        print(publishTemplateDialog.getFile())
+        print(publishTemplateDialog.getFolder())
