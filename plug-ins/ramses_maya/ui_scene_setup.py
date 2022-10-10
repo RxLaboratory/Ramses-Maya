@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import yaml
 from PySide2.QtWidgets import (
     QFormLayout,
     QCheckBox,
@@ -12,7 +13,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
     Slot,
     Qt
 )
-from maya import cmds
+from maya import cmds # pylint: disable=no-name-in-module,import-error
 import dumaf as maf
 from ramses import (
     ItemType,
@@ -37,6 +38,9 @@ class SceneSetupDialog( Dialog ):
         self.__width = 0
         self.__height = 0
         self.__cam_name = ""
+        self.__handle_in = 0
+        self.__handle_out = 0
+        self.__first_image_number = 1
     
     # <== PRIVATE METHODS ==>
 
@@ -98,7 +102,7 @@ class SceneSetupDialog( Dialog ):
 
     # <== PUBLIC METHODS ==>
 
-    def setItem(self, item):
+    def setItem(self, item, step=None):
         ok = True
         
         project = item.project()
@@ -122,34 +126,43 @@ class SceneSetupDialog( Dialog ):
         shot_duration = 0
         scene_duration = 0
         if item.itemType() == ItemType.SHOT:
+            if step:
+                settings = step.generalSettings()
+                settings = yaml.safe_load( settings )
+                shot_settings = settings.get("shot", {})
+                self.__handle_in = shot_settings.get("handle_in", 0)
+                self.__handle_out = shot_settings.get("handle_out", 0)
+                self.__first_image_number = shot_settings.get("first_image_number", 1)
             start_time = cmds.playbackOptions(animationStartTime=True, query=True)
             end_time = cmds.playbackOptions(animationEndTime=True, query=True)
-            scene_duration = int(end_time - start_time)
+            anim_start_time = cmds.playbackOptions(minTime=True, query=True)
+            anim_end_time = cmds.playbackOptions(maxTime=True, query=True)
+
+            scene_duration = int(anim_end_time - anim_start_time)
+            scene_handle_in = int(anim_start_time - start_time)
+            scene_handle_out = int(end_time - anim_end_time)
+
             shot_duration = item.frames()
             self.__duration = shot_duration
 
-        if shot_duration == scene_duration:
+        # Animation
+        if project_fps == scene_fps and shot_duration == scene_duration and scene_handle_in == self.__handle_in and scene_handle_out == self.__handle_out and start_time == self.__first_image_number:
+            self.__ui_animation_label.setText("OK!")
             self.__ui_duration_box.setVisible(False)
             self.__ui_duration_box.setChecked(False)
         else:
-            self.__ui_duration_box.setVisible(True)
-            self.__ui_duration_box.setChecked(True)
-            self.__ui_duration_box.setText("Fix duration: " + str(shot_duration) + " frames")
-
-        # Animation
-        if project_fps == scene_fps and shot_duration == scene_duration:
-            self.__ui_animation_label.setText("OK!")
-        else:
             ok = False
-            self.__ui_animation_label.setText("Current scene:\n" +
+            self.__ui_animation_label.setText( "Current scene:\n" +
                 str(scene_duration) +
                 " frames @ " +
-                str(scene_fps) +
-                " fps\nShot:\n" +
-                str(shot_duration) +
-                " frames @ " +
-                str(project_fps) +
-                " fps" )
+                str(scene_fps))
+            self.__ui_duration_box.setVisible(True)
+            self.__ui_duration_box.setChecked(True)
+            self.__ui_duration_box.setText("Fix duration:\n• Shot: " +
+                str(shot_duration) + " frames\n• Handles: " +
+                str(self.__handle_in) + " frames in / " +
+                str(self.__handle_out) + " frames out\n• First image number: " +
+                str(self.__first_image_number) )
 
         # Image Size
         project_w = 0
@@ -170,7 +183,7 @@ class SceneSetupDialog( Dialog ):
             self.__ui_resolution_box.setVisible(True)
             self.__ui_resolution_box.setChecked(True)
             self.__ui_resolution_box.setText("Fix image size: " + str(project_w) + " x " + str(project_h) + " px")
-        
+
         # Camera
         shot_name = ""
         scene_cam_name = ""
@@ -200,23 +213,23 @@ class SceneSetupDialog( Dialog ):
         else:
             ok = False
             self.__ui_rendering_label.setText("Current scene:\n" + 
-            str(scene_w) + " x " + str(scene_h) +
-            " px | " +
-            scene_cam_name +
-            "\n Shot:\n" +
-            str(project_w) + " x " + str(project_h) +
-            " px | " +
-            shot_name + "_camera")
+                str(scene_w) + " x " + str(scene_h) +
+                " px | " +
+                scene_cam_name)
 
         return ok
-        
+
     @Slot()
     def fix_scene(self):
         if self.__ui_fps_box.isChecked() and self.__fps != 0:
             maf.animation.set_framerate(self.__fps)
         if self.__ui_duration_box.isChecked() and self.__duration != 0:
-            start_time = cmds.playbackOptions(animationStartTime = True, query=True)
-            cmds.playbackOptions(animationEndTime = start_time + self.__duration)
+            start_time = self.__first_image_number
+            cmds.playbackOptions(animationStartTime = start_time)
+            cmds.playbackOptions(animationEndTime = start_time + self.__handle_in + self.__duration + self.__handle_out)
+            cmds.playbackOptions(minTime = start_time + self.__handle_in)
+            cmds.playbackOptions(maxTime = start_time + self.__handle_in + self.__duration)
+
         if self.__ui_resolution_box.isChecked():
             if self.__width != 0:
                 cmds.setAttr("defaultResolution.width", self.__width)

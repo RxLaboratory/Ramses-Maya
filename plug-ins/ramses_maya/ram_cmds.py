@@ -218,7 +218,7 @@ def create_thumbnail(filePath):
     """Saves a thumbnail for the current viewport at filepath"""
     cmds.refresh(cv=True, fn = filePath)
 
-def setup_scene( ramItem ):
+def setup_scene( ramItem, ramStep=None ):
     """Setup the current scene according to the given item.
     Returns False if the user cancelled the operation."""
 
@@ -229,7 +229,7 @@ def setup_scene( ramItem ):
         return True
 
     dlg = SceneSetupDialog( dumaf.ui.getMayaWindow() )
-    ok = dlg.setItem( ramItem )
+    ok = dlg.setItem( ramItem, ramStep )
     if not ok:
         if not dlg.exec_():
             return False
@@ -438,7 +438,8 @@ class RamSaveAsCmd( om.MPxCommand ):
             ram.log( 'I\'ve added this comment for you: "Overwritten by an external file."' )
 
         new_item = saveAsDialog.getItem()
-        if not setup_scene(new_item):
+        new_step = saveAsDialog.getStep()
+        if not setup_scene(new_item, new_step):
             return
 
         mayaType = 'mayaBinary'
@@ -1188,8 +1189,9 @@ class RamSetupSceneCmd( om.MPxCommand ):
             return
 
         currentItem = ram.RamItem.fromPath( save_filepath )
+        currentStep = ram.RamStep.fromPath( save_filepath )
 
-        ok = setup_scene(currentItem)
+        ok = setup_scene(currentItem, currentStep)
 
         if ok:
             cmds.inViewMessage( msg='Scene ready!', pos='midCenter', fade=True )
