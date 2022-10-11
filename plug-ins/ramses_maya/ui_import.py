@@ -584,7 +584,7 @@ class ImportDialog( Dialog ):
                 continue
             resource = nm.resource
             if resource == "":
-                resource = "Main"
+                resource = "/ scene_backup /"
             title = resource + " (" + nm.extension + ")"
             item = QListWidgetItem( title )
             item.setData(Qt.UserRole, f)
