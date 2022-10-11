@@ -64,3 +64,21 @@ def get_del_on_publish_nodes( ):
         return []
 
     return nodes
+
+def delete_ramses_sets():
+    """Removes the sets created by Ramses in the scene"""
+
+    try:
+        cmds.delete( 'Ramses_Publish' )
+    except ValueError:
+        pass
+
+    try:
+        cmds.delete( 'Ramses_Proxies' )
+    except ValueError:
+        pass
+
+    try:
+        cmds.delete( 'Ramses_DelOnPublish' )
+    except ValueError:
+        pass

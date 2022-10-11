@@ -9,7 +9,8 @@ from maya import cmds # pylint: disable=import-error
 from .ui_publish import PublishDialog
 from .utils_nodes import (
     get_del_on_publish_nodes,
-    get_publish_nodes
+    get_publish_nodes,
+    delete_ramses_sets
 )
 from .utils import end_process
 from .utils_attributes import (
@@ -132,6 +133,9 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
     # Remove animation
     if get_option("remove_animation", publish_options, False):
         maf.animation.removeAll()
+
+    # Remove Ramses Maya Sets
+    delete_ramses_sets()
 
     progress_dialog.setMaximum(len(publish_nodes) + 1)
     progress_dialog.setText("Publishing nodes...")
