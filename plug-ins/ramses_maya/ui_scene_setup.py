@@ -125,6 +125,9 @@ class SceneSetupDialog( Dialog ):
         # Duration
         shot_duration = 0
         scene_duration = 0
+        scene_handle_in = 0
+        scene_handle_out = 0
+        start_time = 1
         if item.itemType() == ItemType.SHOT:
             if step:
                 settings = step.generalSettings()
