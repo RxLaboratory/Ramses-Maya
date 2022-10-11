@@ -92,8 +92,13 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
         lock_transform = get_option("lock_transformations", options, True)
         as_reference = get_option("as_reference", options, False)
         no_root_shape = get_option("no_root_shape", options, False)
+        create_namespace = get_option("create_namespace", options, True)
 
-        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step)
+        ns = item_namespace
+        if not create_namespace:
+            ns = ""
+
+        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, ns, item_group, step)
         geo_nodes = geo_nodes + new_nodes
 
     # Import shaders
@@ -105,8 +110,13 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
         options = get_format_options(shader_file, import_options)
         as_reference = get_option("as_reference", options, False)
         no_root_shape = get_option("no_root_shape", options, False)
+        create_namespace = get_option("create_namespace", options, True)
 
-        new_nodes = import_file(shader_file, as_reference, False, no_root_shape, item, item_namespace, item_group, step)
+        ns = item_namespace
+        if not create_namespace:
+            ns = ""
+
+        new_nodes = import_file(shader_file, as_reference, False, no_root_shape, item, ns, item_group, step)
         # Apply shaders to the geo nodes
         # Get the shaders
         shaders = []
@@ -187,24 +197,43 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
 
     new_nodes = ()
     if as_reference:
-        new_nodes = cmds.file(
-            file_path,
-            r=True,
-            ignoreVersion=True,
-            mergeNamespacesOnClash=True,
-            returnNewNodes=True,
-            ns=item_namespace
-            )
+        if item_namespace != "":
+            new_nodes = cmds.file(
+                file_path,
+                r=True,
+                ignoreVersion=True,
+                mergeNamespacesOnClash=True,
+                returnNewNodes=True,
+                ns=item_namespace
+                )
+        else:
+            new_nodes = cmds.file(
+                file_path,
+                r=True,
+                ignoreVersion=True,
+                returnNewNodes=True,
+                defaultNamespace=True
+                )
     else:
-        new_nodes = cmds.file (
-            file_path,
-            i=True,
-            ignoreVersion=True,
-            mergeNamespacesOnClash=True,
-            returnNewNodes=True,
-            ns=item_namespace,
-            preserveReferences=True
-            )
+        if item_namespace != "":
+            new_nodes = cmds.file (
+                file_path,
+                i=True,
+                ignoreVersion=True,
+                mergeNamespacesOnClash=True,
+                returnNewNodes=True,
+                ns=item_namespace,
+                preserveReferences=True
+                )
+        else:
+            new_nodes = cmds.file (
+                file_path,
+                i=True,
+                ignoreVersion=True,
+                returnNewNodes=True,
+                preserveReferences=True,
+                defaultNamespace=True
+                )
 
     # Get root to create control, and move into its group
     root_nodes = []
