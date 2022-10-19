@@ -1152,6 +1152,8 @@ class RamOpenRamsesCmd( om.MPxCommand ):
         RAMSES.showClient()
 
 class RamSetupSceneCmd( om.MPxCommand ):
+    """Sets the scene up to be Ramses friendly,
+    and respect the project/shot settings (resolution, duration...)"""
     name = "ramSetupScene"
 
     def __init__(self):
@@ -1176,6 +1178,7 @@ class RamSetupSceneCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the command"""
         # The current maya file
         currentFilePath = cmds.file( q=True, sn=True )
 

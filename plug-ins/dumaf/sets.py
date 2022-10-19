@@ -6,6 +6,7 @@ import maya.cmds as cmds # pylint: disable=import-error
 import maya.api.OpenMaya as om # pylint: disable=import-error
 
 def getNodes( setName ):
+    """Gets all the nodes from a given set"""
     # Create a list and add the set
     selectionList = om.MSelectionList()
     try:
@@ -25,8 +26,9 @@ def getNodes( setName ):
         publishPaths.append( dagPath.fullPathName() )
         iterator.next()
     return publishPaths
-        
+
 def exists(setName):
+    """Checks if a set exists"""
     # Create a list and add the set
     selectionList = om.MSelectionList()
     try:
@@ -36,6 +38,7 @@ def exists(setName):
     return True
 
 def create_if_not_exists(setName):
+    """Create a set if it does not exist yet"""
     if exists(setName):
         return
-    cmds.sets(name=setName)
+    cmds.sets(name=setName, empty=True)
