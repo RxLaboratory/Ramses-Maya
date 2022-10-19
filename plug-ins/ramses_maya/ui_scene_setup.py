@@ -103,8 +103,9 @@ class SceneSetupDialog( Dialog ):
     # <== PUBLIC METHODS ==>
 
     def setItem(self, item, step=None):
+        """Sets the current item"""
         ok = True
-        
+
         project = item.project()
         
         # FPS
@@ -132,6 +133,8 @@ class SceneSetupDialog( Dialog ):
             if step:
                 settings = step.generalSettings()
                 settings = yaml.safe_load( settings )
+                if not settings:
+                    settings = {}
                 shot_settings = settings.get("shot", {})
                 self.__handle_in = shot_settings.get("handle_in", 0)
                 self.__handle_out = shot_settings.get("handle_out", 0)
