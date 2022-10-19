@@ -119,7 +119,7 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
                 continue
         node = maf.Node(node)
         node.remove()
-    
+
     # Scene pre-processing
 
     progress_dialog.setText("Cleaning scene...")
@@ -143,6 +143,9 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
 
     # Publish each node
     for node in reversed(publish_nodes):
+        # node is a tuple (node, node_name)
+        if not cmds.objExists(node[0]):
+            continue
         progress_dialog.setText("Publishing " + node[1] + "...")
         progress_dialog.increment()
         ram.log("Publishing " + node[1] + "...")
@@ -335,6 +338,8 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
     spheres = []
     offset = 0
     for shading_engine in all_shading_engines:
+        if not cmds.objExists(shading_engine):
+            continue
         shading_engine = maf.Node(shading_engine)
         # create a sphere per shader and export that
         sphere = cmds.polySphere(name=shading_engine.name().replace("_Engine","") + "_shader", constructionHistory=False)[0]
