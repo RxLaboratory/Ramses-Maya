@@ -812,6 +812,7 @@ class ImportSettingsDialog( Dialog ):
         self.__connect_events()
         self.set_preset_folder(IMPORT_PRESETS_PATH)
         self.__ui_preset_box.setCurrentIndex(-1)
+        self.__formats = []
 
     # <== PRIVATE METHODS ==>
 
@@ -869,11 +870,20 @@ class ImportSettingsDialog( Dialog ):
 
     def __add_file(self, file_dict):
         # Add entry
-        format = file_dict["format"]
-        if format == "*" or format == "":
+        fmt = file_dict["format"]
+        if fmt == "*" or fmt == "":
+            # if already there, ignore
+            if fmt == "":
+                fmt = "*"
+            if fmt in self.__formats:
+                return
+            self.__formats.append(fmt)
             self.__ui_files_box.addItem("Format: Default (*)")
         else:
-            self.__ui_files_box.addItem("Format: " + file_dict["format"])
+            if fmt in self.__formats:
+                return
+            self.__formats.append(fmt)
+            self.__ui_files_box.addItem("Format: " + fmt)
         # Add widget
         widget = ImportSettingsWidget( self )
         self.__ui_stacked_layout.addWidget(widget)
