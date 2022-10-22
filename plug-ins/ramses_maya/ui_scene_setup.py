@@ -133,7 +133,8 @@ class SceneSetupDialog( Dialog ):
             if step:
                 settings = step.generalSettings()
                 settings = yaml.safe_load( settings )
-                if not settings:
+                # yaml may return a string
+                if not settings or not isinstance(settings, dict):
                     settings = {}
                 shot_settings = settings.get("shot", {})
                 self.__handle_in = shot_settings.get("handle_in", 0)
