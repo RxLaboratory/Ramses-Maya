@@ -15,7 +15,7 @@ from . import ui_scene_setup
 
 
 VENDOR = "RxLaboratory"
-VERSION = "0.6.0-Beta"
+VERSION = "0.7.0-Beta"
 TOOL_NAME = "Ramses-Maya"
 IS_PRERELEASE = False
 RAMSES = Ramses.instance()

@@ -75,7 +75,7 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
         for node in nodes:
             maf_node = maf.Node(node)
             node_name = maf_node.name().replace("_", " ")
-            publish_nodes.append((node, node_name))
+            publish_nodes.append((maf_node, node_name))
 
     # Backup file
     publish_info = ram.RamFileManager.getPublishInfo( file_path )
@@ -143,8 +143,9 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
 
     # Publish each node
     for node in reversed(publish_nodes):
-        # node is a tuple (node, node_name)
-        if not cmds.objExists(node[0]):
+        # node is a tuple (Node, node_name)
+        if not node[0].exists():
+            ram.log("Skipping node: '" + node[0].path() + "' (it seems it doesn't exist anymore?)")
             continue
         progress_dialog.setText("Publishing " + node[1] + "...")
         progress_dialog.increment()
