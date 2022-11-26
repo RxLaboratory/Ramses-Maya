@@ -312,7 +312,7 @@ class Node():
 
         nodePath = self.path()
         try:
-            cmds.makeIdentity(nodePath, apply=True, t=1, r=1, s=1, n=0)
+            cmds.makeIdentity(nodePath, apply=True, normal = 0, preserveNormals = True)
         except RuntimeError:
             return
         self.center_pivot()
