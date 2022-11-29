@@ -551,50 +551,18 @@ class RamSaveVersionCmd( om.MPxCommand ):
             if currentItem.virtual():
                 status_dialog.setVirtual()
             status_dialog.setPublish( self.publish )
-            if currentStatus is not None:
-                status_dialog.setStatus( currentStatus )
+            status_dialog.setStatus( currentStatus )
             update = status_dialog.exec_()
             if update == 0:
                 return
             if update == 1:
-                # If the user of the current status is not us,
-                # Create a new one
-                createNew = False
-                currentUser = RAMSES.currentUser()
-                if currentStatus and currentStatus.user() != currentUser:
-                    createNew = True
-                elif not currentStatus:
-                    createNew = True
+                currentStatus.setState( status_dialog.getState() )
+                currentStatus.setComment( status_dialog.getComment() )
+                currentStatus.setCompletionRatio( status_dialog.getCompletionRatio() )
+                currentStatus.setPublished( status_dialog.publish() )
+                currentStatus.setUser()
 
-                if currentStatus:
-                    data = currentStatus.data()
-                else:
-                    data = {}
-
-                data['state'] = status_dialog.getState().uuid()
-                data['comment'] = status_dialog.getComment()
-                data['completionRatio'] = status_dialog.getCompletionRatio()
-                data['published'] = status_dialog.publish()
-                data['user'] = currentUser.uuid()
-                data["date"] = datetime.now().strftime("%Y-%m-%d- %H:%M:%S")
-
-                if not currentStatus:
-                    data["step"] = currentStep.uuid()
-                    data['item'] = currentItem.uuid()
-                    if currentItem.itemType() == ram.ItemType.ASSET:
-                        data['itemType'] = "asset"
-                    elif currentItem.itemType() == ram.ItemType.SHOT:
-                        data['itemType'] = "shot"
-                    else:
-                        data['itemType'] = "item"
-
-                if createNew:
-                    status = ram.RamStatus( data=data, create=True )
-                    if status:
-                        currentItem.setStatus( status, currentStep )
-                else:
-                    currentStatus.setData( data )
-                    status = currentStatus
+                status = currentStatus
 
                 self.publish = status_dialog.publish()
                 self.preview = status_dialog.preview()
