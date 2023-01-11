@@ -13,9 +13,8 @@ from . import ui_publish
 from . import ui_import
 from . import ui_scene_setup
 
-
 VENDOR = "RxLaboratory"
-VERSION = "0.8.0-Beta"
+VERSION = "0.8.1-Beta"
 TOOL_NAME = "Ramses-Maya"
 IS_PRERELEASE = False
 RAMSES = Ramses.instance()
