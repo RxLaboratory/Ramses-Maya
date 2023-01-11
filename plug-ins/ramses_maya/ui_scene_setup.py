@@ -228,6 +228,7 @@ class SceneSetupDialog( Dialog ):
 
     @Slot()
     def fix_scene(self):
+        """Sets all scene settings according to ramses settings and user choices"""
         if self.__ui_fps_box.isChecked() and self.__fps != 0:
             maf.animation.set_framerate(self.__fps)
         if self.__ui_duration_box.isChecked() and self.__duration != 0:
@@ -238,10 +239,8 @@ class SceneSetupDialog( Dialog ):
             cmds.playbackOptions(maxTime = start_time + self.__handle_in + self.__duration)
 
         if self.__ui_resolution_box.isChecked():
-            if self.__width != 0:
-                cmds.setAttr("defaultResolution.width", self.__width)
-            if self.__height != 0:
-                cmds.setAttr("defaultResolution.height", self.__height)
+            if self.__width != 0 and self.__height != 0:
+                maf.rendering.set_render_resolution(self.__width, self.__height)
         if self.__ui_select_camera_box.isChecked():
             maf.rendering.set_renderable_camera(self.__ui_list_camera_box.currentData(Qt.UserRole))
         if self.__ui_camera_name_box.isChecked():
