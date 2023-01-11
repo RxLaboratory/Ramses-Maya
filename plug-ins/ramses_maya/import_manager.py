@@ -316,14 +316,16 @@ def get_format_options( file_path, options ):
         ext = ext[1:]
     ram.log("Checking options for format: " + ext, ram.LogLevel.Debug)
     for o in options["formats"]:
-        if o['format'] == ext:
-            ram.log("Found these options:", ram.LogLevel.Debug)
-            ram.log(o, ram.LogLevel.Debug)
-            return o
+        if 'format' in o:
+            if o['format'] == ext:
+                ram.log("Found these options:", ram.LogLevel.Debug)
+                ram.log(o, ram.LogLevel.Debug)
+                return o
 
     # Find default
     for o in options["formats"]:
-        if o['format'] == "*":
-            return o
+        if 'format' in o:
+            if o['format'] == "*":
+                return o
 
     return { 'format': "*" }
