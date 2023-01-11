@@ -1243,7 +1243,7 @@ class RamUpdateCmd( om.MPxCommand ):
             if not cmds.objExists( node ):
                 continue
 
-            children = cmds.listRelatives( node, ad=True, type='transform')
+            children = cmds.listRelatives( node, ad=True, type='transform', fullPath=True)
             if children and len(children) > 0:
                 child = children[0]
                 # Check if this is a reference, in which case, just replace it

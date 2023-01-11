@@ -116,12 +116,15 @@ def get_item( node ):
     sourcePath = get_ramses_attr( node, RamsesAttribute.SOURCE_FILE )
     if sourcePath != '':
         item = ram.RamItem.fromPath( sourcePath )
-        if item is not None: return item
+        if item is not None:
+            return item
+    return None
     # try from name
-    name = get_ramses_attr( node, RamsesAttribute.ITEM )
+    """name = get_ramses_attr( node, RamsesAttribute.ITEM )
     itemType = get_ramses_attr( node, RamsesAttribute.ITEM_TYPE )
-    if name == '': return None
-    return ram.RamItem.fromString( name, itemType )
+    if name == '':
+        return None
+    return ram.RamItem.fromString( name, itemType )"""
 
 def get_step( node ):
     """Gets the RamStep corresponding to this node"""
@@ -129,11 +132,13 @@ def get_step( node ):
     sourcePath = get_ramses_attr( node, RamsesAttribute.SOURCE_FILE )
     if sourcePath != '':
         step = ram.RamStep.fromPath( sourcePath )
-        if step is not None: return step
+        if step is not None:
+            return step
+    return None
     # try from name
-    name = get_ramses_attr( node, RamsesAttribute.STEP )
+    """name = get_ramses_attr( node, RamsesAttribute.STEP )
     if name == '': return None
-    return ram.RamStep.fromString( name )
+    return ram.RamStep.fromString( name )"""
 
 def get_state( node ):
     """Gets the RamState corresponding to this node"""
