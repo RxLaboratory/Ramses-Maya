@@ -1244,6 +1244,7 @@ class RamUpdateCmd( om.MPxCommand ):
                 continue
 
             children = cmds.listRelatives( node, ad=True, type='transform', fullPath=True)
+            lock_transform = True
             if children and len(children) > 0:
                 child = children[0]
                 # Check if this is a reference, in which case, just replace it
@@ -1256,7 +1257,6 @@ class RamUpdateCmd( om.MPxCommand ):
                     set_import_attributes(node, ram_item, ram_step, updateFile)
                     continue
                 # check if transforms are locked
-                lock_transform = True
                 for child in children:
                     child = dumaf.Node(child)
                     if not child.is_transform_locked(recursive=True):
