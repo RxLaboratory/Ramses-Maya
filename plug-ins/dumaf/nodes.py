@@ -361,14 +361,14 @@ class Node():
         if not self.is_group():
             return False
 
-        if len(self.children()) == 0:
+        children = self.children(True)
+
+        if len( children ) == 0:
             return True
 
         if recursive:
-            children = self.children()
             for child in children:
-                child = Node(child)
-                if not child.is_empty(recursive=True):
+                if not child.is_empty():
                     return False
             return True
 
