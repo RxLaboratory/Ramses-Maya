@@ -600,7 +600,7 @@ class ImportDialog( Dialog ):
 
                     item = QListWidgetItem( res )
                     item.setData( Qt.UserRole, resource )
-                    item.setToolTip( os.path.basename(file) )
+                    item.setToolTip( os.path.basename(resource) )
                     self.resourceList.addItem( item )
 
             # Templates
