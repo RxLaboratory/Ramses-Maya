@@ -578,7 +578,7 @@ class Node():
         """Removes the shape from this node"""
         if not self.exists():
             return
-        self.remove_extra_shapes()
+        self.remove_extra_shapes(False)
         shape = self.shape()
         if shape is not None:
             shape.remove()
@@ -624,13 +624,21 @@ class Node():
                 child.remove()
 
     def remove_types(self, types_list):
-        """Removes all shapes (self and children) if they're on of these types"""
+        """Removes all shapes (self and children) if they're one of these types"""
         children = self.children(transform_only=True)
+
         for child in children:
             child = Node(child)
-            if child.shape_type() in types_list:
+            shape_type = child.shape_type()
+            if shape_type in types_list:
+                print("Removing shape from " + child.name())
+                print("    Because it is of type " + shape_type)
                 child.remove_shape()
-        if self.shape_type() in types_list:
+
+        shape_type = self.shape_type()
+        if shape_type in types_list:
+            print("Removing shape from " + self.name())
+            print("    Because it is of type " + shape_type)
             self.remove_shape()
 
     def rename_shapes(self):
