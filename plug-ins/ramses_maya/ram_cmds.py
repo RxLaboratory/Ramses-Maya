@@ -237,11 +237,12 @@ def setup_scene( ramItem, ramStep=None ):
     return True
 
 def add_to_recent_files( file ):
+    """Adds the file to the recent file list"""
     recent_files = SETTINGS.userSettings.get('recentFiles', [])
     if file in recent_files:
         recent_files.pop( recent_files.index(file) )
     recent_files.insert(0, file)
-    recent_files = recent_files[0:10]
+    recent_files = recent_files[0:20]
     SETTINGS.userSettings['recentFiles'] = recent_files
     SETTINGS.save()
 
