@@ -236,6 +236,15 @@ def setup_scene( ramItem, ramStep=None ):
 
     return True
 
+def add_to_recent_files( file ):
+    recent_files = SETTINGS.userSettings.get('recentFiles', [])
+    if file in recent_files:
+        recent_files.pop( recent_files.index(file) )
+    recent_files.insert(0, file)
+    recent_files = recent_files[0:10]
+    SETTINGS.userSettings['recentFiles'] = recent_files
+    SETTINGS.save()
+
 class RamSaveCmd( om.MPxCommand ):
     """ramSave Maya cmd"""
     name = "ramSave"
@@ -347,6 +356,7 @@ class RamSaveCmd( om.MPxCommand ):
         # Set the save name and save
         cmds.file( rename = saveFilePath )
         cmds.file( save=True, options="v=1;" )
+        add_to_recent_files( saveFilePath )
         # Backup / Increment
         backupFilePath = ram.RamFileManager.copyToVersion( saveFilePath, increment=increment )
         backupFileName = os.path.basename( backupFilePath )
@@ -447,6 +457,7 @@ class RamSaveAsCmd( om.MPxCommand ):
             mayaType = 'mayaAscii'
         cmds.file(rename = filePath )
         cmds.file( save=True, options="v=1;", f=True, typ=mayaType )
+        add_to_recent_files( filePath )
 
         # Create the first version ( or increment existing )
         ram.RamFileManager.copyToVersion( filePath, increment=True )
@@ -778,7 +789,7 @@ class RamOpenCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
-        """Runs the comma,d"""
+        """Runs the command"""
         # Check if the Daemon is available if Ramses is set to be used "online"
         if not check_daemon():
             return
@@ -818,6 +829,7 @@ class RamOpenCmd( om.MPxCommand ):
                 file = ram.RamFileManager.restoreVersionFile( file, False )
             # Open
             cmds.file(file, open=True, force=True)
+            add_to_recent_files( file )
         else:
             # Get Data
             item = importDialog.getItem()

@@ -35,6 +35,7 @@ from ramses_maya.utils_options import (
 from ramses_maya.utils import IMPORT_PRESETS_PATH
 
 RAMSES = ram.Ramses.instance()
+SETTINGS = ram.RamSettings.instance()
 
 class ImportDialog( Dialog ):
     """The main open/import/replace dialog"""
@@ -68,7 +69,7 @@ class ImportDialog( Dialog ):
 
         self.setWindowTitle( "Open / Import Item" )
 
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(1000)
 
         mainLayout = QVBoxLayout()
         mainLayout.setSpacing(3)
@@ -90,6 +91,9 @@ class ImportDialog( Dialog ):
         typeLayout = QVBoxLayout()
         typeLayout.setContentsMargins(0,0,0,0)
         typeLayout.setSpacing(3)
+        self.recentButton = QRadioButton()
+        self.recentButton.setText("Recent")
+        typeLayout.addWidget(self.recentButton)
         self.assetButton = QRadioButton()
         self.assetButton.setText("Asset")
         typeLayout.addWidget(self.assetButton)
@@ -101,6 +105,7 @@ class ImportDialog( Dialog ):
         typeLayout.addWidget(self.templateButton)
         self.typeWidget.setLayout(typeLayout)
         self.typeWidget.setEnabled(False)
+        self.recentButton.setChecked(True)
         topLayout.addRow( "Type:", self.typeWidget )
 
         self.actionWidget = QWidget()
@@ -130,13 +135,14 @@ class ImportDialog( Dialog ):
 
         midLayout.addLayout( topLayout )
 
-        itemLayout = QVBoxLayout()
+        self.itemWidget = QWidget()
+        midLayout.addWidget(self.itemWidget)
+        itemLayout = QVBoxLayout(self.itemWidget)
         itemLayout.setSpacing(3)
+        itemLayout.setContentsMargins(0,0,0,0)
         self.itemLabel = QLabel("Item")
-        self.itemLabel.hide()
         itemLayout.addWidget(self.itemLabel)
         self.groupBox = RamObjectBox()
-        self.groupBox.hide()
         itemLayout.addWidget(self.groupBox)
         self.itemSearchField = QLineEdit()
         self.itemSearchField.setPlaceholderText('Search...')
@@ -144,28 +150,33 @@ class ImportDialog( Dialog ):
         itemLayout.addWidget(self.itemSearchField)
         self.itemSearchField.hide()
         self.itemList = QListWidget()
-        self.itemList.hide()
         itemLayout.addWidget(self.itemList)
-        midLayout.addLayout(itemLayout)
 
-        stepLayout = QVBoxLayout()
+        self.stepWidget = QWidget()
+        midLayout.addWidget(self.stepWidget)
+        stepLayout = QVBoxLayout(self.stepWidget)
         stepLayout.setSpacing(3)
+        stepLayout.setContentsMargins(0,0,0,0)
         stepLabel = QLabel("Step:")
         stepLayout.addWidget(stepLabel)
         self.stepList = QListWidget()
         stepLayout.addWidget(self.stepList)
-        midLayout.addLayout(stepLayout)
 
-        resourcesLayout = QVBoxLayout()
+        self.resourcesWidget = QWidget()
+        midLayout.addWidget(self.resourcesWidget)
+        resourcesLayout = QVBoxLayout(self.resourcesWidget)
         resourcesLayout.setSpacing(3)
+        resourcesLayout.setContentsMargins(0,0,0,0)
         self.resourcesLabel = QLabel("Resource:")
         resourcesLayout.addWidget(self.resourcesLabel)
         self.resourceList = QListWidget()
         resourcesLayout.addWidget(self.resourceList)
-        midLayout.addLayout(resourcesLayout)
 
-        versionsLayout = QVBoxLayout()
+        self.versionsWidget = QWidget()
+        midLayout.addWidget(self.versionsWidget)
+        versionsLayout = QVBoxLayout(self.versionsWidget)
         versionsLayout.setSpacing(3)
+        versionsLayout.setContentsMargins(0,0,0,0)
         self.versionsLabel = QLabel("Version:")
         versionsLayout.addWidget(self.versionsLabel)
         self.publishVersionBox = QComboBox()
@@ -177,7 +188,6 @@ class ImportDialog( Dialog ):
         versionsLayout.addWidget(self.versionSearchField)
         self.versionList = QListWidget()
         versionsLayout.addWidget(self.versionList)
-        midLayout.addLayout(versionsLayout)
 
         mainLayout.addLayout( midLayout )
 
@@ -200,12 +210,16 @@ class ImportDialog( Dialog ):
 
         mainLayout.addLayout( buttonsLayout )
 
+        self.__type_changed()
+
     def __connect_events(self):
         self.projectBox.currentIndexChanged.connect( self.__project_changed )
 
+        self.recentButton.clicked.connect( self.__recent_button_clicked )
         self.assetButton.clicked.connect( self.__asset_button_clicked )
         self.shotButton.clicked.connect( self.__shot_button_clicked )
         self.templateButton.clicked.connect( self.__template_button_clicked )
+        self.recentButton.clicked.connect( self.__type_changed )
         self.assetButton.clicked.connect( self.__type_changed )
         self.shotButton.clicked.connect( self.__type_changed )
         self.templateButton.clicked.connect( self.__type_changed )
@@ -231,19 +245,29 @@ class ImportDialog( Dialog ):
         self.publishVersionBox.currentIndexChanged.connect( self.__update_published_files )
 
     @Slot()
+    def __recent_button_clicked(self):
+        self.recentButton.setChecked(True)
+        self.assetButton.setChecked(False)
+        self.shotButton.setChecked(False)
+        self.templateButton.setChecked(False)
+
+    @Slot()
     def __asset_button_clicked(self):
+        self.recentButton.setChecked(False)
         self.assetButton.setChecked(True)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(False)
 
     @Slot()
     def __shot_button_clicked(self):
+        self.recentButton.setChecked(False)
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(True)
         self.templateButton.setChecked(False)
 
     @Slot()
     def __template_button_clicked(self):
+        self.recentButton.setChecked(False)
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(True)
@@ -297,25 +321,36 @@ class ImportDialog( Dialog ):
 
     @Slot()
     def __type_changed( self ):
+        recent = self.recentButton.isChecked()
         shot = self.shotButton.isChecked()
         asset = self.assetButton.isChecked()
         template = self.templateButton.isChecked()
 
         # adjust UI
         if shot or asset:
-            self.itemLabel.show()
-            self.itemList.show()
-            self.itemSearchField.show()
-            self.groupBox.show()
+            self.itemWidget.show()
+            self.stepWidget.show()
+            self.versionsWidget.show()
+            self.importButton.setEnabled(True)
+            self.replaceButton.setEnabled(True)
             if asset:
                 self.itemLabel.setText("Asset:")
             else:
                 self.itemLabel.setText("Shot:")
+        elif recent:
+            self.itemWidget.hide()
+            self.stepWidget.hide()
+            self.versionsWidget.hide()
+            self.openButton.setChecked(True)
+            self.__open_button_clicked()
+            self.importButton.setEnabled(False)
+            self.replaceButton.setEnabled(False)
         else:
-            self.itemLabel.hide()
-            self.itemList.hide()
-            self.groupBox.hide()
-            self.itemSearchField.hide()
+            self.itemWidget.hide()
+            self.stepWidget.show()
+            self.versionsWidget.show()
+            self.importButton.setEnabled(True)
+            self.replaceButton.setEnabled(True)
 
         # reinit lists
         self.itemList.clear()
@@ -324,8 +359,12 @@ class ImportDialog( Dialog ):
         self.versionList.clear()
         self.groupBox.clear()
 
-        if not shot and not asset and not template:
+        if not shot and not asset and not template and not recent:
             return
+
+        if recent:
+            # Load recent files
+            self.__update_resources()
 
         project = self.projectBox.currentData()
         if not project:
@@ -480,15 +519,51 @@ class ImportDialog( Dialog ):
 
                     item = QListWidgetItem( nm.shortName + " | " + res )
                     item.setData( Qt.UserRole, resource )
-                    item.setToolTip(t)
+                    item.setToolTip(os.path.basename(t))
                     self.resourceList.addItem( item )
 
-        self.resourceList.hide()
-        self.resourcesLabel.hide()
         self._openButton.setEnabled(False)
 
         self.resourceList.clear()
         self.versionList.clear()
+
+        if self.recentButton.isChecked():
+            recent_files = SETTINGS.userSettings.get("recentFiles", [])
+            for i, file in enumerate( reversed(recent_files) ):
+                if not os.path.isfile(file):
+                    recent_files.pop(i)
+                    continue
+                item = ram.RamItem.fromPath(file)
+                if not item:
+                    it = QListWidgetItem( os.path.basename(file) )
+                    it.setData( Qt.UserRole, file )
+                    self.resourceList.insertItem(0, it)
+                    continue
+
+                nm = ram.RamFileInfo()
+                nm.setFilePath(file)
+
+                res = nm.resource
+
+                if nm.isRestoredVersion:
+                    if res != '':
+                        res = res + " | "
+                    res = res + "v" + str(nm.restoredVersion) + " (restored)"
+
+                itemName = ""
+                if nm.project != "":
+                    itemName = nm.project + " | "
+                itemName = itemName + str(item)
+                if nm.step != "":
+                    itemName = itemName + " | " + nm.step
+                if res != "":
+                    itemName = itemName + " | " + res
+
+                it = QListWidgetItem( itemName )
+                it.setData( Qt.UserRole, file )
+                it.setToolTip( os.path.basename(file) )
+                self.resourceList.insertItem(0, it)
+            return
 
         stepItem = self.stepList.currentItem()
         if not stepItem:
@@ -499,8 +574,6 @@ class ImportDialog( Dialog ):
 
         # If open, list resources in wip folder
         if self.openButton.isChecked():
-            self.resourceList.show()
-            self.resourcesLabel.show()
             # Shots and Assets
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 if not currentItem:
@@ -527,6 +600,7 @@ class ImportDialog( Dialog ):
 
                     item = QListWidgetItem( res )
                     item.setData( Qt.UserRole, resource )
+                    item.setToolTip( os.path.basename(file) )
                     self.resourceList.addItem( item )
 
             # Templates
@@ -539,8 +613,6 @@ class ImportDialog( Dialog ):
             self.__list_published_versions()
         # If import template, list resources
         else:
-            self.resourceList.show()
-            self.resourcesLabel.show()
             listTemplateResources(step)
 
     def __list_published_versions(self):
@@ -606,6 +678,9 @@ class ImportDialog( Dialog ):
             self._openButton.setEnabled(False)
         else:
             self._openButton.setEnabled(True)
+
+        if self.recentButton.isChecked():
+            return
 
         self.versionList.clear()
 
@@ -1056,3 +1131,5 @@ if __name__ == '__main__':
     dialog = ImportDialog()
     ok = dialog.exec_()
     print(ok)
+    if ok == 1:
+        print(dialog.getFile())
