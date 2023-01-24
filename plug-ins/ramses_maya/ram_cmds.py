@@ -320,7 +320,8 @@ class RamSaveCmd( om.MPxCommand ):
             return
 
         currentItem = ram.RamItem.fromPath( saveFilePath )
-        if not setup_scene(currentItem):
+        currentStep = ram.RamStep.fromPath( saveFilePath )
+        if not setup_scene(currentItem, currentStep):
             return
 
         # Parse arguments
@@ -548,7 +549,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         currentStep = ram.RamStep.fromPath( save_filepath )
         currentItem = ram.RamItem.fromPath( save_filepath, True )
 
-        if not setup_scene(currentItem):
+        if not setup_scene(currentItem, currentStep):
             return
         if currentItem is None or currentStep is None:
             cmds.warning( ram.Log.NotAnItem )
@@ -681,6 +682,7 @@ class RamRetrieveVersionCmd( om.MPxCommand ):
         cmds.file(versionFile, open=True, force=True)
 
 class RamPublishTemplateCmd( om.MPxCommand ):
+    """ramPublishTemplate Maya commnand: saves a new template"""
     name = "ramPublishTemplate"
 
     def __init__(self):
@@ -705,6 +707,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
                 raise
 
     def run(self, args):
+        """Runs the command"""
         ram.log("Saving as template...")
 
         # Check if the Daemon is available if Ramses is set to be used "online"
@@ -726,7 +729,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         if step is not None:
             publishDialog.setStep( step )
     
-        if not setup_scene(ram.RamItem.fromPath(currentFilePath)):
+        if not setup_scene(ram.RamItem.fromPath(currentFilePath), step):
             return
 
         if publishDialog.exec_():
