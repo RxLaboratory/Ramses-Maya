@@ -217,6 +217,7 @@ def publish_node( published_node, publish_options, publish_info ):
         maya_extension = "mb"
         alembic = False
         ass = False
+        obj = False
 
         if frmt == "ma" or frmt == "mb":
             maya_scene = True
@@ -237,6 +238,11 @@ def publish_node( published_node, publish_options, publish_info ):
             frmt = frmt["abc"]
         elif frmt == "ass" or "ass" in frmt:
             ass = True
+        elif frmt == "obj":
+            obj = True
+        elif "obj" in frmt:
+            obj = True
+            frmt = frmt["obj"]
 
         if maya_scene:
             publish_maya_scene(node, frmt, maya_extension, publish_info, published_node[1])
@@ -246,6 +252,8 @@ def publish_node( published_node, publish_options, publish_info ):
             publish_alembic(node, frmt, publish_info, published_node[1])
         elif ass:
             publish_ass(node, frmt, publish_info, published_node[1])
+        elif obj:
+            publish_obj(node, frmt, publish_info, published_node[1])
 
 def publish_maya_scene(node, options, extension, publish_info, name):
     """Publishes the node as a maya scene"""
@@ -419,4 +427,39 @@ def publish_ass(node, options, publish_info, name):
     file_path = get_publish_file_path( publish_info, 'ass', name )
 
     cmds.arnoldExportAss(f=file_path, s=True, mask=223, lightLinks=0, shadowLinks=0, cam="perspShape" )
+    set_export_metadata( file_path, publish_info)
+
+def publish_obj(node, options, publish_info, name):
+    """Publishes the node as obj"""
+    import json
+    # We need OBJ Export, of course
+    maf.Plugin.load("objExport")
+
+    file_path = get_publish_file_path( publish_info, 'obj', name )
+
+    # Collect options
+    mtl = "1"
+    if "materials" in options:
+        mtl = get_option("materials", options, True)
+        if mtl:
+            mtl = "1"
+        else:
+            mtl = "0"
+
+    obj_options = ';'.join([
+        "groups=1",
+        "ptgroups=1",
+        "materials=" + mtl,
+        "smoothing=1",
+        "normals=1",
+    ])
+
+    ram.log("These are the obj options:\n" + obj_options, ram.LogLevel.Info)
+
+    #Export
+    cmds.select(clear=True)
+    node.select()
+
+    cmds.file(file_path, force=True, options=obj_options, typ="OBJexport", preserveReferences=True, exportSelected=True)
+    # Meta data
     set_export_metadata( file_path, publish_info)

@@ -23,14 +23,10 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QLineEdit,
     QSpinBox,
     QDoubleSpinBox,
-    QFileDialog,
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
     Qt,
-)
-from PySide2.QtGui import (  # pylint: disable=no-name-in-module
-    QKeySequence,
 )
 import yaml
 from dumaf import Node
@@ -92,8 +88,10 @@ class PublishDialog(Dialog):
         self.__ui_sections_box.addItem("Publish: Maya scene")
         self.__ui_sections_box.addItem("Publish: Maya scene - shaders")
         self.__ui_sections_box.addItem("Publish: Alembic")
+        self.__ui_sections_box.addItem("Publish: OBJ")
         self.__ui_sections_box.item(4).setHidden(True)
         self.__ui_sections_box.item(5).setHidden(True)
+        self.__ui_sections_box.item(6).setHidden(True)
         self.__ui_sections_box.setMaximumWidth( 150 )
         content_layout.addWidget(self.__ui_sections_box)
 
@@ -156,6 +154,8 @@ class PublishDialog(Dialog):
         format_layout.addWidget(self.__ui_alembic_box)
         self.__ui_arnold_scene_source_box = QCheckBox("Arnold scene source (ass)")
         format_layout.addWidget(self.__ui_arnold_scene_source_box)
+        self.__ui_obj_box = QCheckBox("OBJ")
+        format_layout.addWidget(self.__ui_obj_box)
 
         # <-- Nodes -->
 
@@ -323,6 +323,20 @@ class PublishDialog(Dialog):
         self.__ui_alembic_filter_euler_box = QCheckBox("Filter Euler rotations")
         alembic_layout.addRow("", self.__ui_alembic_filter_euler_box)
 
+        # <-- OBJ -->
+
+        obj_widget = QWidget()
+        obj_vlayout = QVBoxLayout(obj_widget)
+        obj_vlayout.setSpacing(3)
+        self.__ui_stacked_layout.addWidget( obj_widget )
+        obj_layout = QFormLayout()
+        obj_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        obj_layout.setSpacing(3)
+        obj_vlayout.addLayout(obj_layout)
+
+        self.__ui_obj_mtl_box = QCheckBox("Materials (.mtl)")
+        obj_layout.addRow("Export:", self.__ui_obj_mtl_box)
+
     def __connect_events(self):
         self.__ui_sections_box.currentRowChanged.connect( self.__ui_stacked_layout.setCurrentIndex )
         self.__ui_publish_button.clicked.connect( self.__ui_publish_button_clicked )
@@ -333,6 +347,7 @@ class PublishDialog(Dialog):
         self.__ui_maya_shaders_box.toggled.connect( self.__ui_maya_shaders_box_clicked )
         self.__ui_alembic_box.toggled.connect( self.__ui_alembic_box_clicked )
         self.__ui_arnold_scene_source_box.toggled.connect( self.__ui_arnold_scene_source_box_clicked )
+        self.__ui_obj_box.toggled.connect( self.__ui_obj_box_clicked )
         self.__ui_preset_box.currentIndexChanged.connect( self.__ui_preset_box_current_changed )
         # general
         self.__ui_import_references_box.toggled.connect( self.__update_preset )
@@ -383,6 +398,9 @@ class PublishDialog(Dialog):
         self.__ui_alembic_frame_step_box.setValue(1)
         self.__ui_alembic_filter_euler_box.setChecked(True)
 
+    def __set_obj_defaults(self):
+        self.__ui_obj_mtl_box.setChecked(True)
+
     # <== PRIVATE SLOTS ==>
 
     @Slot()
@@ -419,6 +437,14 @@ class PublishDialog(Dialog):
     def __ui_arnold_scene_source_box_clicked(self):
         #item = self.__ui_sections_box.item(5)
         #item.setHidden(not checked)
+        self.__update_preset()
+
+    @Slot()
+    def __ui_obj_box_clicked(self, checked):
+        item = self.__ui_sections_box.item(6)
+        item.setHidden(not checked)
+        if checked:
+            self.__set_obj_defaults()
         self.__update_preset()
 
     @Slot(int)
@@ -506,6 +532,10 @@ class PublishDialog(Dialog):
         if ass_options:
             options["formats"].append( ass_options )
 
+        obj_options = self.get_obj_options()
+        if obj_options:
+            options["formats"].append( obj_options )
+
         return options
 
     def get_maya_options(self):
@@ -558,7 +588,7 @@ class PublishDialog(Dialog):
             self.__ui_alembic_frame_step_box.setEnabled(False)
 
         abc["filter_euler_rotations"] = self.__ui_alembic_filter_euler_box.isChecked()
- 
+
         options[ "abc" ] = abc
         return options
 
@@ -568,6 +598,18 @@ class PublishDialog(Dialog):
             return None
 
         options = "ass"
+        return options
+
+    def get_obj_options(self):
+        """Gets the options for obj as a dict, or None if not set to publish an obj file"""
+        if not self.__ui_obj_box.isChecked():
+            return None
+
+        options = {}
+        obj = {}
+
+        obj["materials"] = self.__ui_obj_mtl_box.isChecked()
+        options["obj"] = obj
         return options
 
     def load_nodes(self, nodes):
@@ -629,6 +671,7 @@ class PublishDialog(Dialog):
         self.__ui_maya_shaders_box.setChecked(False)
         self.__ui_alembic_box.setChecked(False)
         self.__ui_arnold_scene_source_box.setChecked(False)
+        self.__ui_obj_box.setChecked(False)
 
         if "formats" in options:
             for frmt in options["formats"]:
@@ -688,6 +731,16 @@ class PublishDialog(Dialog):
 
                 elif frmt == "ass" or "ass" in frmt:
                     self.__ui_arnold_scene_source_box.setChecked(True)
+
+                # <-- OBJ -->
+
+                elif frmt == "obj":
+                    self.__set_obj_defaults()
+
+                elif "obj" in frmt:
+                    self.__set_obj_defaults()
+                    frmt = frmt["obj"]
+                    load_bool_preset( "materials", frmt, self.__ui_obj_mtl_box)
         else:
             self.__set_maya_defaults()
 
