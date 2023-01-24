@@ -596,11 +596,10 @@ class Node():
         """Removes all extra shapes from this node"""
         if not self.exists():
             return
-        
+
         if recursive:
             children = self.children(transform_only=True)
             for child in children:
-                child = Node(child)
                 shapes = child.shapes()
                 if len(shapes) > 1:
                     for shape in shapes[1:]:
