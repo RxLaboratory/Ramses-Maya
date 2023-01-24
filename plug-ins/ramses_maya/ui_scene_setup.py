@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Setups the scene according to Ramses settigns"""
 import yaml
+import os
 from PySide2.QtWidgets import (
     QFormLayout,
     QCheckBox,
@@ -33,15 +35,23 @@ class SceneSetupDialog( Dialog ):
         self.__setup_ui()
         self.__connect_events()
 
+        # Duration
         self.__fps = 0
         self.__duration = 0
+        # Rendering
         self.__width = 0
         self.__height = 0
         self.__cam_name = ""
+        # Shot
         self.__handle_in = 0
         self.__handle_out = 0
         self.__first_image_number = 1
-    
+        # Color Management
+        self.__ocio_path = ""
+        self.__rendering_space = ""
+        self.__display_space = ""
+        self.__view_transform = ""
+
     # <== PRIVATE METHODS ==>
 
     def __setup_ui(self):
@@ -51,6 +61,8 @@ class SceneSetupDialog( Dialog ):
         main_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.main_layout.addLayout(main_layout)
 
+        # ANIMATION
+
         self.__ui_animation_label = QLabel("")
         main_layout.addRow("Animation:", self.__ui_animation_label )
 
@@ -59,6 +71,8 @@ class SceneSetupDialog( Dialog ):
 
         self.__ui_duration_box = QCheckBox("Fix duration (240 frames)")
         main_layout.addRow("", self.__ui_duration_box )
+
+        # RENDERING
 
         self.__ui_rendering_label = QLabel("")
         main_layout.addRow("Rendering:", self.__ui_rendering_label )
@@ -79,6 +93,23 @@ class SceneSetupDialog( Dialog ):
 
         self.__ui_camera_name_box = QCheckBox("Rename camera (shotName)")
         main_layout.addRow("", self.__ui_camera_name_box )
+
+        # COLOR MANAGEMENT
+
+        self.__ui_color_label = QLabel("")
+        main_layout.addRow("Color Management:", self.__ui_color_label )
+
+        self.__ui_ocio_path_box = QCheckBox("Set OCIO Config Path")
+        main_layout.addRow("", self.__ui_ocio_path_box )
+
+        self.__ui_rendering_space_box = QCheckBox("Set rendering space (space)")
+        main_layout.addRow("", self.__ui_rendering_space_box )
+
+        self.__ui_display_space_box = QCheckBox("Set display space (space)")
+        main_layout.addRow("", self.__ui_display_space_box )
+
+        self.__ui_view_transform_box = QCheckBox("Set view transform (transform)")
+        main_layout.addRow("", self.__ui_view_transform_box )
 
         # <-- BOTTOM BUTTONS -->
 
@@ -107,7 +138,7 @@ class SceneSetupDialog( Dialog ):
         ok = True
 
         project = item.project()
-        
+
         # FPS
         project_fps = 0
         scene_fps = 0
@@ -129,17 +160,22 @@ class SceneSetupDialog( Dialog ):
         scene_handle_in = 0
         scene_handle_out = 0
         start_time = 1
+
+        stepSettings = {}
+        if step:
+            stepSettings = step.generalSettings()
+            stepSettings = yaml.safe_load( stepSettings )
+            # yaml may return a string
+            if not stepSettings or not isinstance(stepSettings, dict):
+                stepSettings = {}
+
+        # If it's a shot, set duration settings
         if item.itemType() == ItemType.SHOT:
-            if step:
-                settings = step.generalSettings()
-                settings = yaml.safe_load( settings )
-                # yaml may return a string
-                if not settings or not isinstance(settings, dict):
-                    settings = {}
-                shot_settings = settings.get("shot", {})
-                self.__handle_in = shot_settings.get("handle_in", 0)
-                self.__handle_out = shot_settings.get("handle_out", 0)
-                self.__first_image_number = shot_settings.get("first_image_number", 1)
+            # If there's a step, get handles & first image number   
+            shot_settings = stepSettings.get("shot", {})
+            self.__handle_in = shot_settings.get("handle_in", 0)
+            self.__handle_out = shot_settings.get("handle_out", 0)
+            self.__first_image_number = shot_settings.get("first_image_number", 1)
             start_time = cmds.playbackOptions(animationStartTime=True, query=True)
             end_time = cmds.playbackOptions(animationEndTime=True, query=True)
             anim_start_time = cmds.playbackOptions(minTime=True, query=True)
@@ -219,10 +255,65 @@ class SceneSetupDialog( Dialog ):
             self.__ui_rendering_label.setText("OK!")
         else:
             ok = False
-            self.__ui_rendering_label.setText("Current scene:\n" + 
+            self.__ui_rendering_label.setText("Current scene:\n" +
                 str(scene_w) + " x " + str(scene_h) +
                 " px | " +
                 scene_cam_name)
+
+        # Color Management
+        self.__ui_ocio_path_box.hide()
+        self.__ui_rendering_space_box.hide()
+        self.__ui_display_space_box.hide()
+        self.__ui_view_transform_box.hide()
+        if "color_management" not in stepSettings:
+            self.__ui_color_label.setText("OK")
+        else:
+            color_settings = stepSettings.get("color_management", {})
+            color_ok = True
+            scene_ocio_path = cmds.colorManagementPrefs(q=True, configFilePath=True)
+            scene_rendering_space = cmds.colorManagementPrefs(q=True, renderingSpaceName=True)
+            scene_display_space = cmds.colorManagementPrefs(q=True, displayName=True)
+            scene_view_transform = cmds.colorManagementPrefs(q=True, viewName=True)
+            self.__ocio_path = color_settings.get("ocio_path", "")
+            self.__rendering_space = color_settings.get("rendering_space", "")
+            self.__display_space = color_settings.get("display_space", "")
+            self.__view_transform = color_settings.get("view_transform", "")
+
+            if self.__ocio_path not in ("", scene_ocio_path):
+                color_ok = False
+                path_display = self.__ocio_path
+                if len(path_display) > 35:
+                    path_display = "(...)" + path_display[-30:]
+                self.__ui_ocio_path_box.setText("Set OCIO Config Path: " + path_display)
+                self.__ui_ocio_path_box.setChecked(True)
+                self.__ui_ocio_path_box.show()
+            if self.__rendering_space not in ("", scene_rendering_space):
+                color_ok = False
+                self.__ui_rendering_space_box.setText("Set rendering space: " + self.__rendering_space)
+                self.__ui_rendering_space_box.setChecked(True)
+                self.__ui_rendering_space_box.show()
+            if self.__display_space not in ("", scene_display_space):
+                color_ok = False
+                self.__ui_display_space_box.setText("Set display space: " + self.__display_space)
+                self.__ui_display_space_box.setChecked(True)
+                self.__ui_display_space_box.show()
+            if self.__view_transform not in ("", scene_view_transform):
+                color_ok = False
+                self.__ui_view_transform_box.setText("Set display space: " + self.__view_transform)
+                self.__ui_view_transform_box.setChecked(True)
+                self.__ui_view_transform_box.show()
+
+            if not color_ok:
+                path_display = scene_ocio_path
+                if len(path_display) > 35:
+                    path_display = "(...)" + path_display[-30:]
+                self.__ui_color_label.setText( "Current scene:\n" +
+                    "OCIO: " + path_display + "\n" +
+                    "Rendering: " + scene_rendering_space + "\n" +
+                    "Display: " + scene_display_space + "\n" +
+                    "View: " + scene_view_transform
+                    )
+            ok = color_ok
 
         return ok
 
@@ -251,4 +342,16 @@ class SceneSetupDialog( Dialog ):
                 except RuntimeError as e:
                     log("Cannot rename camera: " + camera)
                     print(e)
+        
+        if self.__ui_ocio_path_box.isChecked() or  self.__ui_rendering_space_box.isChecked() or self.__ui_display_space_box.isChecked() or self.__ui_view_transform_box.isChecked():
+            cmds.colorManagementPrefs(e=True, cmEnabled=True)
+            if self.__ui_ocio_path_box.isChecked():
+                cmds.colorManagementPrefs(e=True, configFilePath=self.__ocio_path)
+            if self.__ui_rendering_space_box.isChecked():
+                cmds.colorManagementPrefs(e=True, renderingSpaceName=self.__rendering_space)
+            if self.__ui_display_space_box.isChecked():
+                cmds.colorManagementPrefs(e=True, displayName=self.__display_space)
+            if self.__ui_view_transform_box.isChecked():
+                cmds.colorManagementPrefs(e=True, viewName=self.__view_transform)
+
         self.accept()
