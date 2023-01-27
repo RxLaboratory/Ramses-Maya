@@ -20,6 +20,8 @@
 """A wrapper class for maya nodes"""
 
 import re
+import uuid as UUID
+import maya.api.OpenMaya as om  
 import maya.cmds as cmds  # pylint: disable=import-error
 from .paths import baseName
 
@@ -45,23 +47,26 @@ class Node():
     # <== Constructor ==>
 
     def __init__(self, node_path):
-
         if isinstance(node_path, Node):
             # Copy constructor
-
-            # Get the uuid
-            self.__uuid = node_path.uuid()
+            self.__dagPath = node_path.dagPath()
         else:
-            # Get the uuid
-            # For some reason, Maya returns the short names if queried with uuid,
-            # We need to get the full paths first...
-            node_paths = cmds.ls(node_path, long=True)
-            if len(node_paths) > 0:
-                self.__uuid = cmds.ls(node_paths, uuid=True)[0]
-            else:
-                raise ValueError("Sorry, the node '" + node_path + "' doesn't exist.")
+            self.__dagPath = Node.get_dagPath( node_path )
+
+        self.__fnDagNode = om.MFnDagNode( self.__dagPath )
 
     # <== Static ==>
+
+    @staticmethod
+    def get_dagPath( node_path ):
+        """Creates an MDagPath from a path string"""
+        selectionList = om.MSelectionList()
+        try:
+            selectionList.add( node_path )
+        except:
+            return None
+        dagPath = selectionList.getDagPath( 0 )
+        return dagPath
 
     @staticmethod
     def get_nodes(node_paths_or_uuids):
@@ -230,12 +235,14 @@ class Node():
             children = cmds.listRelatives(
                 nodePath,
                 ad=recursive,
-                type='transform'
+                type='transform',
+                fullPath=True
             )
         else:
             children = cmds.listRelatives(
                 nodePath,
-                ad=recursive
+                ad=recursive,
+                fullPath=True
             )
         if children is None:
             return []
@@ -275,6 +282,10 @@ class Node():
             controller = Node(controller)
 
         return controller
+
+    def dagPath(self):
+        """Returns the MDagPath for this node"""
+        return self.__dagPath
 
     def delete_history(self, recursive=False):
         """Deletes the construction history of the node"""
@@ -545,21 +556,33 @@ class Node():
 
     def path(self):
         """Returns the full path for the node"""
-        paths = cmds.ls(self.__uuid, long=True)
-        if len(paths) == 0:
-            return ''
-        return paths[0]
+
+        if not self.__dagPath:
+            return ""
+
+        return self.__dagPath.fullPathName()
 
     def reference_file(self):
         """Gets the source file of the reference if this node is part of a reference"""
         if not self.exists():
             return
 
-        if not self.is_referenced:
+        if not self.is_referenced():
             return None
 
         nodePath = self.path()
         return cmds.referenceQuery(nodePath, filename=True)
+
+    def reference_node(self):
+        """Gets the root node of this reference, if it is part of a reference"""
+        if not self.exists():
+            return
+
+        if not self.is_referenced():
+            return None
+
+        nodePath = self.path()
+        return cmds.referenceQuery(nodePath, referenceNode=True)
 
     def remove(self):
         """Deletes the node from the scene,
@@ -727,4 +750,4 @@ class Node():
 
     def uuid(self):
         """Returns the uuid of this node"""
-        return self.__uuid
+        return self.__fnDagNode.uuid()
