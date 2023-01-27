@@ -635,7 +635,12 @@ class ImportDialog( Dialog ):
             if len(folderName) == 3: # resource, version, state
                 title = folderName[0] + " | v" + folderName[1] + " | " + folderName[2]
             elif len(folderName) < 3: # version (state)
-                if int(folderName[0]) != 0:
+                # naming could be faulty
+                try:
+                    n = int(folderName[0])
+                except ValueError:
+                    n = 0
+                if n != 0:
                     title = "v" + " | ".join(folderName)
             else:
                 title = " | ".join(folderName)
