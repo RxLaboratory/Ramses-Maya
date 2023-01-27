@@ -363,8 +363,8 @@ class PublishDialog(Dialog):
         self.__ui_types_edit.textChanged.connect( self.__update_preset )
         self.__ui_remove_empty_groups_box.toggled.connect( self.__update_preset )
         # nodes
-        self.__ui_select_no_nodes.toggled.connect( self.__ui_nodes_tree.clearSelection )
-        self.__ui_select_all_nodes.toggled.connect( self.__ui_nodes_tree.selectAll )
+        self.__ui_select_no_nodes.clicked.connect( self.__ui_nodes_tree.clearSelection )
+        self.__ui_select_all_nodes.clicked.connect( self.__ui_nodes_tree.selectAll )
         # maya
         self.__ui_maya_format_box.currentIndexChanged.connect( self.__update_preset )
         self.__ui_maya_hide_joints_box.currentIndexChanged.connect( self.__update_preset )
@@ -616,13 +616,13 @@ class PublishDialog(Dialog):
         """Gets the nodes to be published and populates the nodes tree view"""
         self.__ui_nodes_tree.clear()
         for node in nodes:
-            node = Node(node)
+            maNode = Node(node)
             item = QTreeWidgetItem(self.__ui_nodes_tree)
-            item.setText(0, node.name())
-            item.setText(1, node.name().replace("_", " "))
+            item.setText(0, maNode.name())
+            item.setText(1, maNode.name().replace("_", " "))
             item.setSelected(True)
             item.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            item.setData(0, Qt.UserRole, node)
+            item.setData(0, Qt.UserRole, maNode)
             self.__ui_nodes_tree.addTopLevelItem(item)
 
     def update_preset_files(self, preset_files):

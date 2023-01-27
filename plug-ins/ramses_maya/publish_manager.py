@@ -80,7 +80,6 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
     # Backup file
     publish_info = ram.RamFileManager.getPublishInfo( file_path )
     # Prepare the file for backup in the published folder
-    currentFilePath = cmds.file( q=True, sn=True )
     backup_info = publish_info.copy()
     backup_info.version = -1
     backup_info.state = ''
@@ -89,8 +88,6 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
     cmds.file( rename = published_filepath )
     cmds.file( save=True, options="v=1;" )
     ram.RamMetaDataManager.appendHistoryDate( published_filepath )
-    # Reopen initial file
-    cmds.file(currentFilePath,o=True,f=True)
     ram.RamMetaDataManager.setVersion( published_filepath, publish_info.version )
 
     if "formats" not in publish_options or len(publish_options["formats"]) == 0:
@@ -147,9 +144,9 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
         if not node[0].exists():
             ram.log("Skipping node: '" + node[0].path() + "' (it seems it doesn't exist anymore?)")
             continue
+        ram.log("Publishing " + node[1] + "...")
         progress_dialog.setText("Publishing " + node[1] + "...")
         progress_dialog.increment()
-        ram.log("Publishing " + node[1] + "...")
         publish_node(node, publish_options, publish_info)
 
     end_process(temp_data, progress_dialog)
@@ -158,6 +155,8 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
 def publish_node( published_node, publish_options, publish_info ):
     """Publishes a specific node"""
     node = maf.Node(published_node[0])
+
+    ram.log("  processing: " + node.path())
 
     # Move to center of the scene
     node.move_to_zero()

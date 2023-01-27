@@ -616,7 +616,6 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Publish
         if self.publish:
-            # We need the RamStep, get it from the project
             if currentStep is not None:
                 RAMSES.publish( currentItem, currentStep, save_filepath, publishOptions=None, showPublishOptions=self.edit_publish_settings )
             else:
