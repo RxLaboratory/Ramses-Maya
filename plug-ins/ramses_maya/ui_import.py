@@ -529,9 +529,9 @@ class ImportDialog( Dialog ):
 
         if self.recentButton.isChecked():
             recent_files = SETTINGS.userSettings.get("recentFiles", [])
-            for i, file in enumerate( reversed(recent_files) ):
+            for file in reversed(recent_files):
                 if not os.path.isfile(file):
-                    recent_files.pop(i)
+                    recent_files.remove(file)
                     continue
                 item = ram.RamItem.fromPath(file)
                 if not item:
