@@ -47,13 +47,24 @@ class Node():
     # <== Constructor ==>
 
     def __init__(self, node_path):
+
+        self.__fnDagNode = None
+        self.__dagPath = None
+
         if isinstance(node_path, Node):
             # Copy constructor
             self.__dagPath = node_path.dagPath()
+            self.__uuid = node_path.uuid()
         else:
             self.__dagPath = Node.get_dagPath( node_path )
-
-        self.__fnDagNode = om.MFnDagNode( self.__dagPath )
+            if self.__dagPath:
+                self.__fnDagNode = om.MFnDagNode( self.__dagPath )
+            else:
+                # For some reason, Maya returns the short names if queried with uuid,
+                # We need to get the full paths first...
+                node_paths = cmds.ls(node_path, long=True)
+                if len(node_paths) > 0:
+                    self.__uuid = cmds.ls(node_paths, uuid=True)[0]
 
     # <== Static ==>
 
@@ -65,7 +76,10 @@ class Node():
             selectionList.add( node_path )
         except:
             return None
-        dagPath = selectionList.getDagPath( 0 )
+        try:
+            dagPath = selectionList.getDagPath( 0 )
+        except TypeError:
+            return None
         return dagPath
 
     @staticmethod
@@ -442,6 +456,9 @@ class Node():
                 return False
         return True
 
+    def is_valid(self):
+        return 
+
     def is_visible(self):
         """Checks if the node is visible.
         Note that if it does not have a visibility attribute,
@@ -558,7 +575,10 @@ class Node():
         """Returns the full path for the node"""
 
         if not self.__dagPath:
-            return ""
+            paths = cmds.ls(self.uuid(), long=True)
+            if len(paths) == 0:
+                return ''
+            return paths[0]
 
         return self.__dagPath.fullPathName()
 
@@ -750,4 +770,6 @@ class Node():
 
     def uuid(self):
         """Returns the uuid of this node"""
+        if not self.__fnDagNode:
+            return self.__uuid
         return self.__fnDagNode.uuid()

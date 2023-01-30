@@ -348,11 +348,10 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
     for shading_engine in all_shading_engines:
         if not cmds.objExists(shading_engine):
             continue
-        shading_engine = maf.Node(shading_engine)
         # create a sphere per shader and export that
-        sphere = cmds.polySphere(name=shading_engine.name().replace("_Engine","") + "_shader", constructionHistory=False)[0]
+        sphere = cmds.polySphere(name=shading_engine.replace("_Engine","") + "_shader", constructionHistory=False)[0]
         # Assign shader
-        cmds.sets(sphere, e=True, forceElement=shading_engine.path())
+        cmds.sets(sphere, e=True, forceElement=shading_engine)
         # Move on the X axis
         cmds.setAttr(sphere + ".translateX", offset)
         offset = offset + 2
