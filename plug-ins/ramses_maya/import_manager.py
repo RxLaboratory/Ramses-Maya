@@ -7,6 +7,7 @@ from maya import cmds # pylint: disable=import-error
 import yaml
 import ramses as ram
 from dumaf import ProgressDialog, Node, Plugin
+from dupyf.string import intToStr
 from .ui_import import ImportSettingsDialog
 from .utils_options import get_option
 from .utils_attributes import RamsesAttribute, get_ramses_attr, set_import_attributes, is_ramses_managed
@@ -80,7 +81,6 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
 
     # Prepare scene to get its new stuff
     item_group = get_import_group(item)
-    item_namespace = get_import_namespace(item)
 
     # Import files
     for file_path in file_paths:
@@ -94,7 +94,7 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
         no_root_shape = get_option("no_root_shape", options, False)
         create_namespace = get_option("create_namespace", options, True)
 
-        ns = item_namespace
+        ns = get_import_namespace(item)
         if not create_namespace:
             ns = ""
 
@@ -173,16 +173,13 @@ def get_import_namespace( item ):
     if re.match(regex, item_short_name):
         item_short_name = item_type + item_short_name
     # And the namespace + its number
-    """ import_namespace = item_short_name + '_001'
+    import_namespace = item_short_name + '_001'
     i = 1
     while cmds.namespace( exists=import_namespace ):
         i = i+1
-        i_str = str(i)
-        while len(i_str) < 3:
-            i_str = '0' + i_str
-        import_namespace = item_short_name + '_'  + i_str"""
+        import_namespace = item_short_name + '_'  + intToStr(i)
 
-    return item_short_name
+    return import_namespace
 
 def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step):
     """Imports the items in the file"""
