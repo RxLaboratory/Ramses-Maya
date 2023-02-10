@@ -148,7 +148,6 @@ class ImportDialog( Dialog ):
         self.itemSearchField.setPlaceholderText('Search...')
         self.itemSearchField.setClearButtonEnabled(True)
         itemLayout.addWidget(self.itemSearchField)
-        self.itemSearchField.hide()
         self.itemList = QListWidget()
         itemLayout.addWidget(self.itemList)
 
@@ -380,8 +379,9 @@ class ImportDialog( Dialog ):
             # Add groups
             for group in groups:
                 self.groupBox.addItem(group.name(), group)
-            self.groupBox.setCurrentIndex(-1)
+            self.groupBox.setCurrentIndex(0)
             self.groupBox.blockSignals(False)
+            self.__update_items()
             steps = project.steps( ram.StepType.ASSET_PRODUCTION )
         # Load sequences, shots and shot steps
         elif shot:
@@ -391,7 +391,7 @@ class ImportDialog( Dialog ):
             # Add sequences
             for group in groups:
                 self.groupBox.addItem(group.name(), group)
-            self.groupBox.setCurrentIndex(-1)
+            self.groupBox.setCurrentIndex(0)
             self.groupBox.blockSignals(False)
             steps = project.steps( ram.StepType.SHOT_PRODUCTION )
         # Load steps for templates
