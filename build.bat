@@ -1,7 +1,7 @@
 @echo off
 :: Builds the module (copies needed files) to the build subfolder,
 
-SET version=0.8.8-Beta
+SET version=0.8.9-Beta
 
 :: The repo (current dir)
 SET repoPath=%~dp0
@@ -74,6 +74,7 @@ xcopy /Y "%repoPath%README.md" "%build_path%\README.txt"
 
 :: update version
 call :FindReplace "#version#" "%version%" "%build_path%\Ramses.mod"
+call :FindReplace "#path#" "D:\Path\To\Ramses-Maya" "%build_path%\Ramses.mod"
 call :FindReplace "#version#" "%version%" "%build_path%\plug-ins\ramses_maya\__init__.py"
 
 exit /b 
