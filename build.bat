@@ -75,7 +75,7 @@ xcopy /Y "%repoPath%README.md" "%build_path%\README.txt"
 :: update version
 call :FindReplace "#version#" "%version%" "%build_path%\Ramses.mod"
 call :FindReplace "#path#" "D:\Path\To\Ramses-Maya" "%build_path%\Ramses.mod"
-call :FindReplace "#version#" "%version%" "%build_path%\plug-ins\ramses_maya\__init__.py"
+call :FindReplace "#version#" "%version%" "%build_path%\plug-ins\ramses_maya\constants.py"
 
 exit /b 
 

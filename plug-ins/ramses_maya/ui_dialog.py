@@ -9,7 +9,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QDialog,
     QMenuBar,
     QVBoxLayout,
-    QFileDialog
+    QFileDialog,
+    QApplication
 )
 from PySide2.QtGui import (  # pylint: disable=no-name-in-module
     QKeySequence,
@@ -17,11 +18,12 @@ from PySide2.QtGui import (  # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot
 )
-from .utils import (
+from ramses_maya.utils import (
     open_help,
     about_ramses,
     open_api_reference
 )
+from ramses_maya.ui_about import AboutDialog
 from dumaf.utils import checkUpdate
 
 class Dialog(QDialog):
@@ -47,7 +49,11 @@ class Dialog(QDialog):
         self.__help_action = help_menu.addAction("Ramses Maya Add-on help...")
         self.__about_ramses_action = help_menu.addAction("Ramses general help...")
         self.__api_reference_action = help_menu.addAction("Ramses API reference...")
+        help_menu.addSeparator()
         self.__update_action = help_menu.addAction("Check for update")
+        help_menu.addSeparator()
+        self.__about_qt_action = help_menu.addAction("About Qt...")
+        self.__about_action = help_menu.addAction("About...")
         self.__help_action.setShortcut(QKeySequence("F1"))
 
     def __dialog_setup_ui(self):
@@ -59,12 +65,16 @@ class Dialog(QDialog):
         self.__ui_menu_bar = QMenuBar()
         self.main_layout.addWidget(self.__ui_menu_bar)
 
+        self.__ui_about_dialog = AboutDialog(self)
+
     def __dialog_connect_events(self):
         # menu
         self.__help_action.triggered.connect( open_help )
         self.__about_ramses_action.triggered.connect( about_ramses )
         self.__api_reference_action.triggered.connect( open_api_reference )
         self.__update_action.triggered.connect( self.check_update )
+        self.__about_qt_action.triggered.connect( self.show_about_qt )
+        self.__about_action.triggered.connect( self.show_about )
 
     # <== PROTECTED METHODS ==>
 
@@ -77,6 +87,16 @@ class Dialog(QDialog):
         self.__save_preset_action.triggered.connect( self.save_preset )
 
     # <== PUBLIC METHODS ==>
+
+    @Slot()
+    def show_about(self):
+        """Shows the about dialog for the module"""
+        self.__ui_about_dialog.exec_()
+
+    @Slot()
+    def show_about_qt(self):
+        """Shows the about dialog for the module"""
+        QApplication.aboutQt()
 
     def load_preset_file(self, file_path):
         """Loads a preset file"""
@@ -144,3 +164,7 @@ class Dialog(QDialog):
         """Checks if an update is available"""
         from ramses_maya import TOOL_NAME, VERSION, IS_PRERELEASE
         checkUpdate( TOOL_NAME, VERSION, discreet=False, preRelease=IS_PRERELEASE )
+
+if __name__ == "__main__":
+    d = Dialog()
+    d.exec_()

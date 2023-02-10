@@ -12,11 +12,8 @@ from . import utils
 from . import ui_publish
 from . import ui_import
 from . import ui_scene_setup
+from .constants import *
 
-VENDOR = "RxLaboratory"
-VERSION = "#version#"
-TOOL_NAME = "Ramses-Maya"
-IS_PRERELEASE = False
 RAMSES = Ramses.instance()
 
 # Register publish scripts
