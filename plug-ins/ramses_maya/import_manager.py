@@ -112,7 +112,7 @@ def importer( item, file_paths, step, import_options=None, show_import_options=F
         no_root_shape = get_option("no_root_shape", options, False)
         create_namespace = get_option("create_namespace", options, True)
 
-        ns = item_namespace
+        ns = get_import_namespace(item)
         if not create_namespace:
             ns = ""
 
