@@ -171,8 +171,10 @@ class SceneSetupDialog( Dialog ):
 
         # If it's a shot, set duration settings
         if item.itemType() == ItemType.SHOT:
-            # If there's a step, get handles & first image number   
+            # If there's a step, get handles & first image number
             shot_settings = stepSettings.get("shot", {})
+            if not shot_settings:
+                shot_settings = {}
             self.__handle_in = shot_settings.get("handle_in", 0)
             self.__handle_out = shot_settings.get("handle_out", 0)
             self.__first_image_number = shot_settings.get("first_image_number", 1)
