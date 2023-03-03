@@ -1,7 +1,5 @@
 @echo off
 
-SET version=0.8.12-Beta
-
 :: Install in documents
 SET destPath=%userprofile%\Documents\maya\modules
 
