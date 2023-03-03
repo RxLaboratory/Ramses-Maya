@@ -332,7 +332,8 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
                 except: # pylint: disable=bare-except
                     pass
 
-                all_shading_engines.append(shading_engine)
+                if not shading_engine in all_shading_engines:
+                    all_shading_engines.append(shading_engine)
 
     if len(all_shading_engines) == 0:
         ram.log("Sorry, I did not find any shader to publish...", ram.LogLevel.Info)
