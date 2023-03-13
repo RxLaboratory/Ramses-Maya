@@ -297,6 +297,9 @@ class PublishDialog(Dialog):
         self.__ui_alembic_renderable_box = QCheckBox("Renderable only")
         alembic_layout.addRow("Export:", self.__ui_alembic_renderable_box)
 
+        self.__ui_alembic_worldSpace_box = QCheckBox("World space")
+        alembic_layout.addRow("", self.__ui_alembic_worldSpace_box)
+
         self.__ui_alembic_handles_widget = QWidget()
         handles_layout = QHBoxLayout(self.__ui_alembic_handles_widget)
         handles_layout.setContentsMargins(0,0,0,0)
@@ -374,6 +377,7 @@ class PublishDialog(Dialog):
         self.__ui_shaders_format_box.currentIndexChanged.connect( self.__update_preset )
         # alembic
         self.__ui_alembic_renderable_box.toggled.connect( self.__update_preset )
+        self.__ui_alembic_worldSpace_box.toggled.connect( self.__update_preset )
         self.__ui_alembic_handle_start_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_handle_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_frame_step_box.valueChanged.connect( self.__update_preset )
@@ -393,6 +397,7 @@ class PublishDialog(Dialog):
     def __set_alembic_defaults(self):
         self.__ui_alembic_box.setChecked(True)
         self.__ui_alembic_renderable_box.setChecked(True)
+        self.__ui_alembic_worldSpace_box.setChecked(True)
         self.__ui_alembic_handle_start_box.setValue(0)
         self.__ui_alembic_handle_end_box.setValue(0)
         self.__ui_alembic_frame_step_box.setValue(1)
@@ -576,6 +581,7 @@ class PublishDialog(Dialog):
         abc = {}
 
         abc["renderable_only"] = self.__ui_alembic_renderable_box.isChecked()
+        abc["world_space"] = self.__ui_alembic_worldSpace_box.isChecked()
         if not self.__ui_remove_animation_box.isChecked():
             abc["animation"] = {}
             abc["animation"]["handle_in"] = self.__ui_alembic_handle_start_box.value()
@@ -721,6 +727,7 @@ class PublishDialog(Dialog):
                     frmt = frmt["abc"]
                     load_bool_preset( "filter_euler_rotations", frmt, self.__ui_alembic_filter_euler_box, True)
                     load_bool_preset( "renderable_only", frmt, self.__ui_alembic_filter_euler_box, True)
+                    load_bool_preset( "world_space", frmt, self.__ui_alembic_worldSpace_box, True)
                     if "animation" in frmt:
                         anim = frmt["animation"]
                         load_number_preset( "frame_step", anim, self.__ui_alembic_frame_step_box, 1)

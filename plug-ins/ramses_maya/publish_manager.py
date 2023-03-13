@@ -395,14 +395,18 @@ def publish_alembic(node, options, publish_info, name):
     if get_option("renderable_only", options, True):
         renderable = '-renderableOnly'
 
+    worldSpace = ''
+    if get_option("world_space", options, True):
+        worldSpace = '-worldSpace'
+
     abc_options = ' '.join([
         '-frameRange ' + str(in_frame) + ' ' + str(out_frame),
         filter_euler,
+        worldSpace,
         '-step ' + str(frame_step),
         '-autoSubd', # crease
         '-uvWrite',
         '-writeUVSets',
-        '-worldSpace',
         '-writeVisibility',
         '-dataFormat hdf',
         renderable,
