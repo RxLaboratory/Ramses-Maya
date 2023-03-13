@@ -819,7 +819,8 @@ class ImportDialog( Dialog ):
     def getResource(self):
         """Returns the selected resource string if any"""
         item = self.resourceList.currentItem()
-        if not item: return ""
+        if not item:
+            return ""
 
         nm = ram.RamFileInfo()
         nm.setFilePath( item.data(Qt.UserRole) )

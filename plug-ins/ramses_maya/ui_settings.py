@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import sys, platform
+import sys
+import platform
+import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QApplication,
     QFileDialog,
     QFormLayout,
     QStackedLayout,
     QWidget,
-    QMainWindow,
     QHBoxLayout,
     QVBoxLayout,
     QLineEdit,
@@ -17,6 +18,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QPushButton,
     QComboBox,
     QListWidget,
+    QListWidgetItem,
+    QAbstractItemView
 )
 from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
@@ -30,7 +33,7 @@ import dumaf as maf
 from ramses_maya.ui_dialog import Dialog
 
 # Keep the settings at hand
-settings = ram.RamSettings.instance()
+SETTINGS = ram.RamSettings.instance()
 
 saveCmd = """
 import maya.cmds as cmds
@@ -76,6 +79,7 @@ class SettingsDialog( Dialog ):
         self.sectionsBox = QListWidget()
         self.sectionsBox.addItem("Versionning")
         self.sectionsBox.addItem("Ramses Application")
+        self.sectionsBox.addItem("Scripts")
         self.sectionsBox.addItem("Development")
         self.sectionsBox.setMaximumWidth( 150 )
         secondaryLayout.addWidget(self.sectionsBox)
@@ -130,6 +134,39 @@ class SettingsDialog( Dialog ):
         self._clientPortBox.setMaximum( 49151 )
         appLayout.addRow( portLabel, self._clientPortBox )
 
+        scriptsWidget = QWidget()
+        sLH = QHBoxLayout()
+        scriptsWidget.setLayout(sLH)
+        sLV = QVBoxLayout()
+        sLV.setSpacing(2)
+        sLH.addLayout(sLV)
+        self.stackedLayout.addWidget( scriptsWidget )
+        self.scriptsList = QListWidget()
+        self.scriptsList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        sLV.addWidget(self.scriptsList)
+        scriptsButtonsLayout = QHBoxLayout()
+        scriptsButtonsLayout.setSpacing(2)
+        sLV.addLayout(scriptsButtonsLayout)
+        self.scriptsRemoveButton = QPushButton("Remove")
+        scriptsButtonsLayout.addWidget( self.scriptsRemoveButton )
+        self.scriptsAddButton = QPushButton("Add...")
+        scriptsButtonsLayout.addWidget( self.scriptsAddButton )
+        scriptsHelpLabel = QLabel( """Custom scripts can define event functions
+to be run automatically on specific tasks:
+
+    - on_open( ... )
+    - on_update_status( ... )
+    - on_publish( ... )
+    - on_replace_item( ... )
+    - on_import_item( ... )
+
+Read the Maya add-on documentation
+and the Ramses API reference
+for more information and details about
+the available arguments for each function"""
+        )
+        sLH.addWidget( scriptsHelpLabel )
+
         devWidget = QWidget()
         dL = QVBoxLayout()
         devWidget.setLayout(dL)
@@ -182,6 +219,8 @@ class SettingsDialog( Dialog ):
         self._cancelButton.clicked.connect( self.cancel )
         self._revertToSavedAction.triggered.connect( self.revert )
         self._restoreDefaultsAction.triggered.connect( self.restoreDefaults )
+        self.scriptsAddButton.clicked.connect( self.addScript )
+        self.scriptsRemoveButton.clicked.connect( self.removeScript )
 
     @Slot()
     def cancel(self):
@@ -191,15 +230,18 @@ class SettingsDialog( Dialog ):
     @Slot()
     def save(self):
         """Saves the settings"""
-        settings.ramsesClientPath = self._clientPathEdit.text()
-        settings.ramsesClientPort = self._clientPortBox.value()
-        settings.logLevel = self._logLevelBox.currentData()
-        settings.autoIncrementTimeout = self._autoIncrementBox.value()
-        settings.debugMode = self._debugModeBox.isChecked()
-        settings.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
-        settings.userSettings['useRamOpenceneHotkey'] = self._openHotkeyBox.isChecked()
-        settings.userSettings['useRamSaveAsHotkey'] = self._saveAsHotkeyBox.isChecked()
-        settings.save()
+        SETTINGS.ramsesClientPath = self._clientPathEdit.text()
+        SETTINGS.ramsesClientPort = self._clientPortBox.value()
+        SETTINGS.logLevel = self._logLevelBox.currentData()
+        SETTINGS.autoIncrementTimeout = self._autoIncrementBox.value()
+        SETTINGS.debugMode = self._debugModeBox.isChecked()
+        SETTINGS.userSettings['useRamSaveSceneHotkey'] = self._saveHotkeyBox.isChecked()
+        SETTINGS.userSettings['useRamOpenceneHotkey'] = self._openHotkeyBox.isChecked()
+        SETTINGS.userSettings['useRamSaveAsHotkey'] = self._saveAsHotkeyBox.isChecked()
+        SETTINGS.userScripts = []
+        for i in range(self.scriptsList.count()):
+            SETTINGS.userScripts.append(self.scriptsList.item(i).toolTip())
+        SETTINGS.save()
 
         # Update the hotkeys
         if self._saveHotkeyBox.isChecked():
@@ -221,56 +263,91 @@ class SettingsDialog( Dialog ):
 
     @Slot()
     def revert(self):
-        self._clientPathEdit.setText( settings.ramsesClientPath )
-        self._clientPortBox.setValue( settings.ramsesClientPort )
-        self._autoIncrementBox.setValue( settings.autoIncrementTimeout )
-        self._debugModeBox.setChecked( settings.debugMode )
+        """Reloads the settings"""
+        self._clientPathEdit.setText( SETTINGS.ramsesClientPath )
+        self._clientPortBox.setValue( SETTINGS.ramsesClientPort )
+        self._autoIncrementBox.setValue( SETTINGS.autoIncrementTimeout )
+        self._debugModeBox.setChecked( SETTINGS.debugMode )
         save = True
         saveas = True
         open = True
-        if 'useRamSaveSceneHotkey' in settings.userSettings:
-            save = settings.userSettings['useRamSaveSceneHotkey']
-        if 'useRamSaveAsHotkey' in settings.userSettings:
-            saveas = settings.userSettings['useRamSaveAsHotkey']
-        if 'useRamOpenceneHotkey' in settings.userSettings:
-            open = settings.userSettings['useRamOpenceneHotkey']
+        if 'useRamSaveSceneHotkey' in SETTINGS.userSettings:
+            save = SETTINGS.userSettings['useRamSaveSceneHotkey']
+        if 'useRamSaveAsHotkey' in SETTINGS.userSettings:
+            saveas = SETTINGS.userSettings['useRamSaveAsHotkey']
+        if 'useRamOpenceneHotkey' in SETTINGS.userSettings:
+            open = SETTINGS.userSettings['useRamOpenceneHotkey']
         self._saveHotkeyBox.setChecked(save)
         self._saveAsHotkeyBox.setChecked(saveas)
         self._openHotkeyBox.setChecked(open)
         i = 0
         while i < self._logLevelBox.count():
-            if self._logLevelBox.itemData( i ) == settings.logLevel:
+            if self._logLevelBox.itemData( i ) == SETTINGS.logLevel:
                 self._logLevelBox.setCurrentIndex( i )
                 break
             i=i+1
+        self.scriptsList.clear()
+        for s in SETTINGS.userScripts:
+            self.__addScriptToList(s)
 
     @Slot()
     def restoreDefaults(self):
-        self._clientPathEdit.setText( settings.defaultRamsesClientPath )
-        self._clientPortBox.setValue( settings.defaultRamsesClientPort )
-        self._autoIncrementBox.setValue( settings.defaultAutoIncrementTimeout )
-        self._debugModeBox.setChecked( settings.defaultDebugMode )
+        """Restores the default settings"""
+        self._clientPathEdit.setText( SETTINGS.defaultRamsesClientPath )
+        self._clientPortBox.setValue( SETTINGS.defaultRamsesClientPort )
+        self._autoIncrementBox.setValue( SETTINGS.defaultAutoIncrementTimeout )
+        self._debugModeBox.setChecked( SETTINGS.defaultDebugMode )
+        self.scriptsList.clear()
         i=0
         while i < self._logLevelBox.count():
-            if self._logLevelBox.itemData( i ) == settings.defaultLogLevel:
+            if self._logLevelBox.itemData( i ) == SETTINGS.defaultLogLevel:
                 self._logLevelBox.setCurrentIndex( i )
                 break
             i=i+1
 
     @Slot()
     def help(self):
-        QDesktopServices.openUrl( QUrl( settings.addonsHelpUrl ) )
-    
+        """Shows the addon help"""
+        QDesktopServices.openUrl( QUrl( SETTINGS.addonsHelpUrl ) )
+
     @Slot()
     def browseClientPath(self):
-        filter = ""
+        """Opens a file browser to select the Ramses Application path"""
+        file_filter = ""
         system = platform.system()
-        if system == "Windows": filter = "Executable Files (*.exe *.bat)"
+        if system == "Windows":
+            file_filter = "Executable Files (*.exe *.bat)"
         file = QFileDialog.getOpenFileName(self,
-            "Select the path to the Ramses Client",
+            "Select the path to the Ramses Application",
             self._clientPathEdit.text(),
-            filter)
-        if file[0] != "": self._clientPathEdit.setText( file[0] )
+            file_filter)
+        if file[0] != "":
+            self._clientPathEdit.setText( file[0] )
+
+    @Slot()
+    def addScript(self):
+        """Adds a new custom script"""
+
+        file_filter = "Python Script Files (*.py);;All Files (*.*)"
+        file = QFileDialog.getOpenFileName(self,
+            "Select the Python script to add",
+            "",
+            file_filter)
+        script_path = file[0]
+
+        if script_path != "":
+            self.__addScriptToList(script_path)
+
+    def __addScriptToList(self, script_path):
+        item = QListWidgetItem( os.path.basename(script_path), self.scriptsList )
+        item.setToolTip( script_path )
+
+    @Slot()
+    def removeScript(self):
+        """Removes the selected scripts"""
+        for item in reversed(self.scriptsList.selectedItems()):
+            item = self.scriptsList.takeItem(self.scriptsList.row(item))
+            del item
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

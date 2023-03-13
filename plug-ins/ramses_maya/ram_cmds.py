@@ -598,6 +598,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Update status
         if status is not None:
             status.setVersion(newVersion)
+            RAMSES.updateStatus(currentItem, status, currentStep)
 
         # Alert
         newVersionStr = str( newVersion )
