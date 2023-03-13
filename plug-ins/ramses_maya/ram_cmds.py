@@ -26,7 +26,7 @@ from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-n
 from .utils_attributes import get_item, get_step, set_import_attributes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
-from .utils_files import get_current_project, get_step_for_file
+from .utils_files import get_current_project, get_step_for_file, add_to_recent_files
 from .ui_publish import PublishDialog
 
 import ramses as ram
@@ -235,16 +235,6 @@ def setup_scene( ramItem, ramStep=None ):
             return False
 
     return True
-
-def add_to_recent_files( file ):
-    """Adds the file to the recent file list"""
-    recent_files = SETTINGS.userSettings.get('recentFiles', [])
-    if file in recent_files:
-        recent_files.pop( recent_files.index(file) )
-    recent_files.insert(0, file)
-    recent_files = recent_files[0:20]
-    SETTINGS.userSettings['recentFiles'] = recent_files
-    SETTINGS.save()
 
 class RamSaveCmd( om.MPxCommand ):
     """ramSave Maya cmd"""
@@ -826,13 +816,15 @@ class RamOpenCmd( om.MPxCommand ):
             # If the current file needs to be saved
             if not dumaf.Scene.checkSaveState():
                 return
-            # Get the file, check if it's a version
+            # Get the file and data
             file = importDialog.getFile()
-            if ram.RamFileManager.inVersionsFolder( file ):
-                file = ram.RamFileManager.restoreVersionFile( file, False )
-            # Open
-            cmds.file(file, open=True, force=True)
-            add_to_recent_files( file )
+            item = importDialog.getItem()
+            step = importDialog.getStep()
+            RAMSES.openFile(
+                file,
+                item,
+                step
+            )
         else:
             # Get Data
             item = importDialog.getItem()
