@@ -79,16 +79,6 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
 
     # Backup file
     publish_info = ram.RamFileManager.getPublishInfo( file_path )
-    # Prepare the file for backup in the published folder
-    backup_info = publish_info.copy()
-    backup_info.version = -1
-    backup_info.state = ''
-    # Save
-    published_filepath = backup_info.filePath()
-    cmds.file( rename = published_filepath )
-    cmds.file( save=True, options="v=1;" )
-    ram.RamMetaDataManager.appendHistoryDate( published_filepath )
-    ram.RamMetaDataManager.setVersion( published_filepath, publish_info.version )
 
     if "formats" not in publish_options or len(publish_options["formats"]) == 0:
         return
@@ -133,6 +123,17 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
 
     # Remove Ramses Maya Sets
     delete_ramses_sets()
+
+    # Prepare the file for backup in the published folder
+    backup_info = publish_info.copy()
+    backup_info.version = -1
+    backup_info.state = ''
+    # Save
+    published_filepath = backup_info.filePath()
+    cmds.file( rename = published_filepath )
+    cmds.file( save=True, options="v=1;" )
+    ram.RamMetaDataManager.appendHistoryDate( published_filepath )
+    ram.RamMetaDataManager.setVersion( published_filepath, publish_info.version )
 
     progress_dialog.setMaximum(len(publish_nodes) + 1)
     progress_dialog.setText("Publishing nodes...")
