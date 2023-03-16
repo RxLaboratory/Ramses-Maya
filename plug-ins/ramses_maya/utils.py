@@ -40,6 +40,7 @@ def open_api_reference():
 
 def end_process(temp_data, progress_dialog):
     """Ends a process on the scene (closes and removes the temp file)"""
+
     # Re-Open initial scene
     cmds.file(temp_data[1],o=True,f=True)
 

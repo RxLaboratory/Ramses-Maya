@@ -92,7 +92,8 @@ class UpdateDialog( QDialog ):
             latestVersionLabel = QLabel("version: " + updateInfo.get("version") )
             mainLayout.addWidget(latestVersionLabel)
 
-            descriptionEdit = QTextEdit(updateInfo.get("description"))
+            descriptionEdit = QTextEdit()
+            descriptionEdit.setMarkdown(updateInfo.get("description"))
             descriptionEdit.setReadOnly(True)
             mainLayout.addWidget(descriptionEdit)
 
