@@ -6,7 +6,6 @@ import platform
 import subprocess
 import tempfile
 import shutil
-from datetime import datetime, timedelta
 
 import maya.api.OpenMaya as om # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
@@ -22,7 +21,6 @@ from .ui_comment import CommentDialog # pylint: disable=import-error,no-name-in-
 from .ui_import import ImportDialog # pylint: disable=import-error,no-name-in-module
 from .ui_saveas import SaveAsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-module
-from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-name-in-module
 from .utils_attributes import get_item, get_step, set_import_attributes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
@@ -219,22 +217,7 @@ def create_thumbnail(filePath):
     cmds.refresh(cv=True, fn = filePath)
 
 def setup_scene( ramItem, ramStep=None ):
-    """Setup the current scene according to the given item.
-    Returns False if the user cancelled the operation."""
-
-    dumaf.sets.create_if_not_exists("Ramses_Publish")
-    dumaf.sets.create_if_not_exists("Ramses_DelOnPublish")
-
-    if not ramItem:
-        return True
-
-    dlg = SceneSetupDialog( dumaf.ui.getMayaWindow() )
-    ok = dlg.setItem( ramItem, ramStep )
-    if not ok:
-        if not dlg.exec_():
-            return False
-
-    return True
+    pass
 
 class RamSaveCmd( om.MPxCommand ):
     """ramSave Maya cmd"""
@@ -257,6 +240,7 @@ class RamSaveCmd( om.MPxCommand ):
         return syntax
 
     def parseArgs(self, args, saveFilePath):
+        """Parses the arguments of the maya command"""
         parser = om.MArgParser( self.syntax(), args)
         useDialog = False
         if parser.isFlagSet( '-sc' ):
@@ -280,7 +264,7 @@ class RamSaveCmd( om.MPxCommand ):
             if not commentDialog.exec_():
                 return False
             self.newComment = commentDialog.getComment()
-        
+
         return True
 
     def doIt(self, args):
@@ -309,62 +293,11 @@ class RamSaveCmd( om.MPxCommand ):
         if saveFilePath == '':
             return
 
-        currentItem = ram.RamItem.fromPath( saveFilePath )
-        currentStep = ram.RamStep.fromPath( saveFilePath )
-        if not setup_scene(currentItem, currentStep):
-            return
-
         # Parse arguments
         if not self.parseArgs(args,saveFilePath):
             return
 
-        increment = False
-        incrementReason = ''
-        # It it's a restored version, we need to increment
-        nm = ram.RamFileInfo()
-        nm.setFilePath( currentFilePath )
-        if nm.isRestoredVersion:
-            increment = True
-            incrementReason = "we're restoring the older version " + str(nm.restoredVersion) + "."
-            cmds.warning( "Incremented and Saved as " + saveFilePath )
-
-        # If the current Maya file is inside a preview/publish/version subfolder, we're going to increment
-        # to be sure to not lose the previous working file.
-
-        if ram.RamFileManager.inReservedFolder( currentFilePath ) and not increment:
-            increment = True
-            incrementReason = "the file was misplaced."
-            cmds.warning( "Incremented and Saved as " + saveFilePath )
-
-        # If the timeout has expired, we're also incrementing
-        prevVersionInfo = ram.RamFileManager.getLatestVersionInfo( saveFilePath, previous=True )
-        modified = prevVersionInfo.date
-        now = datetime.today()
-        timeout = timedelta(seconds = SETTINGS.autoIncrementTimeout * 60 )
-        if  timeout < now - modified and not increment:
-            incrementReason = "the file was too old."
-            increment = True
-
-        # Set the save name and save
-        cmds.file( rename = saveFilePath )
-        cmds.file( save=True, options="v=1;" )
-        add_to_recent_files( saveFilePath )
-        # Backup / Increment
-        backupFilePath = ram.RamFileManager.copyToVersion( saveFilePath, increment=increment )
-        backupFileName = os.path.basename( backupFilePath )
-        nm = ram.RamFileInfo()
-        nm.setFileName( backupFileName )
-        newVersion = str( nm.version )
-        ram.log( "Scene saved! Current version is: " + newVersion )
-        cmds.inViewMessage( msg='Scene saved! <hl>v' + newVersion + '</hl>', pos='midCenter', fade=True )
-
-        # Write the comment
-        if self.setComment:
-            ram.RamMetaDataManager.setComment( backupFilePath, self.newComment )
-            ram.log( "I've added this comment for you: " + self.newComment )
-        elif increment:
-            ram.RamMetaDataManager.setComment( backupFilePath, 'Auto-Increment because ' + incrementReason )
-            ram.log("I've incremented the version for you because it was " + incrementReason)
+        RAMSES.saveFile( saveFilePath )
 
 class RamSaveAsCmd( om.MPxCommand ):
     """ramSaveAs Maya cmd"""
@@ -571,10 +504,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
                 self.preview = status_dialog.preview()
                 self.edit_publish_settings = status_dialog.edit_publish_settings()
 
-        # Set the save name and save
-        cmds.file( rename = save_filepath )
-        cmds.file( save=True, options="v=1;" )
-        # Backup / Increment
+        # Get the state
         state = RAMSES.defaultState
         if status is not None:
             state = status.state()
@@ -585,15 +515,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if state:
             stateShortName = state.shortName()
 
-        backupFilePath = ram.RamFileManager.copyToVersion(
-            save_filepath,
-            True,
-            stateShortName
-            )
-        backupFileName = os.path.basename( backupFilePath )
-        nm = ram.RamFileInfo()
-        nm.setFileName( backupFileName )
-        newVersion = nm.version
+        RAMSES.saveFile(save_filepath, currentItem, currentStep, True, "", stateShortName)
+
+        # Get the new version
+        versionInfo = ram.RamFileManager.getLatestVersionInfo( save_filepath )
+        newVersion = versionInfo.version
 
         # Update status
         if status is not None:
@@ -602,7 +528,6 @@ class RamSaveVersionCmd( om.MPxCommand ):
 
         # Alert
         newVersionStr = str( newVersion )
-        ram.log( "Incremental save, scene saved! New version is: " + newVersionStr )
         cmds.inViewMessage( msg='Incremental save! New version: <hl>v' + newVersionStr + '</hl>', pos='midCenterBot', fade=True )
 
         # Publish

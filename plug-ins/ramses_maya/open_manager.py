@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""The entry point for opening assets"""
+"""The entry point for opening items"""
 
 from maya import cmds # pylint: disable=import-error
 from .utils_files import add_to_recent_files
