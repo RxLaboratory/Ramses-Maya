@@ -155,7 +155,7 @@ class PublishTemplateDialog( Dialog ):
     def __buildFileName(self):
         nm = ram.RamFileInfo()
 
-        p = project = self.projectBox.getObject()
+        p = self.projectBox.getObject()
         s = self.stepBox.getObject()
         if not p:
             return ""
@@ -168,7 +168,7 @@ class PublishTemplateDialog( Dialog ):
         nm.shortName = self.nameEdit.text()
         if nm.shortName == "":
             nm.shortName = "Template"
-        
+
         self.fileNameLabel.setText( nm.fileName() )
 
     @Slot()
@@ -220,10 +220,25 @@ class PublishTemplateDialog( Dialog ):
             n = step.shortName()
         self.stepBox.addItem(n, step.shortName())
         self.stepBox.setCurrentIndex( self.stepBox.count() - 1)
-        
+
     def setOffline(self, offline=True):
         self.locationEdit.setEnabled(offline)
         self.browseButton.setVisible(offline)
+
+    def getStep(self):
+        """Returns the selected step (or None)"""
+        return self.stepBox.getObject()
+
+    def getExtension(self):
+        """Returns the selected file extension (ma or mb)"""
+        return self.extensionBox.currentData()
+    
+    def getTemplateName(self):
+        """Returns the template name"""
+        n = self.nameEdit.text()
+        if n == "":
+            return "Template"
+        return n
 
     def getFolder(self):
         return self.locationEdit.text()

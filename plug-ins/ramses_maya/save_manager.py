@@ -3,11 +3,22 @@
 
 from maya import cmds # pylint: disable=import-error
 
+import os
 import dumaf
+from ramses import RamItem
 
 from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-name-in-module
 
-def setup_scene(item, filePath='', step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
+def setup_scene_save_handler(item, filePath='', step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
+    """Setup scene before saving"""
+    return setup_scene(item, step)
+
+def setup_scene_template_handler(filePath, step, templateName=''): # pylint: disable=unused-argument
+    """Setup scene before saving template"""
+    item = RamItem.fromPath(filePath)
+    return setup_scene(item, step)
+
+def setup_scene(item, step=None): # pylint: disable=unused-argument
     """Setup the current scene according to the given item.
     Returns False if the user cancelled the operation."""
 
@@ -25,7 +36,6 @@ def setup_scene(item, filePath='', step=None, version=1, comment='', incremented
 
     return True
 
-
 def saver(item, filePath, step, version, comment, incremented): # pylint: disable=unused-argument
     """Saves the scene"""
 
@@ -39,3 +49,12 @@ def saver(item, filePath, step, version, comment, incremented): # pylint: disabl
     cmds.inViewMessage( msg='Scene saved! <hl>v' + str(version) + '</hl>', pos='midCenter', fade=True )
 
     return True
+
+def templateSaver( filePath, step, templateName ): # pylint: disable=unused-argument
+    """Saves the template"""
+
+    # save as
+    cmds.file( rename = filePath )
+    cmds.file( save=True, options="v=1;" )
+    # Message
+    cmds.inViewMessage( msg='Template saved as: <hl>' + os.path.basename(filePath) + '</hl> in ' + os.path.dirname(filePath) , pos='midCenter', fade=True )

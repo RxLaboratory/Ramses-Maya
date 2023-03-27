@@ -9,7 +9,7 @@ from .publish_manager import publisher
 from .import_manager import importer
 from .replace_manager import replacer
 from .open_manager import opener
-from .save_manager import setup_scene, saver
+from .save_manager import setup_scene_save_handler, setup_scene_template_handler, saver, templateSaver
 from . import utils
 from . import ui_publish
 from . import ui_import
@@ -19,11 +19,15 @@ from .constants import *
 RAMSES = Ramses.instance()
 
 # Register save scripts
-RAMSES.saveScripts.append(setup_scene)
+RAMSES.saveScripts.append(setup_scene_save_handler)
 RAMSES.saveScripts.append(saver)
 
 # Register open scripts
 RAMSES.openScripts.append(opener)
+
+# Register template scripts
+RAMSES.saveTemplateScripts.append(setup_scene_template_handler)
+RAMSES.saveTemplateScripts.append(templateSaver)
 
 # Register publish scripts
 RAMSES.publishScripts.append(publisher)

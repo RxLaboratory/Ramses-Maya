@@ -372,7 +372,7 @@ class RamSaveAsCmd( om.MPxCommand ):
 
         new_item = saveAsDialog.getItem()
         new_step = saveAsDialog.getStep()
-        if not setup_scene(new_item, '', new_step):
+        if not setup_scene(new_item, new_step):
             return
 
         mayaType = 'mayaBinary'
@@ -512,7 +512,12 @@ class RamSaveVersionCmd( om.MPxCommand ):
         if state:
             stateShortName = state.shortName()
 
-        RAMSES.saveFile(save_filepath, currentItem, currentStep, True, "", stateShortName)
+        RAMSES.saveFile(
+            save_filepath,
+            incrementVersion=True,
+            comment="",
+            newStateShortName=stateShortName
+            )
 
         # Get the new version
         versionInfo = ram.RamFileManager.getLatestVersionInfo( save_filepath )
@@ -620,7 +625,6 @@ class RamPublishTemplateCmd( om.MPxCommand ):
 
     def run(self, args):
         """Runs the command"""
-        ram.log("Saving as template...")
 
         # Check if the Daemon is available if Ramses is set to be used "online"
         if not check_daemon():
@@ -640,28 +644,13 @@ class RamPublishTemplateCmd( om.MPxCommand ):
             publishDialog.setProject( project )
         if step is not None:
             publishDialog.setStep( step )
-    
-        if not setup_scene(ram.RamItem.fromPath(currentFilePath), currentFilePath, step):
-            return
 
         if publishDialog.exec_():
             # save as template
-            saveFolder = publishDialog.getFolder()
-            saveName = publishDialog.getFile()
-            if saveFolder == '':
-                return
-            if not os.path.isdir( saveFolder ):
-                os.makedirs(saveFolder)
-            saveFilePath = ram.RamFileManager.buildPath((
-                saveFolder,
-                saveName
-            ))
-            # save as
-            cmds.file( rename = saveFilePath )
-            cmds.file( save=True, options="v=1;" )
-            # Message
-            cmds.inViewMessage( msg='Template saved as: <hl>' + saveName + '</hl> in ' + saveFolder , pos='midCenter', fade=True )
-            ram.log('Template saved as: ' + saveName + ' in ' + saveFolder)
+            step = publishDialog.getStep()
+            ext = publishDialog.getExtension()
+            templateName = publishDialog.getTemplateName()
+            RAMSES.saveTemplate( ext, step, templateName)
 
 class RamOpenCmd( om.MPxCommand ):
     """Shows the UI to open, import or replace an item"""
@@ -739,15 +728,9 @@ class RamOpenCmd( om.MPxCommand ):
             # If the current file needs to be saved
             if not dumaf.Scene.checkSaveState():
                 return
-            # Get the file and data
+            # Get the file and open
             file = importDialog.getFile()
-            item = importDialog.getItem()
-            step = importDialog.getStep()
-            RAMSES.openFile(
-                file,
-                item,
-                step
-            )
+            RAMSES.openFile( file )
         else:
             # Get Data
             item = importDialog.getItem()
@@ -1092,7 +1075,7 @@ class RamSetupSceneCmd( om.MPxCommand ):
         currentItem = ram.RamItem.fromPath( save_filepath )
         currentStep = ram.RamStep.fromPath( save_filepath )
 
-        ok = setup_scene(currentItem, save_filepath, currentStep)
+        ok = setup_scene(currentItem, currentStep)
 
         if ok:
             cmds.inViewMessage( msg='Scene ready!', pos='midCenter', fade=True )
