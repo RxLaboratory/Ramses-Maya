@@ -528,7 +528,7 @@ class ImportDialog( Dialog ):
         self.versionList.clear()
 
         if self.recentButton.isChecked():
-            recent_files = SETTINGS.userSettings.get("recentFiles", [])
+            recent_files = SETTINGS.recentFiles
             for file in reversed(recent_files):
                 if not os.path.isfile(file):
                     recent_files.remove(file)

@@ -24,8 +24,9 @@ from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-
 from .utils_attributes import get_item, get_step, set_import_attributes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
-from .utils_files import get_current_project, get_step_for_file, add_to_recent_files
+from .utils_files import get_current_project, get_step_for_file
 from .ui_publish import PublishDialog
+from .save_manager import setup_scene
 
 import ramses as ram
 # Keep the ramses and the SETTINGS instances at hand
@@ -216,9 +217,6 @@ def create_thumbnail(filePath):
     """Saves a thumbnail for the current viewport at filepath"""
     cmds.refresh(cv=True, fn = filePath)
 
-def setup_scene( ramItem, ramStep=None ):
-    pass
-
 class RamSaveCmd( om.MPxCommand ):
     """ramSave Maya cmd"""
     name = "ramSave"
@@ -374,7 +372,7 @@ class RamSaveAsCmd( om.MPxCommand ):
 
         new_item = saveAsDialog.getItem()
         new_step = saveAsDialog.getStep()
-        if not setup_scene(new_item, new_step):
+        if not setup_scene(new_item, '', new_step):
             return
 
         mayaType = 'mayaBinary'
@@ -382,7 +380,7 @@ class RamSaveAsCmd( om.MPxCommand ):
             mayaType = 'mayaAscii'
         cmds.file(rename = filePath )
         cmds.file( save=True, options="v=1;", f=True, typ=mayaType )
-        add_to_recent_files( filePath )
+        RAMSES.addToRecentFiles( filePath )
 
         # Create the first version ( or increment existing )
         ram.RamFileManager.copyToVersion( filePath, increment=True )
@@ -472,12 +470,11 @@ class RamSaveVersionCmd( om.MPxCommand ):
         currentStep = ram.RamStep.fromPath( save_filepath )
         currentItem = ram.RamItem.fromPath( save_filepath, True )
 
-        if not setup_scene(currentItem, currentStep):
-            return
         if currentItem is None or currentStep is None:
             cmds.warning( ram.Log.NotAnItem )
             cmds.inViewMessage( msg='Invalid item, <hl>this does not seem to be a valid Ramses Item</hl>', pos='midCenter', fade=True )
             return
+
         currentStatus = currentItem.currentStatus( currentStep )
         status = None
 
@@ -644,7 +641,7 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         if step is not None:
             publishDialog.setStep( step )
     
-        if not setup_scene(ram.RamItem.fromPath(currentFilePath), step):
+        if not setup_scene(ram.RamItem.fromPath(currentFilePath), currentFilePath, step):
             return
 
         if publishDialog.exec_():
@@ -1095,7 +1092,7 @@ class RamSetupSceneCmd( om.MPxCommand ):
         currentItem = ram.RamItem.fromPath( save_filepath )
         currentStep = ram.RamStep.fromPath( save_filepath )
 
-        ok = setup_scene(currentItem, currentStep)
+        ok = setup_scene(currentItem, save_filepath, currentStep)
 
         if ok:
             cmds.inViewMessage( msg='Scene ready!', pos='midCenter', fade=True )

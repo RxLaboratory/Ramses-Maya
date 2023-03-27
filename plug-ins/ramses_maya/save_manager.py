@@ -6,9 +6,8 @@ from maya import cmds # pylint: disable=import-error
 import dumaf
 
 from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-name-in-module
-from .utils_files import add_to_recent_files
 
-def setup_scene(item, filePath, step, version, comment, incremented): # pylint: disable=unused-argument
+def setup_scene(item, filePath='', step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
     """Setup the current scene according to the given item.
     Returns False if the user cancelled the operation."""
 
@@ -33,7 +32,6 @@ def saver(item, filePath, step, version, comment, incremented): # pylint: disabl
     # Set the save name and save
     cmds.file( rename = filePath )
     cmds.file( save=True, options="v=1;" )
-    add_to_recent_files( filePath )
 
     if incremented:
         cmds.warning( "Incremented and Saved as " + filePath )
