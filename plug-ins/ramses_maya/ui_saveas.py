@@ -176,7 +176,7 @@ class SaveAsDialog( Dialog ):
         if not step:
             self.locationEdit.setPlaceholderText('Sorry, invalid step...')
             return
-        
+
         if self.assetButton.isChecked():
 
             # Get the group
@@ -255,7 +255,8 @@ class SaveAsDialog( Dialog ):
 
             itemShortName = self.itemBox.currentText()
             item = self.getItem()
-            if item: itemShortName = item.shortName()
+            if item:
+                itemShortName = item.shortName()
 
             stepPath = step.folderPath()
 
@@ -264,7 +265,7 @@ class SaveAsDialog( Dialog ):
             # The filename
             nm = ram.RamFileInfo()
             nm.project = project.shortName()
-            nm.ramType = ram.ItemType.SHOT
+            nm.ramType = ram.ItemType.GENERAL
             nm.step = step.shortName()
             nm.shortName = itemShortName
             nm.extension = self.extensionBox.currentData()
@@ -408,14 +409,20 @@ class SaveAsDialog( Dialog ):
         s = self.stepBox.currentData()
         if not s:
             project = self.getProject()
-            if not project: return None
+            if not project:
+                return None
             sShortName = self.stepBox.currentText()
             s = project.step( sShortName )
         return s
 
     def getItem(self):
         i = self.itemBox.currentData()
+        if not i and self.otherButton.isChecked():
+            return ram.RamItem.fromPath(self.getFilePath(), True)
         return i
+
+    def getResource(self):
+        return self.resourceEdit.text()
 
 if __name__ == '__main__':
     dialog = SaveAsDialog()

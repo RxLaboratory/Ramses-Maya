@@ -9,13 +9,16 @@ from ramses import RamItem
 
 from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-name-in-module
 
-def setup_scene_save_handler(item, filePath='', step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
+def setup_scene_save_handler( item, filePath='', step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
     """Setup scene before saving"""
     return setup_scene(item, step)
 
-def setup_scene_template_handler(filePath, step, templateName=''): # pylint: disable=unused-argument
+def setup_scene_template_handler( filePath, item, step, templateName=''): # pylint: disable=unused-argument
     """Setup scene before saving template"""
-    item = RamItem.fromPath(filePath)
+    return setup_scene(item, step)
+
+def setup_scene_save_as_handler( filePath, item, step, resource ): # pylint: disable=unused-argument
+    """Setup scene before saving as new scene"""
     return setup_scene(item, step)
 
 def setup_scene(item, step=None): # pylint: disable=unused-argument
@@ -50,7 +53,13 @@ def saver(item, filePath, step, version, comment, incremented): # pylint: disabl
 
     return True
 
-def templateSaver( filePath, step, templateName ): # pylint: disable=unused-argument
+def saveAs( filePath, item, step, resource ):
+    """Saves as e new scene"""
+    cmds.file(rename = filePath )
+    cmds.file( save=True, options="v=1;", f=True)
+    cmds.inViewMessage( msg='Scene saved as: <hl>' + os.path.basename(filePath) + '</hl>.', pos='midCenter', fade=True )
+
+def templateSaver( filePath, item, step, templateName ): # pylint: disable=unused-argument
     """Saves the template"""
 
     # save as

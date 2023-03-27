@@ -352,42 +352,16 @@ class RamSaveAsCmd( om.MPxCommand ):
             self.setResult( False )
             return
 
-        filePath = saveAsDialog.getFilePath()
-        extension = saveAsDialog.getExtension()
-        if filePath == '':
+        item = saveAsDialog.getItem()
+        step = saveAsDialog.getStep()
+        resource = saveAsDialog.getResource()
+        ext = saveAsDialog.getExtension()
+
+        if not item or not step:
             self.setResult( False )
             return
-        # Create folder
-        folder = os.path.dirname(filePath)
-        fileName = os.path.basename(filePath)
-        if not os.path.isdir(folder):
-            os.makedirs(folder)
-        # Check if file exists
-        if os.path.isfile( filePath ):
-            # Backup
-            backupFilePath = ram.RamFileManager.copyToVersion( filePath, increment=True )
-            # Be kind, set a comment
-            ram.RamMetaDataManager.setComment( backupFilePath, "Overwritten by an external file." )
-            ram.log( 'I\'ve added this comment for you: "Overwritten by an external file."' )
 
-        new_item = saveAsDialog.getItem()
-        new_step = saveAsDialog.getStep()
-        if not setup_scene(new_item, new_step):
-            return
-
-        mayaType = 'mayaBinary'
-        if extension == 'ma':
-            mayaType = 'mayaAscii'
-        cmds.file(rename = filePath )
-        cmds.file( save=True, options="v=1;", f=True, typ=mayaType )
-        RAMSES.addToRecentFiles( filePath )
-
-        # Create the first version ( or increment existing )
-        ram.RamFileManager.copyToVersion( filePath, increment=True )
-
-        ram.log( "Scene saved as: " + filePath )
-        cmds.inViewMessage( msg='Scene saved as: <hl>' + fileName + '</hl>.', pos='midCenter', fade=True )
-
+        RAMSES.saveFileAs( currentFilePath, ext, item, step, resource)
         self.setResult( True )
 
 class RamSaveVersionCmd( om.MPxCommand ):
