@@ -509,7 +509,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
         # Publish
         if self.publish:
             if currentStep is not None:
-                RAMSES.publish( currentItem, currentStep, save_filepath, publishOptions=None, showPublishOptions=self.edit_publish_settings )
+                RAMSES.publish( save_filepath, publishOptions=None, showPublishOptions=self.edit_publish_settings )
             else:
                 ram.log( "I can't publish this item, I don't know which step it is.", ram.LogLevel.Critical )
                 cmds.inViewMessage( msg="Can't publish: unknown step.", pos='midCenterBot', fade=True )
@@ -716,8 +716,8 @@ class RamOpenCmd( om.MPxCommand ):
             if result == 2: # import
                 filePaths = importDialog.getFiles()
                 RAMSES.importItem(
-                    item,
                     filePaths,
+                    item,
                     step,
                     importOptions=None,
                     showImportOptions=show_options
@@ -728,8 +728,8 @@ class RamOpenCmd( om.MPxCommand ):
                 filePath = importDialog.getFile()
 
                 RAMSES.replaceItem(
-                    item,
                     filePath,
+                    item,
                     step,
                     importOptions=None,
                     showImportOptions=show_options

@@ -13,7 +13,7 @@ from .ui_import import ImportSettingsDialog
 from .import_manager import get_import_group, get_import_namespace, import_file, get_format_options
 from .utils_files import get_step_for_file
 
-def replacer(item, file_path, step, import_options, show_import_options=False):
+def replacer(file_path, item, step, import_options, show_import_options=False):
     """Runs a few checks and replaces selected nodes with the ones from the filepath"""
 
     # Try to find the current step
@@ -38,7 +38,7 @@ def replacer(item, file_path, step, import_options, show_import_options=False):
 
     if not 'formats' in import_options:
         import_options['formats'] = ()
-    
+
     if show_import_options:
         import_dialog = ImportSettingsDialog()
         if len(import_options['formats']) != 0:

@@ -43,15 +43,11 @@ def set_export_metadata( filepath, publish_info ):
     ram.RamMetaDataManager.setState( filepath, publish_info.state )
     ram.RamMetaDataManager.setResource( filepath, publish_info.resource )
 
-def publisher(item, step, file_path, publish_options=None, show_publish_options=False):
+def publisher(file_path, item, step, publish_options=None, show_publish_options=False):
     """The publish entry point"""
 
     # Get options
     publish_nodes = ()
-    if not publish_options:
-        publish_options_str = step.publishSettings()
-        if publish_options_str != "":
-            publish_options = yaml.safe_load( publish_options_str )
 
     # Check if we need to show the publish dialog
     publish_dialog = PublishDialog()
@@ -86,7 +82,7 @@ def publisher(item, step, file_path, publish_options=None, show_publish_options=
     if len(publish_nodes) == 0:
         return
 
-    ram.log("Publishing " + str(item) + " for " + str(step) + " in:\n" + os.path.dirname( publish_info.filePath()), ram.LogLevel.Info)
+    ram.log("Publishing in: " + os.path.dirname(publish_info.filePath()), ram.LogLevel.Info )
     ram.log("-> These are the publish options:\n\n" + yaml.dump(publish_options), ram.LogLevel.Info )
 
     # Show progress

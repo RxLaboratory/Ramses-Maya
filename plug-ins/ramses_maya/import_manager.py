@@ -13,7 +13,7 @@ from .utils_options import get_option
 from .utils_attributes import RamsesAttribute, get_ramses_attr, set_import_attributes, is_ramses_managed
 from .utils_files import get_step_for_file
 
-def importer( item, file_paths, step, import_options=None, show_import_options=False):
+def importer( file_paths, item, step, import_options=None, show_import_options=False):
     """The entry point for importing assets"""
 
     # Try to find the current step

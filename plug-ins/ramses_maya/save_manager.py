@@ -39,7 +39,7 @@ def setup_scene(item, step=None): # pylint: disable=unused-argument
 
     return True
 
-def saver(item, filePath, step, version, comment, incremented): # pylint: disable=unused-argument
+def saver(filePath, item, step, version, comment, incremented): # pylint: disable=unused-argument
     """Saves the scene"""
 
     # Set the save name and save
@@ -54,7 +54,7 @@ def saver(item, filePath, step, version, comment, incremented): # pylint: disabl
     return True
 
 def saveAs( filePath, item, step, resource ):
-    """Saves as e new scene"""
+    """Saves as new scene"""
     cmds.file(rename = filePath )
     cmds.file( save=True, options="v=1;", f=True)
     cmds.inViewMessage( msg='Scene saved as: <hl>' + os.path.basename(filePath) + '</hl>.', pos='midCenter', fade=True )
