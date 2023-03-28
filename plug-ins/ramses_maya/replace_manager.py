@@ -11,33 +11,11 @@ from .utils_options import get_option
 from .update_manager import update
 from .ui_import import ImportSettingsDialog
 from .import_manager import get_import_group, get_import_namespace, import_file, get_format_options
-from .utils_files import get_step_for_file
 
 def replacer(file_path, item, step, import_options, show_import_options=False):
     """Runs a few checks and replaces selected nodes with the ones from the filepath"""
 
-    # Try to find the current step
-    current_scene_file = cmds.file( q=True, sn=True )
-    current_step = get_step_for_file( current_scene_file )
-
     extension = os.path.splitext(file_path)[1][1:]
-
-    # Get options
-    if not import_options:
-        import_options = { "formats": [] }
-        for p in step.outputPipes():
-            if current_step is None or current_step.shortName() == p.inputStepShortName():
-                for f in p.pipeFiles():
-                    options_str = f.customSettings()
-                    if options_str != "":
-                        options = yaml.safe_load( options_str )
-                        if options['format'] == extension:
-                            import_options['formats'].append( options )
-                            break
-                break
-
-    if not 'formats' in import_options:
-        import_options['formats'] = ()
 
     if show_import_options:
         import_dialog = ImportSettingsDialog()

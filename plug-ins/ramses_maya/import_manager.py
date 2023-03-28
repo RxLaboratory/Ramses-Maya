@@ -11,27 +11,9 @@ from dupyf.string import intToStr
 from .ui_import import ImportSettingsDialog
 from .utils_options import get_option
 from .utils_attributes import RamsesAttribute, get_ramses_attr, set_import_attributes, is_ramses_managed
-from .utils_files import get_step_for_file
 
 def importer( file_paths, item, step, import_options=None, show_import_options=False):
     """The entry point for importing assets"""
-
-    # Try to find the current step
-    current_scene_file = cmds.file( q=True, sn=True )
-    current_step = get_step_for_file( current_scene_file )
-
-    # Get options
-    if not import_options:
-        import_options = { "formats": [] }
-        for p in step.outputPipes():
-            ram.log("Checking pipe: " + str(p), ram.LogLevel.Debug)
-            if current_step is None or current_step.shortName() == p.inputStepShortName():
-                for f in p.pipeFiles():
-                    options_str = f.customSettings()
-                    ram.log("Found options:\n" + options_str, ram.LogLevel.Debug)
-                    if options_str != "":
-                        options = yaml.safe_load( options_str )
-                        import_options['formats'].append( options )
 
     if len(import_options['formats']) == 0 or show_import_options:
         import_dialog = ImportSettingsDialog()

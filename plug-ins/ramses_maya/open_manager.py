@@ -3,7 +3,7 @@
 
 from maya import cmds # pylint: disable=import-error
 
-def opener( item, file_path, step ):
+def opener( file_path, item, step ):
     """Opens a scene"""
     # Open
     cmds.file(file_path, open=True, force=True)

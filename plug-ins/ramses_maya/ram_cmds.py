@@ -24,7 +24,6 @@ from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-
 from .utils_attributes import get_item, get_step, set_import_attributes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
-from .utils_files import get_current_project, get_step_for_file
 from .ui_publish import PublishDialog
 from .save_manager import setup_scene
 
@@ -336,8 +335,8 @@ class RamSaveAsCmd( om.MPxCommand ):
         currentFilePath = cmds.file( q=True, sn=True )
 
         # Info
-        project = get_current_project( currentFilePath )
-        step = get_step_for_file( currentFilePath )
+        project = ram.RamProject.fromPath( currentFilePath )
+        step = ram.RamStep.fromPath( currentFilePath )
         item = ram.RamItem.fromPath( currentFilePath )
 
         saveAsDialog = SaveAsDialog(dumaf.ui.getMayaWindow())
@@ -611,8 +610,8 @@ class RamPublishTemplateCmd( om.MPxCommand ):
         publishDialog = PublishTemplateDialog(dumaf.ui.getMayaWindow())
 
         # Set the project and step
-        project = get_current_project( currentFilePath )
-        step = get_step_for_file( currentFilePath )
+        project = ram.RamProject.fromPath( currentFilePath )
+        step = ram.RamStep.fromPath( currentFilePath )
         # Set
         if project is not None:
             publishDialog.setProject( project )
@@ -716,6 +715,7 @@ class RamOpenCmd( om.MPxCommand ):
             if result == 2: # import
                 filePaths = importDialog.getFiles()
                 RAMSES.importItem(
+                    cmds.file( q=True, sn=True ),
                     filePaths,
                     item,
                     step,
@@ -728,6 +728,7 @@ class RamOpenCmd( om.MPxCommand ):
                 filePath = importDialog.getFile()
 
                 RAMSES.replaceItem(
+                    cmds.file( q=True, sn=True )
                     filePath,
                     item,
                     step,
@@ -1207,10 +1208,10 @@ class RamPublishSettings( om.MPxCommand ):
             return
 
         # Get current info
-        step = get_step_for_file( current_file_path )
+        step = ram.RamStep.fromPath( current_file_path )
 
         publish_dialog = PublishDialog()
-        project = get_current_project(current_file_path)
+        project = ram.RamProject.fromPath(current_file_path)
         if project:
             publish_dialog.set_steps( project.steps() )
         if step:
