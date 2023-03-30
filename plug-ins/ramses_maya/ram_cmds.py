@@ -728,7 +728,7 @@ class RamOpenCmd( om.MPxCommand ):
                 filePath = importDialog.getFile()
 
                 RAMSES.replaceItem(
-                    cmds.file( q=True, sn=True )
+                    cmds.file( q=True, sn=True ),
                     filePath,
                     item,
                     step,
