@@ -9,7 +9,7 @@ from ramses import RamItem
 
 from .ui_scene_setup import SceneSetupDialog # pylint: disable=import-error,no-name-in-module
 
-def setup_scene_save_handler( item, filePath='', step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
+def setup_scene_save_handler( filePath, item, step=None, version=1, comment='', incremented=False): # pylint: disable=unused-argument
     """Setup scene before saving"""
     return setup_scene(item, step)
 
