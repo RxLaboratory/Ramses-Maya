@@ -21,7 +21,7 @@
 
 import re
 import uuid as UUID
-import maya.api.OpenMaya as om  
+import maya.api.OpenMaya as om  # pylint: disable=import-error
 import maya.cmds as cmds  # pylint: disable=import-error
 from .paths import baseName
 
@@ -714,7 +714,7 @@ class Node():
         for node in current_nodes:
             sets = cmds.listSets(object=node, ets= True)
             if sets is not None:
-                node_name = baseName(node, True)
+                node_name = baseName(node)
                 node_sets[node_name] = sets
 
         return node_sets

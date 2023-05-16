@@ -64,7 +64,7 @@ def update_nodes( old_node, new_nodes, root_locator, node_sets, node_locators ):
         if children is not None:
             children.append(new_node.path())
             for child in children:
-                new_name = dumaf.paths.baseName(child, True)
+                new_name = dumaf.paths.baseName(child)
                 # Reset deformers and shaders
                 if new_name in node_sets:
                     new_sets = node_sets[new_name]
