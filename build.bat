@@ -1,7 +1,7 @@
 @echo off
 :: Builds the module (copies needed files) to the build subfolder,
 
-SET version=0.8.17-Beta
+SET version=0.8.18-Beta
 
 :: The repo (current dir)
 SET repoPath=%~dp0
