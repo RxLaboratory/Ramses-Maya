@@ -1171,11 +1171,12 @@ class RamUpdateCmd( om.MPxCommand ):
             # Replace
             # the replacer replaces selected nodes: select it!
             cmds.select(node, replace=True)
-            replacer(ram_item, updateFile, ram_step, import_options=options, show_import_options=False)
+            replacer(updateFile, ram_item, ram_step, import_options=options, show_import_options=False)
 
         progressDialog.close()
 
 class RamPublishSettings( om.MPxCommand ):
+    """Sets the publish settings"""
     name = "ramPublishSettings"
 
     def __init__(self):
