@@ -2,6 +2,7 @@
 """UI for opening/importing/replacing items"""
 
 import os
+from functools import cmp_to_key
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QDialog,
     QHBoxLayout,
@@ -45,6 +46,7 @@ class ImportDialog( Dialog ):
         super(ImportDialog,self).__init__(parent)
 
         self.__setup_ui()
+        self.__setup_menu()
         self.__load_projects()
         self.__connect_events()
 
@@ -211,6 +213,28 @@ class ImportDialog( Dialog ):
 
         self.__type_changed()
 
+    def __setup_menu(self):
+        by_version = SETTINGS.userSettings.get('sort_publish_by_version', True)
+        asc = SETTINGS.userSettings.get('sort_publish_ascending', False)
+        print(by_version)
+        print(asc)
+
+        sort_menu = self.edit_menu.addMenu("Sort published versions")
+        self.__sort_publish_by_version = sort_menu.addAction("By version")
+        self.__sort_publish_by_version.setCheckable(True)
+        self.__sort_publish_by_version.setChecked( by_version )
+        self.__sort_publish_by_resource = sort_menu.addAction("By resource")
+        self.__sort_publish_by_resource.setCheckable(True)
+        self.__sort_publish_by_resource.setChecked( not by_version )
+        sort_menu.addSeparator()
+        self.__sort_publish_asc = sort_menu.addAction("Ascending")
+        self.__sort_publish_asc.setCheckable(True)
+        self.__sort_publish_asc.setChecked( asc )
+        self.__sort_publish_desc = sort_menu.addAction("Descending")
+        self.__sort_publish_desc.setCheckable(True)
+        self.__sort_publish_desc.setChecked(not asc )
+
+
     def __connect_events(self):
         self.projectBox.currentIndexChanged.connect( self.__project_changed )
 
@@ -242,6 +266,43 @@ class ImportDialog( Dialog ):
         self.itemSearchField.textChanged.connect( self.__search_item )
         self.versionSearchField.textChanged.connect( self.__search_version )
         self.publishVersionBox.currentIndexChanged.connect( self.__update_published_files )
+
+        self.__sort_publish_by_version.toggled.connect( self.__change_sort_publish_by_version )
+        self.__sort_publish_by_resource.toggled.connect( self.__change_sort_publish_by_resource )
+        self.__sort_publish_asc.toggled.connect( self.__change_sort_publish_asc )
+        self.__sort_publish_desc.toggled.connect( self.__change_sort_publish_desc )
+
+    @Slot()
+    def __change_sort_publish_by_version(self, checked):
+        self.__sort_publish_by_version.setChecked( checked )
+        self.__sort_publish_by_resource.setChecked( not checked )
+        SETTINGS.userSettings['sort_publish_by_version'] = checked
+        SETTINGS.save()
+        self.__update_resources()
+
+    @Slot()
+    def __change_sort_publish_by_resource(self, checked):
+        self.__sort_publish_by_version.setChecked( not checked )
+        self.__sort_publish_by_resource.setChecked( checked )
+        SETTINGS.userSettings['sort_publish_by_version'] = not checked
+        SETTINGS.save()
+        self.__update_resources()
+
+    @Slot()
+    def __change_sort_publish_asc(self, checked):
+        self.__sort_publish_asc.setChecked( checked )
+        self.__sort_publish_desc.setChecked( not checked )
+        SETTINGS.userSettings['sort_publish_ascending'] = checked
+        SETTINGS.save()
+        self.__update_resources()
+
+    @Slot()
+    def __change_sort_publish_desc(self, checked):
+        self.__sort_publish_asc.setChecked( not checked )
+        self.__sort_publish_desc.setChecked( checked )
+        SETTINGS.userSettings['sort_publish_ascending'] = not checked
+        SETTINGS.save()
+        self.__update_resources()
 
     @Slot()
     def __recent_button_clicked(self):
@@ -453,6 +514,7 @@ class ImportDialog( Dialog ):
             self.versionsLabel.setText("Version:")
             self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
             self.publishVersionBox.setVisible(False)
+            self.resourcesWidget.show()
         else: # Import or replace
             if self.replaceButton.isChecked():
                 self._replaceButton.show()
@@ -465,6 +527,7 @@ class ImportDialog( Dialog ):
             self._openButton.hide()
             self.versionsLabel.setText("File:")
             self.publishVersionBox.setVisible(True)
+            self.resourcesWidget.hide()
         self.__update_resources()
         self.__resource_changed( self.resourceList.currentRow() )
 
@@ -626,7 +689,13 @@ class ImportDialog( Dialog ):
             return
         folders = currentItem.publishedVersionFolderPaths( step )
 
-        for f in reversed(folders): # list more recent first
+        sorted_folders = folders
+        if self.__sort_publish_by_version.isChecked():
+            sorted_folders = sorted(folders, key=cmp_to_key(publish_sorter))
+        if self.__sort_publish_desc.isChecked():
+            sorted_folders = reversed(sorted_folders)
+
+        for f in sorted_folders:
             folderName = os.path.basename( f )
             folderName = folderName.split("_")
             title = ""
@@ -676,6 +745,9 @@ class ImportDialog( Dialog ):
             if self.assetButton.isChecked() or self.shotButton.isChecked():
                 return
             self.__list_published_versions()
+            return
+
+        if self.replaceButton.isChecked():
             return
 
         # Open, list versions
@@ -1132,6 +1204,22 @@ class ImportSettingsWidget( QWidget ):
         self.__format = get_option("format", options, "*")
 
         self.__update_preset()
+
+def publish_sorter(a, b):
+    """Sorts published folders"""
+    if a == b:
+        return 0
+    a = a.split(" | ")
+    b = b.split(" | ")
+    if len(a) != len(b):
+        return len(b) - len(a)
+    i = 0
+    while i < len(a):
+        if a[i] < b[i]:
+            return -1
+        if a[i] > b[i]:
+            return 1
+    return 0
 
 if __name__ == '__main__':
     dialog = ImportDialog()
