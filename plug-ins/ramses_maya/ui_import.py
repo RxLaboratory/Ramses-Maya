@@ -19,7 +19,8 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
     QCheckBox,
     QTextEdit,
     QStackedLayout,
-    QRadioButton
+    QRadioButton,
+    QAction
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
     Slot,
@@ -216,24 +217,31 @@ class ImportDialog( Dialog ):
     def __setup_menu(self):
         by_version = SETTINGS.userSettings.get('sort_publish_by_version', True)
         asc = SETTINGS.userSettings.get('sort_publish_ascending', False)
-        print(by_version)
-        print(asc)
 
-        sort_menu = self.edit_menu.addMenu("Sort published versions")
-        self.__sort_publish_by_version = sort_menu.addAction("By version")
-        self.__sort_publish_by_version.setCheckable(True)
-        self.__sort_publish_by_version.setChecked( by_version )
-        self.__sort_publish_by_resource = sort_menu.addAction("By resource")
-        self.__sort_publish_by_resource.setCheckable(True)
-        self.__sort_publish_by_resource.setChecked( not by_version )
-        sort_menu.addSeparator()
-        self.__sort_publish_asc = sort_menu.addAction("Ascending")
-        self.__sort_publish_asc.setCheckable(True)
-        self.__sort_publish_asc.setChecked( asc )
-        self.__sort_publish_desc = sort_menu.addAction("Descending")
-        self.__sort_publish_desc.setCheckable(True)
-        self.__sort_publish_desc.setChecked(not asc )
+        self.sort_menu = self.edit_menu.addMenu("Sort published versions")
 
+        self.sort_publish_by_version = QAction("By version", self)
+        self.sort_publish_by_version.setCheckable(True)
+        self.sort_publish_by_version.setChecked( by_version )
+        self.sort_menu.addAction(self.sort_publish_by_version)
+
+        self.sort_publish_by_resource = QAction("By resource", self)
+        self.sort_publish_by_resource.setCheckable(True)
+        self.sort_publish_by_resource.setChecked( not by_version )
+        self.sort_publish_by_resource.setParent(self)
+        self.sort_menu.addAction(self.sort_publish_by_resource)
+
+        self.sort_menu.addSeparator()
+
+        self.sort_publish_asc = QAction("Ascending", self)
+        self.sort_publish_asc.setCheckable(True)
+        self.sort_publish_asc.setChecked( asc )
+        self.sort_menu.addAction(self.sort_publish_asc)
+
+        self.sort_publish_desc = QAction("Descending", self)
+        self.sort_publish_desc.setCheckable(True)
+        self.sort_publish_desc.setChecked(not asc )
+        self.sort_menu.addAction(self.sort_publish_desc)
 
     def __connect_events(self):
         self.projectBox.currentIndexChanged.connect( self.__project_changed )
@@ -267,39 +275,39 @@ class ImportDialog( Dialog ):
         self.versionSearchField.textChanged.connect( self.__search_version )
         self.publishVersionBox.currentIndexChanged.connect( self.__update_published_files )
 
-        self.__sort_publish_by_version.toggled.connect( self.__change_sort_publish_by_version )
-        self.__sort_publish_by_resource.toggled.connect( self.__change_sort_publish_by_resource )
-        self.__sort_publish_asc.toggled.connect( self.__change_sort_publish_asc )
-        self.__sort_publish_desc.toggled.connect( self.__change_sort_publish_desc )
+        self.sort_publish_by_version.toggled.connect( self.__change_sort_publish_by_version )
+        self.sort_publish_by_resource.toggled.connect( self.__change_sort_publish_by_resource )
+        self.sort_publish_asc.toggled.connect( self.__change_sort_publish_asc )
+        self.sort_publish_desc.toggled.connect( self.__change_sort_publish_desc )
 
     @Slot()
     def __change_sort_publish_by_version(self, checked):
-        self.__sort_publish_by_version.setChecked( checked )
-        self.__sort_publish_by_resource.setChecked( not checked )
+        self.sort_publish_by_version.setChecked( checked )
+        self.sort_publish_by_resource.setChecked( not checked )
         SETTINGS.userSettings['sort_publish_by_version'] = checked
         SETTINGS.save()
         self.__update_resources()
 
     @Slot()
     def __change_sort_publish_by_resource(self, checked):
-        self.__sort_publish_by_version.setChecked( not checked )
-        self.__sort_publish_by_resource.setChecked( checked )
+        self.sort_publish_by_version.setChecked( not checked )
+        self.sort_publish_by_resource.setChecked( checked )
         SETTINGS.userSettings['sort_publish_by_version'] = not checked
         SETTINGS.save()
         self.__update_resources()
 
     @Slot()
     def __change_sort_publish_asc(self, checked):
-        self.__sort_publish_asc.setChecked( checked )
-        self.__sort_publish_desc.setChecked( not checked )
+        self.sort_publish_asc.setChecked( checked )
+        self.sort_publish_desc.setChecked( not checked )
         SETTINGS.userSettings['sort_publish_ascending'] = checked
         SETTINGS.save()
         self.__update_resources()
 
     @Slot()
     def __change_sort_publish_desc(self, checked):
-        self.__sort_publish_asc.setChecked( not checked )
-        self.__sort_publish_desc.setChecked( checked )
+        self.sort_publish_asc.setChecked( not checked )
+        self.sort_publish_desc.setChecked( checked )
         SETTINGS.userSettings['sort_publish_ascending'] = not checked
         SETTINGS.save()
         self.__update_resources()
@@ -678,6 +686,7 @@ class ImportDialog( Dialog ):
         else:
             listTemplateResources(step)
 
+    @Slot()
     def __list_published_versions(self):
         self.publishVersionBox.clear()
         folders = []
@@ -690,9 +699,9 @@ class ImportDialog( Dialog ):
         folders = currentItem.publishedVersionFolderPaths( step )
 
         sorted_folders = folders
-        if self.__sort_publish_by_version.isChecked():
+        if self.sort_publish_by_version.isChecked():
             sorted_folders = sorted(folders, key=cmp_to_key(publish_sorter))
-        if self.__sort_publish_desc.isChecked():
+        if self.sort_publish_desc.isChecked():
             sorted_folders = reversed(sorted_folders)
 
         for f in sorted_folders:
