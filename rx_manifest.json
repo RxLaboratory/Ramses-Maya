@@ -1,0 +1,20 @@
+{
+    "title": "Ramses Maya Module",
+    "hosts": [
+        {
+            "name": "maya",
+            "title": "Maya"
+        }
+    ],
+    "os": [
+        {
+            "name": "win",
+            "title": "Windows"
+        }
+    ],
+    "userGuide": "https://ramses.rxlab.guide/components/addons/maya",
+    "apiReference": "https://ramses.rxlab.guide/components/addons/maya-extend/",
+    "website": "https://rxlaboratory.org/tools/ramses/",
+    "description": "The Rx Asset Management System (Ramses) Maya Plugin",
+    "tutorials": ""
+}
