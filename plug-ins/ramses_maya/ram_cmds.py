@@ -172,7 +172,7 @@ def create_playblast(filePath, size):
         '-y', # overwrite
         '-start_number', str(cmds.playbackOptions(q=True,minTime=True)),
         '-framerate', str(framerate),
-        '-i', imageFile.replace('####', "%5d"), # Image file
+        '-i', imageFile.replace('#####', "%5d"), # Image file
     ]
     if soundFile != '':
         ffmpegArgs = ffmpegArgs + [
