@@ -11,3 +11,4 @@ from . import rendering
 from .references import Reference
 from .ui_progress import ProgressDialog
 from . import mayapy
+from . import options
