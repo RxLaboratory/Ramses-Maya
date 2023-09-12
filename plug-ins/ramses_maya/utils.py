@@ -11,6 +11,7 @@ from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     QUrl
 )
 from maya import cmds # pylint: disable=import-error
+import dumaf as maf
 
 # Some paths we need
 MODULE_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -55,3 +56,12 @@ def end_process(temp_data, progress_dialog):
 
     if progress_dialog:
         progress_dialog.hide()
+
+def getVideoPlayer():
+    """Gets the video player to use when playblasting"""
+    default = os.path.dirname( cmds.pluginInfo('DuBlast', query=True, path=True) )
+    default = default + '/ffplay.exe'
+    current = maf.options.get('dublast.videoPlayer', default)
+    if current == "":
+        current = default
+    return current

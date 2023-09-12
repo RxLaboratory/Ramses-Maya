@@ -26,6 +26,7 @@ from .ui_update import UpdateDialog
 from .replace_manager import replacer
 from .ui_publish import PublishDialog
 from .save_manager import setup_scene
+from .utils import getVideoPlayer
 
 import ramses as ram
 # Keep the ramses and the SETTINGS instances at hand
@@ -112,7 +113,6 @@ def create_playblast(filePath, size):
     # Get bin dir
     ramsesFoler = cmds.getModulePath(moduleName='Ramses')
     ffmpegFile = ramsesFoler + '/bin/ffmpeg.exe'
-    ffplayFile = ramsesFoler + '/bin/ffplay.exe'
 
     # Get a temp dir for rendering the playblast
     tempDir = get_temp_dir()
@@ -204,13 +204,12 @@ def create_playblast(filePath, size):
 
     # Remove temp files
     shutil.rmtree(tempDir)
-    subprocess.Popen([ffplayFile, '-seek_interval', '0.1', filePath])
+    player = getVideoPlayer()
+    if player.endswith('ffplay.exe'):
+        subprocess.Popen([player, '-seek_interval', '0.1', filePath])
+    else:
+        subprocess.Popen([player, filePath])
     return
-    # Open playblast
-    if platform.system() == "Windows":
-        os.startfile(filePath)
-    elif platform.system() == "Linux":
-        subprocess.call(["xdg-open", filePath])
 
 def create_thumbnail(filePath):
     """Saves a thumbnail for the current viewport at filepath"""

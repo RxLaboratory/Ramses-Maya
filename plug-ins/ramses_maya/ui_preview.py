@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """UI for the preview options"""
 
+import os
 from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QCheckBox,
     QDialog,
@@ -13,6 +14,7 @@ from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
     QLineEdit,
     QPushButton,
     QSlider,
+    QFileDialog
 )
 from PySide2.QtCore import ( # pylint: disable=no-name-in-module
     Slot,
@@ -24,6 +26,7 @@ import maya.mel as mel  # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
 import dumaf as maf
 from ramses_maya.ui_dialog import Dialog
+from ramses_maya.utils import getVideoPlayer
 
 class PreviewDialog( Dialog ):
     """The dialog for preview options"""
@@ -44,6 +47,7 @@ class PreviewDialog( Dialog ):
 
     def _setupMenu(self):
         self._resetAction = self.edit_menu.addAction("Reset defaults")
+        self._setPlayerAction = self.edit_menu.addAction("Set video player...")
 
     def _setupUi(self):
         self.setWindowTitle( "Create preview" )
@@ -111,6 +115,8 @@ class PreviewDialog( Dialog ):
         renderOptionsLayout.addWidget(self.onlyPolyBox)
         self.motionTrailBox = QCheckBox("Show Motion Trails")
         renderOptionsLayout.addWidget(self.motionTrailBox)
+        self.imagePlaneBox = QCheckBox("Show Image Plane")
+        renderOptionsLayout.addWidget(self.imagePlaneBox)
         self.showHudBox = QCheckBox("Show HUD")
         self.showHudBox.setChecked(True)
         renderOptionsLayout.addWidget(self.showHudBox)
@@ -159,6 +165,7 @@ class PreviewDialog( Dialog ):
 
     def _connectEvents(self):
         self._resetAction.triggered.connect( self._resetDefaults )
+        self._setPlayerAction.triggered.connect( self._setPlayer )
         self._renderButton.clicked.connect( self._ok )
         self._renderButton.clicked.connect( self.accept )
         self._cancelButton.clicked.connect( self.reject )
@@ -168,12 +175,14 @@ class PreviewDialog( Dialog ):
         self.useLightsBox.currentIndexChanged.connect( self._updateRenderer )
         self.displayTexturesBox.clicked.connect( self._updateRenderer )
         self.motionTrailBox.clicked.connect( self._updateRenderer )
+        self.imagePlaneBox.clicked.connect( self._updateRenderer )
         self.displayShadowsBox.clicked.connect( self._updateRenderer )
         self.cameraBox.currentIndexChanged.connect( self._updateRenderer )
         self.aaBox.clicked.connect( self._updateRenderer )
         self.aoBox.clicked.connect( self._updateRenderer )
         self.sizeSlider.valueChanged.connect( self.sizeEdit.setValue )
         self.sizeEdit.valueChanged.connect( self.sizeSlider.setValue )
+        self.folderButton.clicked.connect( self._browseFolder )
 
     def _updateRenderer(self):
         cam = self.cameraBox.currentData()
@@ -184,6 +193,7 @@ class PreviewDialog( Dialog ):
             displayTextures=self.displayTexturesBox.isChecked(),
             motionTrails=self.motionTrailBox.isChecked(),
             shadows=self.displayShadowsBox.isChecked(),
+            imagePlane=self.imagePlaneBox.isChecked(),
             edit=True)
 
         cmds.setAttr('hardwareRenderingGlobals.multiSampleEnable',self.aaBox.isChecked() ) # AA
@@ -252,8 +262,10 @@ class PreviewDialog( Dialog ):
         self.aaBox.setChecked( True )
         self.onlyPolyBox.setChecked( True )
         self.motionTrailBox.setChecked( False )
+        self.imagePlaneBox.setChecked( False )
         self.showHudBox.setChecked( True )
         self.folderEdit.setText( "" )
+        maf.options.save('dublast.videoPlayer', '')
 
     def _loadSettings(self):
         # Init
@@ -284,6 +296,9 @@ class PreviewDialog( Dialog ):
         self.motionTrailBox.setChecked(
             maf.options.get('dublast.motionTrail', 0) == 1
         )
+        self.imagePlaneBox.setChecked(
+            maf.options.get('dublast.imagePlane', 0) == 1
+        )
         self.showHudBox.setChecked(
             maf.options.get('dublast.showHud', 1) == 1
         )
@@ -302,8 +317,15 @@ class PreviewDialog( Dialog ):
         maf.options.save('dublast.aa', 1 if self.aaBox.isChecked() else 0)
         maf.options.save('dublast.onlyPoly',1 if self.onlyPolyBox.isChecked() else 0)
         maf.options.save('dublast.motionTrail', 1 if self.motionTrailBox.isChecked() else 0)
+        maf.options.save('dublast.imagePlane', 1 if self.imagePlaneBox.isChecked() else 0)
         maf.options.save('dublast.showHud', 1 if self.showHudBox.isChecked() else 0)
         maf.options.save('dublast.folder', self.folderEdit.text())
+
+    def _setPlayer(self):
+        current = getVideoPlayer()
+        new = QFileDialog.getOpenFileName(self, "Select the video player", os.path.dirname(current))[0]
+        if QFileInfo.exists(new):
+            maf.options.save('dublast.videoPlayer', new)
 
     Slot()
     def _updateLightsBox(self, index):
@@ -315,6 +337,12 @@ class PreviewDialog( Dialog ):
 
     def _loadCameras(self):
         maf.ui.update_cam_combobox(self.cameraBox)
+
+    Slot()
+    def _browseFolder(self):
+        f = QFileDialog.getExistingDirectory(self, "Select output folder", self.folderEdit.text() )
+        if QFileInfo.exists(f):
+            self.folderEdit.setText(f)
 
     def comment(self):
         """Returns the comment added by the user"""
