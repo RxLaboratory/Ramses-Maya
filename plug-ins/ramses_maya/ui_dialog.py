@@ -25,6 +25,7 @@ from ramses_maya.utils import (
 )
 from ramses_maya.ui_about import AboutDialog
 from dumaf.utils import checkUpdate
+from ramses_maya.utils import donate
 
 class Dialog(QDialog):
     """
@@ -51,6 +52,7 @@ class Dialog(QDialog):
         self.__api_reference_action = help_menu.addAction("Ramses API reference...")
         help_menu.addSeparator()
         self.__update_action = help_menu.addAction("Check for update")
+        self.__donate_action = help_menu.addAction("Donate...")
         help_menu.addSeparator()
         self.__about_qt_action = help_menu.addAction("About Qt...")
         self.__about_action = help_menu.addAction("About...")
@@ -75,6 +77,7 @@ class Dialog(QDialog):
         self.__update_action.triggered.connect( self.check_update )
         self.__about_qt_action.triggered.connect( self.show_about_qt )
         self.__about_action.triggered.connect( self.show_about )
+        self.__donate_action.triggered.connect( donate )
 
     # <== PROTECTED METHODS ==>
 

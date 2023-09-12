@@ -34,6 +34,11 @@ def about_ramses():
     QDesktopServices.openUrl( QUrl( "https://rxlaboratory.org/tools/ramses" ) )
 
 @Slot()
+def donate():
+    """Opens the donation page"""
+    QDesktopServices.openUrl( QUrl( "http://donate.rxlab.info" ) )
+
+@Slot()
 def open_api_reference():
     """Opens the online API reference"""
     QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/0.5/dev/add-ons-reference/" ) )
