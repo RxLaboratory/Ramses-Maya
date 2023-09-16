@@ -130,12 +130,12 @@ def create_playblast(filePath, size):
         filename=imageFile,
         format='image',
         clearCache=True,
-        framePadding= 5,
+        framePadding=5,
         viewer=False,
         showOrnaments=True,
         percent=100,
         compression="jpg",
-        quality=50, 
+        quality=50,
         width = w,
         height = h
         )
@@ -165,6 +165,10 @@ def create_playblast(filePath, size):
     # Get framerate
     framerate = mel.eval('float $fps = `currentTimeUnitToFPS`') # It's not in cmds!!
 
+    # We the number of # may be wrong, because maya....
+    ffmpegImageFile = imageFile.replace('.#', ".%5d")
+    ffmpegImageFile = ffmpegImageFile.replace('#',"")
+
     # Transcode using ffmpeg
     ffmpegArgs = [
         ffmpegFile,
@@ -172,7 +176,7 @@ def create_playblast(filePath, size):
         '-y', # overwrite
         '-start_number', str(cmds.playbackOptions(q=True,minTime=True)),
         '-framerate', str(framerate),
-        '-i', imageFile.replace('#####', "%5d"), # Image file
+        '-i', ffmpegImageFile, # Image file
     ]
     if soundFile != '':
         ffmpegArgs = ffmpegArgs + [

@@ -59,8 +59,8 @@ def end_process(temp_data, progress_dialog):
 
 def getVideoPlayer():
     """Gets the video player to use when playblasting"""
-    default = os.path.dirname( cmds.pluginInfo('DuBlast', query=True, path=True) )
-    default = default + '/ffplay.exe'
+    default = os.path.dirname( cmds.pluginInfo('Ramses', query=True, path=True) )
+    default = default + '/../bin/ffplay.exe'
     current = maf.options.get('dublast.videoPlayer', default)
     if current == "":
         current = default
