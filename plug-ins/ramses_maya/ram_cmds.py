@@ -230,10 +230,12 @@ class RamSaveCmd( om.MPxCommand ):
 
     @staticmethod
     def createCommand():
+        """Creates the Maya command"""
         return RamSaveCmd()
 
     @staticmethod
     def createSyntax():
+        """Creates the syntax of the command"""
         syntax = om.MSyntax()
         syntax.addFlag('-c', "-comment", om.MSyntax.kString )
         syntax.addFlag('-sc', "-setComment", om.MSyntax.kBoolean )
@@ -268,6 +270,7 @@ class RamSaveCmd( om.MPxCommand ):
         return True
 
     def doIt(self, args):
+        """The Maya command entry point"""
         check_update()
         try:
             self.run(args)
@@ -297,7 +300,7 @@ class RamSaveCmd( om.MPxCommand ):
         if not self.parseArgs(args,saveFilePath):
             return
 
-        RAMSES.saveFile( saveFilePath )
+        RAMSES.saveFile( currentFilePath, comment=self.newComment )
 
 class RamSaveAsCmd( om.MPxCommand ):
     """ramSaveAs Maya cmd"""
@@ -520,6 +523,7 @@ class RamSaveVersionCmd( om.MPxCommand ):
             cmds.ramPreview()
 
 class RamRetrieveVersionCmd( om.MPxCommand ):
+    """ramRetrieveVersion Maya cmd"""
     name = "ramRetrieveVersion"
 
     def __init__(self):
