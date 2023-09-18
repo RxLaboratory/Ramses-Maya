@@ -116,4 +116,4 @@ dmypy.json
 # ignore the ramses module
 ramses
 # ignore the dupyf module
-dupyf
+dupyf.foldex.ini
