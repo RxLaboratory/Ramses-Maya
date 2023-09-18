@@ -27,7 +27,7 @@ def icon(name):
 @Slot()
 def open_help():
     """Opens the online help for the addon"""
-    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/0.5/components/addons/maya" ) )
+    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/components/addons/maya" ) )
 
 @Slot()
 def about_ramses():
@@ -42,7 +42,7 @@ def donate():
 @Slot()
 def open_api_reference():
     """Opens the online API reference"""
-    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/0.5/dev/add-ons-reference/" ) )
+    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/dev/add-ons-reference/" ) )
 
 def end_process(temp_data, progress_dialog):
     """Ends a process on the scene (closes and removes the temp file)"""

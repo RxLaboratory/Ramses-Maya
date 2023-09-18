@@ -31,7 +31,7 @@ class AboutDialog(QDialog):
         l.addWidget(QLabel("<p>Licensed under the GNU General Public License v3</p>"
                           "<p>Please make a donation if you like this!</p>" ))
 
-        self.donateButton = QPushButton("💟 Donate")
+        self.donateButton = QPushButton("💟 Donate ")
         l.addWidget(self.donateButton)
 
         self.donateButton.clicked.connect(donate)
