@@ -12,6 +12,18 @@
             "title": "Windows"
         }
     ],
+    "assets": [
+        {
+            "nameRegEx": "",
+            "name": "Ramses Maya Module",
+            "description": "This is the add-on to integrate Ramses into Autodesk Maya.",
+            "hosts": [ {"name": "maya", "title": "Maya"} ],
+            "os": [ {"name": "win", "title": "Windows"} ],
+            "urls": [
+                {"title": "Documentation", "url": "https://ramses.rxlab.guide/components/addons/maya/"}
+            ]
+        }
+    ],
     "userGuide": "https://ramses.rxlab.guide/components/addons/maya",
     "apiReference": "https://ramses.rxlab.guide/components/addons/maya-extend/",
     "website": "https://rxlaboratory.org/tools/ramses/",
