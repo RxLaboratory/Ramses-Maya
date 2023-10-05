@@ -37,6 +37,10 @@ if not ok:
 cmds.ramSaveAs()
 """
 
+def installMarkingMenu():
+    # Create the marking menu
+    ram.RamsesMarkingMenu()
+
 def installHotkeys():
     """
     Registers Ramses Hotkeys
@@ -94,6 +98,7 @@ def initializePlugin( obj ):
             ram.log( "Failed to register command: %s\n" % c.name, ram.LogLevel.Critical )
 
     installHotkeys()
+    installMarkingMenu()
 
     ram.log( "I'm ready!" )
 

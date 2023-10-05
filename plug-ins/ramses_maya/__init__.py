@@ -21,6 +21,7 @@ from . import utils
 from . import ui_publish
 from . import ui_import
 from . import ui_scene_setup
+from .ui_markingmenu import RamsesMarkingMenu
 from .constants import *
 
 RAMSES = Ramses.instance()
@@ -48,3 +49,4 @@ RAMSES.importScripts.append(importer)
 
 # Register replace scripts
 RAMSES.replaceScripts.append(replacer)
+
