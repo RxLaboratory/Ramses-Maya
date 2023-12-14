@@ -324,7 +324,20 @@ class PublishDialog(Dialog):
         alembic_layout.addRow("Frame step:", self.__ui_alembic_frame_step_box)
 
         self.__ui_alembic_filter_euler_box = QCheckBox("Filter Euler rotations")
-        alembic_layout.addRow("", self.__ui_alembic_filter_euler_box)
+        alembic_layout.addRow("Rotations:", self.__ui_alembic_filter_euler_box)
+
+        self.__ui_abc_custom_attr_box = QCheckBox("Automatically add all custom/extra attributes")
+        alembic_layout.addRow("Custom Attributes:", self.__ui_abc_custom_attr_box)
+
+        self.__ui_abc_attr_edit = QTextEdit()
+        self.__ui_abc_attr_edit.setPlaceholderText("Add all the attributes with these exact names.\nOne attribute per line.")
+        self.__ui_abc_attr_edit.setMaximumHeight(100)
+        alembic_layout.addRow("Attributes:", self.__ui_abc_attr_edit)
+
+        self.__ui_abc_prefix_edit = QTextEdit()
+        self.__ui_abc_prefix_edit.setPlaceholderText("Add all the attributes with these prefix in their names.\nOne prefix per line.")
+        self.__ui_abc_prefix_edit.setMaximumHeight(100)
+        alembic_layout.addRow("Attributes prefix:", self.__ui_abc_prefix_edit)
 
         # <-- OBJ -->
 
@@ -382,6 +395,9 @@ class PublishDialog(Dialog):
         self.__ui_alembic_handle_end_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_frame_step_box.valueChanged.connect( self.__update_preset )
         self.__ui_alembic_filter_euler_box.toggled.connect( self.__update_preset )
+        self.__ui_abc_custom_attr_box.toggled.connect( self.__update_preset )
+        self.__ui_abc_attr_edit.textChanged.connect( self.__update_preset )
+        self.__ui_abc_prefix_edit.textChanged.connect( self.__update_preset )
 
     def __set_maya_defaults(self, frmt="mb"):
         self.__ui_maya_scene_box.setChecked(True)
@@ -402,6 +418,9 @@ class PublishDialog(Dialog):
         self.__ui_alembic_handle_end_box.setValue(0)
         self.__ui_alembic_frame_step_box.setValue(1)
         self.__ui_alembic_filter_euler_box.setChecked(True)
+        self.__ui_abc_attr_edit.setText("")
+        self.__ui_abc_prefix_edit.setText("")
+        self.__ui_abc_custom_attr_box.setChecked(False)
 
     def __set_obj_defaults(self):
         self.__ui_obj_mtl_box.setChecked(True)
@@ -595,6 +614,10 @@ class PublishDialog(Dialog):
 
         abc["filter_euler_rotations"] = self.__ui_alembic_filter_euler_box.isChecked()
 
+        abc["add_extra_attributes"] = self.__ui_abc_custom_attr_box.isChecked()
+        abc["attributes"] = self.__ui_abc_attr_edit.toPlainText().split("\n")
+        abc["attributes_prefix"] = self.__ui_abc_prefix_edit.toPlainText().split("\n")
+
         options[ "abc" ] = abc
         return options
 
@@ -733,6 +756,13 @@ class PublishDialog(Dialog):
                         load_number_preset( "frame_step", anim, self.__ui_alembic_frame_step_box, 1)
                         load_number_preset( "handle_in", anim, self.__ui_alembic_handle_start_box, 1)
                         load_number_preset( "handle_out", anim, self.__ui_alembic_handle_end_box, 1)
+                    load_bool_preset("add_extra_attributes", frmt, self.__ui_abc_custom_attr_box, False)
+                    if "attributes" in frmt:
+                        attrs_str = "\n".join(options["attributes"])
+                        self.__ui_abc_attr_edit.setPlainText(attrs_str)
+                    if "attributes_prefix" in frmt:
+                        pref_str = "\n".join(options["attributes_prefix"])
+                        self.__ui_abc_prefix_edit.setPlainText(pref_str)
 
                 # <-- ASS -->
 

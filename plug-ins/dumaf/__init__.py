@@ -8,6 +8,7 @@ from .plugins import Plugin
 from .namespaces import Namespace
 from . import animation
 from . import rendering
+from . import attributes
 from .references import Reference
 from .ui_progress import ProgressDialog
 from . import mayapy

@@ -396,25 +396,59 @@ def publish_alembic(node, options, publish_info, name):
     if get_option("world_space", options, True):
         worldSpace = '-worldSpace'
 
-    abc_options = ' '.join([
-        '-frameRange ' + str(in_frame) + ' ' + str(out_frame),
+    attributes = set()
+    if get_option("add_extra_attributes", options, False):
+        # List all the extra attributes on all the nodes
+        attributes = maf.attributes.get_all_extra(node.path(), recursive=True)
+
+    attributes.update( get_option(
+        "attributes",
+        options,
+        set())
+        )
+
+    attrs_prefix = set(get_option(
+        "attributes_prefix",
+        options,
+        set())
+        )
+
+    abc_options = []
+    for attr in attributes:
+        attr = attr.strip()
+        if attr == '':
+            continue
+        abc_options.append("-attr")
+        abc_options.append(attr)
+
+    for pref in attrs_prefix:
+        pref = pref.strip()
+        if pref == '':
+            continue
+        abc_options.append("-attrPrefix ")
+        abc_options.append(pref)
+
+    abc_options = abc_options + [
+        '-frameRange', str(in_frame), str(out_frame),
         filter_euler,
         worldSpace,
-        '-step ' + str(frame_step),
+        '-step', str(frame_step),
         '-autoSubd', # crease
         '-uvWrite',
         '-writeUVSets',
         '-writeVisibility',
         '-dataFormat hdf',
         renderable,
-        '-root ' + node.path(),
-        '-file "' + file_path + '"',
-    ])
+        '-root', node.path(),
+        '-file', '"' + file_path + '"',
+    ]
 
-    ram.log("These are the alembic options:\n" + abc_options, ram.LogLevel.Info)
+    abc_options_str = ' '.join( abc_options )
+
+    ram.log("These are the alembic options:\n" + abc_options_str, ram.LogLevel.Info)
 
     # Export
-    cmds.AbcExport(j=abc_options)
+    cmds.AbcExport(j=abc_options_str)
     # Meta data
     set_export_metadata( file_path, publish_info)
 

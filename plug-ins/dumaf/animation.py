@@ -39,7 +39,7 @@ def get_framerate():
     
 
     return 1
-    
+
 def set_framerate(fps):
     if type(fps) == int or type(fps) == float:
         fps=str(fps)+'fps'
