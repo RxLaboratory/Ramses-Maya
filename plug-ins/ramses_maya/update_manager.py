@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """The entry point for updating items"""
 
+import os
 from maya import cmds # pylint: disable=import-error
 import dumaf
-from .utils_attributes import is_ramses_managed
+import ramses
+from .utils_attributes import is_ramses_managed, get_ramses_attr, RamsesAttribute, get_step, get_item
 
 def update( node, new_nodes ):
     """Updates the node (and children) with the new nodes"""
@@ -97,3 +99,25 @@ def update_nodes( old_node, new_nodes, root_locator, node_sets, node_locators ):
         root_ctrls.append(new_node.path())
 
     return root_ctrls
+
+def get_update_file( maya_node ):
+    """Gets the asset file updating this node"""
+
+     # Check source info
+    source_file = get_ramses_attr( maya_node, RamsesAttribute.SOURCE_FILE )
+    if source_file is None or source_file == '':
+        return ''
+
+    ram_step = get_step( maya_node )
+    ram_item = get_item( maya_node )
+    resource = get_ramses_attr( maya_node, RamsesAttribute.RESOURCE )
+
+    # Get the latest one and check its version and state
+    fileName = os.path.basename( source_file )
+    latest_folder = ram_item.latestPublishedVersionFolderPath( ram_step, fileName, resource )
+    latest_file = os.path.join(latest_folder, fileName)
+
+    if latest_file != source_file and latest_file != '':
+        return latest_file
+
+    return ''

@@ -50,7 +50,7 @@ class UpdateDialog( Dialog ):
         currentLayout = QVBoxLayout()
         currentLayout.setContentsMargins(0,0,0,0)
         currentLayout.setSpacing(3)
-        
+
         self.onlyNewButton = QCheckBox("Show only updated items.")
         self.onlyNewButton.setChecked(True)
         currentLayout.addWidget( self.onlyNewButton )
@@ -65,7 +65,7 @@ class UpdateDialog( Dialog ):
 
         self.currentDetailsLabel = QLabel("")
         currentLayout.addWidget(self.currentDetailsLabel)
-        
+
         columnLayout.addLayout(currentLayout)
 
         updateLayout = QVBoxLayout()

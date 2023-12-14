@@ -21,14 +21,16 @@ from .ui_comment import CommentDialog # pylint: disable=import-error,no-name-in-
 from .ui_import import ImportDialog # pylint: disable=import-error,no-name-in-module
 from .ui_saveas import SaveAsDialog # pylint: disable=import-error,no-name-in-module
 from .ui_preview import PreviewDialog # pylint: disable=import-error,no-name-in-module
-from .utils_attributes import get_item, get_step, set_import_attributes
+from .utils_attributes import get_item, get_step, set_import_attributes, list_ramses_nodes
 from .ui_update import UpdateDialog
 from .replace_manager import replacer
+from .update_manager import get_update_file
 from .ui_publish import PublishDialog
 from .save_manager import setup_scene
 from .utils import getVideoPlayer
 
 import ramses as ram
+
 # Keep the ramses and the SETTINGS instances at hand
 RAMSES = ram.Ramses.instance()
 SETTINGS = ram.RamSettings.instance()
@@ -1074,6 +1076,10 @@ class RamUpdateCmd( om.MPxCommand ):
     """The command to update Ramses nodes in the scene with other versions"""
     name = "ramUpdate"
 
+    # Defaults
+    updateAll = False
+    updateSelection = False
+
     def __init__(self):
         om.MPxCommand.__init__(self)
 
@@ -1086,7 +1092,23 @@ class RamUpdateCmd( om.MPxCommand ):
     def createSyntax():
         """Creates the Mel Syntax"""
         syntax = om.MSyntax()
+        syntax.addFlag('-a', "-updateAll", om.MSyntax.kBoolean )
+        syntax.addFlag('-s', "-updateSelection", om.MSyntax.kBoolean )
         return syntax
+
+    def parseArgs(self, args):
+        """Parses the Mel args"""
+        parser = om.MArgParser( self.syntax(), args)
+
+        if parser.isFlagSet( '-a' ):
+            self.updateAll = parser.flagArgumentBool('-a', 0)
+        else:
+            self.updateAll = False
+
+        if parser.isFlagSet( '-s' ):
+            self.updateSelection = parser.flagArgumentBool('-s', 0)
+        else:
+            self.updateSelection = False
 
     def doIt(self, args):
         """Runs the command or raise an error in debug mode"""
@@ -1112,16 +1134,37 @@ class RamUpdateCmd( om.MPxCommand ):
         if save_filepath == '':
             return
 
-        updateDialog = UpdateDialog(dumaf.ui.getMayaWindow())
-        result = updateDialog.exec_()
-        if result == 0:
-            return
+        # Parse arguments
+        self.parseArgs(args)
 
+        # The list of nodes to be updated
+        # An list of tuples ( mayaNode, updateFile )
         nodes = []
-        if result == 1:
-            nodes = updateDialog.getAllNodes()
+
+        if not self.updateAll and not self.updateSelection:
+            updateDialog = UpdateDialog(dumaf.ui.getMayaWindow())
+            result = updateDialog.exec_()
+            if result == 0:
+                return
+            if result == 1:
+                nodes = updateDialog.getAllNodes()
+            else:
+                nodes = updateDialog.getSelectedNodes()
         else:
-            nodes = updateDialog.getSelectedNodes()
+            # List all the ramses nodes in the scene
+            ram_nodes = list_ramses_nodes(
+                node_type='',
+                selected_only=self.updateSelection
+                )
+
+            # Check if there are updates
+            for ram_node in ram_nodes:
+                update_file = get_update_file( ram_node )
+                if update_file != '':
+                    nodes.append( (ram_node, update_file) )
+
+        if len(nodes) == 0:
+            return
 
         progressDialog = dumaf.ProgressDialog()
         progressDialog.setText("Updating items...")
