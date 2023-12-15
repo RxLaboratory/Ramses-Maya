@@ -105,6 +105,8 @@ def importer( file_paths, item, step, import_options=None, show_import_options=F
         for node in new_nodes:
             # get meshes
             meshes = cmds.listRelatives(node, ad=True, f=True, type='mesh')
+            if not meshes:
+                continue
             for mesh in meshes:
                 node_history = cmds.listHistory( mesh, f=True )
                 shading_engines = cmds.listConnections( node_history, type='shadingEngine')
