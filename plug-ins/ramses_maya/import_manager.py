@@ -72,6 +72,7 @@ def importer( file_paths, item, step, import_options=None, show_import_options=F
         # Get options
         options = get_format_options(file_path, import_options)
         lock_transform = get_option("lock_transformations", options, True)
+        autoreload_reference = get_option("autoreload_reference", options, False)
         as_reference = get_option("as_reference", options, False)
         no_root_shape = get_option("no_root_shape", options, False)
         create_namespace = get_option("create_namespace", options, True)
@@ -80,7 +81,7 @@ def importer( file_paths, item, step, import_options=None, show_import_options=F
         if not create_namespace:
             ns = ""
 
-        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, ns, item_group, step)
+        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, ns, item_group, step, autoreload_reference)
         geo_nodes = geo_nodes + new_nodes
 
     # Import shaders
@@ -91,6 +92,7 @@ def importer( file_paths, item, step, import_options=None, show_import_options=F
         # Get options
         options = get_format_options(shader_file, import_options)
         as_reference = get_option("as_reference", options, False)
+        autoreload_reference = get_option("autoreload_reference", options, False)
         no_root_shape = get_option("no_root_shape", options, False)
         create_namespace = get_option("create_namespace", options, True)
 
@@ -98,7 +100,7 @@ def importer( file_paths, item, step, import_options=None, show_import_options=F
         if not create_namespace:
             ns = ""
 
-        new_nodes = import_file(shader_file, as_reference, False, no_root_shape, item, ns, item_group, step)
+        new_nodes = import_file(shader_file, as_reference, False, no_root_shape, item, ns, item_group, step, autoreload_reference)
         # Apply shaders to the geo nodes
         # Get the shaders
         shaders = []
@@ -165,7 +167,7 @@ def get_import_namespace( item ):
 
     return import_namespace
 
-def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step):
+def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step, autoreload_reference):
     """Imports the items in the file"""
     ram.log("Importing: " + file_path, ram.LogLevel.Debug)
     # Check the extension to load needed plugins
@@ -185,7 +187,7 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
                 ignoreVersion=True,
                 mergeNamespacesOnClash=True,
                 returnNewNodes=True,
-                ns=item_namespace
+                ns=item_namespace,
                 )
         else:
             new_nodes = cmds.file(
@@ -193,7 +195,7 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
                 r=True,
                 ignoreVersion=True,
                 returnNewNodes=True,
-                defaultNamespace=True
+                defaultNamespace=True,
                 )
     else:
         if item_namespace != "":
@@ -237,7 +239,7 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
         ctrl = node.create_root_controller( rootName, no_root_shape)
         # Set its color
         ctrl_shape = cmds.listRelatives(ctrl.path(), shapes=True, f=True, type='nurbsCurve')
-        if (ctrl_shape):
+        if ctrl_shape:
             ctrl_shape = ctrl_shape[0]
             cmds.setAttr(ctrl_shape+'.overrideEnabled', 1)
             cmds.setAttr(ctrl_shape+'.overrideColor', 18)
@@ -262,6 +264,12 @@ def import_file(file_path, as_reference, lock_transform, no_root_shape, item, it
                         child.lock_transform(True)
 
         root_nodes.append(ctrl.path())
+
+    # We need to reload the reference, because maya breaks stuff
+    # with references during the previous steps...
+    if as_reference and autoreload_reference:
+        reference_node = cmds.file(file_path, referenceNode=True, query=True)
+        cmds.file(loadReference=reference_node)
 
     return root_nodes
 

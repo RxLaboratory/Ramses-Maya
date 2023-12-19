@@ -360,6 +360,7 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
     maya_type = 'mayaBinary'
     if extension == 'ma':
         maya_type = 'mayaAscii'
+
     cmds.file( rename=file_path )
     cmds.file( exportSelected=True, options="v=1;", typ=maya_type)
     set_export_metadata( file_path, publish_info)

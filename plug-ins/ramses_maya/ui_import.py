@@ -970,10 +970,10 @@ class ImportSettingsDialog( Dialog ):
         # <-- Setup -->
         self.__settings_widgets = []
         self.__setup_ui()
-        self._dialog_add_preset_actions()
+        #self._dialog_add_preset_actions()
         self.__connect_events()
-        self.set_preset_folder(IMPORT_PRESETS_PATH)
-        self.__ui_preset_box.setCurrentIndex(-1)
+        #self.set_preset_folder(IMPORT_PRESETS_PATH)
+        #self.__ui_preset_box.setCurrentIndex(-1)
         self.__formats = []
 
     # <== PRIVATE METHODS ==>
@@ -987,20 +987,20 @@ class ImportSettingsDialog( Dialog ):
 
         self.__ui_files_box = QListWidget()
         self.__ui_files_box.setMaximumWidth( 150 )
-        uber_layout.addWidget(self.__ui_files_box)
+        #uber_layout.addWidget(self.__ui_files_box)
 
         self.__ui_stacked_layout = QStackedLayout()
         uber_layout.addLayout(self.__ui_stacked_layout)
 
-        preset_widget = QWidget()
-        preset_layout = QFormLayout(preset_widget)
-        preset_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
-        preset_layout.setSpacing(3)
+        #preset_widget = QWidget()
+        #preset_layout = QFormLayout(preset_widget)
+        #preset_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        #preset_layout.setSpacing(3)
 
-        self.__ui_preset_box = QComboBox()
-        preset_layout.addRow("Preset:", self.__ui_preset_box)
-        
-        self.__ui_stacked_layout.addWidget(preset_widget)
+        #self.__ui_preset_box = QComboBox()
+        #preset_layout.addRow("Preset:", self.__ui_preset_box)
+
+        #self.__ui_stacked_layout.addWidget(preset_widget)
 
         # <-- BOTTOM BUTTONS -->
 
@@ -1015,7 +1015,7 @@ class ImportSettingsDialog( Dialog ):
 
     def __connect_events(self):
         self.__ui_files_box.currentRowChanged.connect( self.__ui_stacked_layout.setCurrentIndex )
-        self.__ui_preset_box.currentIndexChanged.connect( self.__ui_preset_box_current_changed )
+        #self.__ui_preset_box.currentIndexChanged.connect( self.__ui_preset_box_current_changed )
         self.__ui_import_button.clicked.connect( self.accept )
         self.__ui_cancel_button.clicked.connect( self.reject )
 
@@ -1056,12 +1056,12 @@ class ImportSettingsDialog( Dialog ):
 
     def update_preset_files(self, preset_files):
         """Loads the preset files."""
-        if len(preset_files) > 0:
+        """if len(preset_files) > 0:
             self.__ui_preset_box.clear()
             for preset_file in preset_files:
                 name = os.path.basename(preset_file)
                 name = os.path.splitext(name)[0]
-                self.__ui_preset_box.addItem(name, preset_file)
+                self.__ui_preset_box.addItem(name, preset_file)"""
 
     def get_options(self):
         """Gets the import options as a dict"""
@@ -1083,16 +1083,17 @@ class ImportSettingsDialog( Dialog ):
         self.__settings_widgets = []
 
         # Add Presets
-        self.__ui_files_box.addItem("Select: Preset")
+        #self.__ui_files_box.addItem("Select: Preset")
 
         if not "formats" in options:
             return
 
         has_default = False
         for f in options['formats']:
+            if f['format'] != "*":
+                continue
             self.__add_file(f)
-            if f['format'] == "*":
-                has_default = True
+            has_default = True
 
         if not has_default:
             # Add default
@@ -1126,6 +1127,10 @@ class ImportSettingsWidget( QWidget ):
 
         self.__ui_reference_box = QCheckBox("As reference")
         main_layout.addRow("Import:", self.__ui_reference_box )
+
+        self.__ui_reload_reference_box = QCheckBox("Auto-reload reference")
+        self.__ui_reload_reference_box.setEnabled(False)
+        main_layout.addRow("", self.__ui_reload_reference_box )
 
         self.__ui_lock_transform_box = QCheckBox("Lock transformations")
         self.__ui_lock_transform_box.setChecked(True)
@@ -1175,6 +1180,7 @@ class ImportSettingsWidget( QWidget ):
     @Slot(bool)
     def __ui_reference_box_clicked(self, checked):
         self.__ui_lock_transform_box.setDisabled(checked)
+        self.__ui_reload_reference_box.setEnabled(checked)
         if checked:
             self.__ui_lock_transform_box.setChecked(False)
         self.__update_preset()
@@ -1189,9 +1195,11 @@ class ImportSettingsWidget( QWidget ):
         as_ref = self.__ui_reference_box.isChecked()
         options["as_reference"] = as_ref
         if not as_ref:
+            options["autoreload_reference"] = False
             options["lock_transformations"] = self.__ui_lock_transform_box.isChecked()
         else:
             options["lock_transformations"] = False
+            options["autoreload_reference"] = self.__ui_reload_reference_box.isChecked()
         
         options["apply_shaders"] = self.__ui_apply_shaders_box.isChecked()
 
@@ -1205,6 +1213,7 @@ class ImportSettingsWidget( QWidget ):
         """Loads options from a preset"""
 
         load_bool_preset("lock_transformations", options, self.__ui_lock_transform_box, True)
+        load_bool_preset("autoreload_reference", options, self.__ui_reload_reference_box, False)
         load_bool_preset("as_reference", options, self.__ui_reference_box, False)
         load_bool_preset("apply_shaders", options, self.__ui_apply_shaders_box, True)
         load_bool_preset("no_root_shape", options, self.__ui_no_root_shape_box, False)

@@ -263,10 +263,20 @@ class Node():
         return Node.get_nodes(children)
 
     def create_root_controller(self, ctrl_name, no_root_shape = False):
-        """Creates and returns a curve to be used as a controller for this node"""
+        """Creates and returns a curve to be used as a controller for this node
+        NOTE: for some reason, connections may break just after importing nodes
+        if we create the shape before adding to a new group, so we must first group,
+        then create a shape to be added to the transform node/group"""
         if not self.exists():
             return None
         nodePath = self.path()
+
+        controller = cmds.group( nodePath, name=ctrl_name )
+        controller = Node(controller)
+
+        nodePath = self.path()
+        controllerPath = controller.path()
+
         if not no_root_shape:
             # Get the bounding box
             boundingBox = cmds.exactWorldBoundingBox( nodePath )
@@ -287,13 +297,9 @@ class Node():
             cv3 = ( xmax + margin, 0, zmax + margin)
             cv4 = ( xmin - margin, 0, zmax + margin)
             cv5 = cv1
-            controller = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrl_name)
-            controller = Node(controller)
-            # Parent the node
-            self.parent_to(controller)
-        else:
-            controller = cmds.group( nodePath, name=ctrl_name )
-            controller = Node(controller)
+            transform_node = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrl_name)
+            shape = cmds.listRelatives(transform_node,s=True,f=True)[0]
+            cmds.parent(shape, controllerPath, shape=True, relative=True)
 
         return controller
 
