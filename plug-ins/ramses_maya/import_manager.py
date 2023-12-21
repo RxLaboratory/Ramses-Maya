@@ -167,7 +167,7 @@ def get_import_namespace( item ):
 
     return import_namespace
 
-def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step, autoreload_reference):
+def import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step, autoreload_reference=False):
     """Imports the items in the file"""
     ram.log("Importing: " + file_path, ram.LogLevel.Debug)
     # Check the extension to load needed plugins

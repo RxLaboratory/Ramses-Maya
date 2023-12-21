@@ -56,7 +56,7 @@ def replacer(file_path, item, step, import_options, show_import_options=False):
     no_root_shape = get_option("no_root_shape", options, False)
 
     for original_node in original_nodes:
-        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step)
+        new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step, autoreload_reference=False)
         update(original_node, new_nodes)
         original_node = dumaf.Node(original_node)
         original_node.remove()
