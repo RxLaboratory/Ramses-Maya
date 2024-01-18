@@ -465,7 +465,6 @@ class RamSaveVersionCmd( om.MPxCommand ):
             if currentItem.virtual():
                 status_dialog.setVirtual()
             status_dialog.setPublish( self.publish )
-            #if currentStatus:
             status_dialog.setStatus( currentStatus )
             update = status_dialog.exec_()
             if update == 0:
