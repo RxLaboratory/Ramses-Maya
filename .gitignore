@@ -114,6 +114,8 @@ dmypy.json
 .pyre/
 
 # ignore the ramses module
-ramses
+src/plug-ins/ramses
 # ignore the dupyf module
-dupyf.foldex.ini
+src/plug-ins/dupyf
+
+.foldex.ini
