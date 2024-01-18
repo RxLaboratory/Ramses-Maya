@@ -12,7 +12,7 @@ rampy_dest= os.path.join(
 if not os.path.exists(rampy_dest):
     rampy_src = os.path.join(
         E.REPO_DIR,
-        '..', 'Ramses-Py'
+        '..', 'Ramses-Py', 'ramses'
     )
     os.symlink(rampy_src, rampy_dest)
 
@@ -23,7 +23,7 @@ dupyf_dest = os.path.join(
 if not os.path.exists(dupyf_dest):
     dupyf_src = os.path.join(
         E.REPO_DIR,
-        '..', '..', 'Python', 'DuPYF'
+        '..', '..', 'Python', 'DuPYF', 'dupyf'
     )
     os.symlink(dupyf_src, dupyf_dest)
 

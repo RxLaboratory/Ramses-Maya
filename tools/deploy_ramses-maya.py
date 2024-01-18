@@ -3,5 +3,5 @@ ramaya.init()
 B = ramaya.builder
 
 if __name__ == '__main__':
-    B.build_py()
-    B.deploy_py()
+    B.build_py("")
+    B.deploy_py("")

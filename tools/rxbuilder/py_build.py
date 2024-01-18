@@ -90,7 +90,7 @@ def build(name="Python"):
         os.makedirs(build_path)
 
     print("> Building Python Modules...")
-    for mod in E.ENV['py']:
+    for mod in E.ENV['py'].get('modules', ()):
         mod_build_path = os.path.join(
             build_path,
             mod.get("name", "")
