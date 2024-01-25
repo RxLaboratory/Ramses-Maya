@@ -300,6 +300,7 @@ class Node():
             transform_node = cmds.curve( d=1, p=[cv1, cv2, cv3, cv4, cv5], k=(0,1,2,3,4), name=ctrl_name)
             shape = cmds.listRelatives(transform_node,s=True,f=True)[0]
             cmds.parent(shape, controllerPath, shape=True, relative=True)
+            cmds.delete(transform_node)
 
         return controller
 
@@ -566,7 +567,6 @@ class Node():
             toWorld = True
         elif parent == '|':
             toWorld = True
-
         try:
             if toWorld:
                 cmds.parent(nodePath, world=True)
