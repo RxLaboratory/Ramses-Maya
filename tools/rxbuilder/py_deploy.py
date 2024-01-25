@@ -27,7 +27,7 @@ def deploy_mod(path, name, version):
 
     zip_file = os.path.join(os.path.dirname(deploy_path), os.path.basename(path) + version + '.zip')
     with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as z:
-        zip_dir(path, z)
+        zip_dir(deploy_path, z)
 
 def deploy(name="Python"):
     print("> Deploying Python...")
