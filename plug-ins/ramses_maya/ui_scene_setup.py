@@ -201,8 +201,10 @@ class SceneSetupDialog( Dialog ):
                 str(scene_duration) +
                 " frames @ " +
                 str(scene_fps))
-            self.__ui_duration_box.setVisible(True)
-            self.__ui_duration_box.setChecked(True)
+            
+            self.__ui_duration_box.setVisible(shot_duration != 0)
+            self.__ui_duration_box.setChecked(shot_duration != 0)
+            
             self.__ui_duration_box.setText("Fix duration:\n• Shot: " +
                 str(shot_duration) + " frames\n• Handles: " +
                 str(self.__handle_in) + " frames in / " +

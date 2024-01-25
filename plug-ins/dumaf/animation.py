@@ -43,10 +43,14 @@ def get_framerate():
 def set_framerate(fps):
     if type(fps) == int or type(fps) == float:
         fps=str(fps)+'fps'
-    else:
-        fps=fps.replace(' ','')
+
+    fps = str(fps)
+    fps=fps.replace(' ','')
+    if not fps.endswith('fps'):
+        fps = fps + 'fps'
+
     # Change Framerate
-    cmds.currentUnit(time=str(fps)+'fps')
+    cmds.currentUnit(time=fps)
     # Round start and end time
     start_time = cmds.playbackOptions(animationStartTime=True, query=True)
     end_time = cmds.playbackOptions(animationEndTime=True, query=True)
