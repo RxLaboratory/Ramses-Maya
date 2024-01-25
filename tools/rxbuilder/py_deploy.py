@@ -1,7 +1,6 @@
 import os
 import shutil
 import zipfile
-from distutils.dir_util import copy_tree
 from .file_deploy import deploy as deploy_files
 from .py_build import get_py_build_path
 from .environment import Environment
@@ -24,7 +23,7 @@ def deploy_mod(path, name, version):
     if not os.path.isdir(deploy_path):
         os.makedirs(deploy_path)
 
-    copy_tree(path, deploy_path)
+    shutil.copytree(path, deploy_path, dirs_exist_ok=True)
 
     zip_file = os.path.join(os.path.dirname(deploy_path), os.path.basename(path) + version + '.zip')
     with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as z:
