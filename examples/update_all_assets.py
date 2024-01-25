@@ -4,9 +4,8 @@
     Unless you really know what you're doing.
 """
 
-import os
 from maya import cmds # pylint: disable=import-error
-import ramses as ram
+import ramses as ram # pylint: disable=import-error
 
 # Set a log file
 log_file = "D:/Ramses_auto_update_log.txt"
@@ -17,7 +16,7 @@ RAMSES = ram.Ramses.instance()
 # A simple function to log stuff
 def log( msg ):
     """Log to log_file and the console"""
-    print("Ramses auto-update: " + msg)
+    ram.log("Auto-update: " + msg)
     with open(log_file,"a", encoding='utf8') as f:
         f.write(msg + "\n")
 
@@ -88,6 +87,7 @@ def auto_update( step_id = 'layout' ):
     # Finished!
     log("Updated " + str(i) + " scenes.")
 
-# Run the function
-# Just change the step id if you wish
-auto_update('Rig')
+if __name__ == "__main__":
+    # Run the function
+    # Just change the step id if you wish
+    auto_update('Rig')

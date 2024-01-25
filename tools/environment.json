@@ -1,0 +1,20 @@
+{
+    "py": {
+        "modules": [
+            { "name": "", "src": "./src" }
+        ]
+    },
+    "src": {
+        "repo_path": "."
+    },
+    "meta": {
+        "name": "ramses-maya",
+        "version": "0.8.33-Beta",
+        "prerelease": true,
+        "modpath": "D:\\Path\\To\\Ramses-Maya"
+    },
+    "deploy": [
+        { "src": "./LICENSE", "dest": "ramses-maya/LICENSE.txt" },
+        { "src": "./README.md", "dest": "ramses-maya/README.txt" }
+    ]
+}

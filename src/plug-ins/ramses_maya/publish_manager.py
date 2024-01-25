@@ -346,14 +346,24 @@ def publish_maya_shaders(node, options, extension, publish_info, name):
     for shading_engine in all_shading_engines:
         if not cmds.objExists(shading_engine):
             continue
-        # create a sphere per shader and export that
-        sphere = cmds.polySphere(name=shading_engine.replace("_Engine","") + "_shader", constructionHistory=False)[0]
-        # Assign shader
-        cmds.sets(sphere, e=True, forceElement=shading_engine)
+        try:
+            # create a sphere per shader and export that
+            sphere = cmds.polySphere(name=shading_engine.replace("_Engine","") + "_shader", constructionHistory=False)[0]
+            # Assign shader
+            cmds.sets(sphere, e=True, forceElement=shading_engine)
+        except RuntimeError:
+            # Can't assign the shader to the sphere
+            ram.log("I Can't publish this shader, for some reason it can't be assigned to our 'sphere shader' mesh: " + shading_engine, ram.LogLevel.Critical)
+            continue
         # Move on the X axis
         cmds.setAttr(sphere + ".translateX", offset)
         offset = offset + 2
         spheres.append(sphere)
+
+    # Nothing to publish
+    if len(spheres) == 0:
+        ram.log("I can't find any shader to publish, sorry! Skipping shaders...")
+        return
     root_group = cmds.group(spheres, name=name)
     cmds.select(root_group)
 
