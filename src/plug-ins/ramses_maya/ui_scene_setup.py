@@ -138,21 +138,7 @@ class SceneSetupDialog( Dialog ):
         ok = True
 
         project = item.project()
-
-        # FPS
-        project_fps = 0
-        scene_fps = 0
-        if project:
-            scene_fps = maf.animation.get_framerate()
-            project_fps = project.framerate()
-            self.__fps = project_fps
-        if project_fps == scene_fps:
-            self.__ui_fps_box.setVisible(False)
-            self.__ui_fps_box.setChecked(False)
-        else:
-            self.__ui_fps_box.setVisible(True)
-            self.__ui_fps_box.setChecked(True)
-            self.__ui_fps_box.setText("Fix framerate: " + str(project_fps))
+        sequence = None
 
         # Duration
         shot_duration = 0
@@ -171,6 +157,7 @@ class SceneSetupDialog( Dialog ):
 
         # If it's a shot, set duration settings
         if item.itemType() == ItemType.SHOT:
+            sequence = item.sequence()
             # If there's a step, get handles & first image number
             shot_settings = stepSettings.get("shot", {})
             if not shot_settings:
@@ -189,6 +176,22 @@ class SceneSetupDialog( Dialog ):
 
             shot_duration = item.frames()
             self.__duration = shot_duration
+
+        # FPS
+        project_fps = 0
+        scene_fps = maf.animation.get_framerate()
+        if sequence:
+            project_fps = sequence.framerate()
+        elif project:
+            project_fps = project.framerate()
+        self.__fps = project_fps
+        if project_fps == scene_fps:
+            self.__ui_fps_box.setVisible(False)
+            self.__ui_fps_box.setChecked(False)
+        else:
+            self.__ui_fps_box.setVisible(True)
+            self.__ui_fps_box.setChecked(True)
+            self.__ui_fps_box.setText("Fix framerate: " + str(project_fps))
 
         # Animation
         if project_fps == scene_fps and shot_duration == scene_duration and scene_handle_in == self.__handle_in and scene_handle_out == self.__handle_out and start_time == self.__first_image_number:
@@ -214,15 +217,16 @@ class SceneSetupDialog( Dialog ):
         # Image Size
         project_w = 0
         project_h = 0
-        scene_w = 0
-        scene_h = 0
-        if project:
+        scene_w = cmds.getAttr("defaultResolution.width")
+        scene_h = cmds.getAttr("defaultResolution.height")
+        if sequence:
+            project_w = sequence.width()
+            project_h = sequence.height()
+        elif project:
             project_w = project.width()
             project_h = project.height()
-            scene_w = cmds.getAttr("defaultResolution.width")
-            scene_h = cmds.getAttr("defaultResolution.height")
-            self.__width = project_w
-            self.__height = project_h
+        self.__width = project_w
+        self.__height = project_h
         if project_w == scene_w and project_h == scene_h:
             self.__ui_resolution_box.setVisible(False)
             self.__ui_resolution_box.setChecked(False)
