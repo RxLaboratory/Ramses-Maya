@@ -155,6 +155,13 @@ class SceneSetupDialog( Dialog ):
             if not stepSettings or not isinstance(stepSettings, dict):
                 stepSettings = {}
 
+        # Hide shot settings by default
+        self.__ui_fps_box.setVisible(False)
+        self.__ui_fps_box.setChecked(False)
+        self.__ui_duration_box.setVisible(False)
+        self.__ui_duration_box.setChecked(False)
+        self.__ui_animation_label.setText("-- This is not a shot --")
+
         # If it's a shot, set duration settings
         if item.itemType() == ItemType.SHOT:
             sequence = item.sequence()
@@ -177,42 +184,37 @@ class SceneSetupDialog( Dialog ):
             shot_duration = item.frames()
             self.__duration = shot_duration
 
-        # FPS
-        project_fps = 0
-        scene_fps = maf.animation.get_framerate()
-        if sequence:
-            project_fps = sequence.framerate()
-        elif project:
-            project_fps = project.framerate()
-        self.__fps = project_fps
-        if project_fps == scene_fps:
-            self.__ui_fps_box.setVisible(False)
-            self.__ui_fps_box.setChecked(False)
-        else:
-            self.__ui_fps_box.setVisible(True)
-            self.__ui_fps_box.setChecked(True)
-            self.__ui_fps_box.setText("Fix framerate: " + str(project_fps))
+            # FPS
+            project_fps = 0
+            scene_fps = maf.animation.get_framerate()
+            if sequence:
+                project_fps = sequence.framerate()
+            elif project:
+                project_fps = project.framerate()
+            self.__fps = project_fps
+            if project_fps != scene_fps:
+                self.__ui_fps_box.setVisible(True)
+                self.__ui_fps_box.setChecked(True)
+                self.__ui_fps_box.setText("Fix framerate: " + str(project_fps))
 
-        # Animation
-        if project_fps == scene_fps and shot_duration == scene_duration and scene_handle_in == self.__handle_in and scene_handle_out == self.__handle_out and start_time == self.__first_image_number:
-            self.__ui_animation_label.setText("OK!")
-            self.__ui_duration_box.setVisible(False)
-            self.__ui_duration_box.setChecked(False)
-        else:
-            ok = False
-            self.__ui_animation_label.setText( "Current scene:\n" +
-                str(scene_duration) +
-                " frames @ " +
-                str(scene_fps))
-            
-            self.__ui_duration_box.setVisible(shot_duration != 0)
-            self.__ui_duration_box.setChecked(shot_duration != 0)
-            
-            self.__ui_duration_box.setText("Fix duration:\n• Shot: " +
-                str(shot_duration) + " frames\n• Handles: " +
-                str(self.__handle_in) + " frames in / " +
-                str(self.__handle_out) + " frames out\n• First image number: " +
-                str(self.__first_image_number) )
+            # Animation
+            if project_fps == scene_fps and shot_duration == scene_duration and scene_handle_in == self.__handle_in and scene_handle_out == self.__handle_out and start_time == self.__first_image_number:
+                self.__ui_animation_label.setText("OK!")
+            else:
+                ok = False
+                self.__ui_animation_label.setText( "Current scene:\n" +
+                    str(scene_duration) +
+                    " frames @ " +
+                    str(scene_fps))
+                
+                self.__ui_duration_box.setVisible(shot_duration != 0)
+                self.__ui_duration_box.setChecked(shot_duration != 0)
+                
+                self.__ui_duration_box.setText("Fix duration:\n• Shot: " +
+                    str(shot_duration) + " frames\n• Handles: " +
+                    str(self.__handle_in) + " frames in / " +
+                    str(self.__handle_out) + " frames out\n• First image number: " +
+                    str(self.__first_image_number) )
 
         # Image Size
         project_w = 0
