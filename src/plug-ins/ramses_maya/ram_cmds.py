@@ -1184,52 +1184,10 @@ class RamUpdateCmd( om.MPxCommand ):
             progressDialog.increment()
 
             # Let's update!
-
-            # A node may have been updated twice
-            if not cmds.objExists( node ):
-                continue
-
-            children = cmds.listRelatives( node, ad=True, type='transform', fullPath=True)
-            lock_transform = True
-            if children and len(children) > 0:
-                child = children[0]
-                # Check if this is a reference, in which case, just replace it
-                if cmds.referenceQuery(child, isNodeReferenced=True):
-                    # Get the reference node
-                    rNode = cmds.referenceQuery( child, referenceNode=True)
-                    # Reload new file
-                    cmds.file( updateFile, loadReference=rNode )
-                    # Set new version
-                    set_import_attributes(node, ram_item, ram_step, updateFile)
-                    continue
-                # check if transforms are locked
-                for child in children:
-                    child = dumaf.Node(child)
-                    if not child.is_transform_locked(recursive=True):
-                        lock_transform = False
-                        break
-
-            # check if there's a root shape
-            ctrl_shape = cmds.listRelatives(node, shapes=True, f=True, type='nurbsCurve')
-            no_root_shape = False
-            if not ctrl_shape:
-                no_root_shape = True
-
-            # Set the options
-            options = { 'formats': [
-                    {
-                        'format': '*',
-                        'lock_transformations': lock_transform,
-                        'as_reference': False,
-                        'no_root_shape': no_root_shape
-                    },
-                ]
-            }
-
             # Replace
             # the replacer replaces selected nodes: select it!
             cmds.select(node, replace=True)
-            replacer(updateFile, ram_item, ram_step, import_options=options, show_import_options=False)
+            replacer(updateFile, ram_item, ram_step, import_options=None, show_import_options=False)
 
         progressDialog.close()
 

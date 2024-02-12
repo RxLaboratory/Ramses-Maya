@@ -6,7 +6,7 @@ import os
 from maya import cmds # pylint: disable=import-error
 import ramses
 import dumaf
-from .utils_attributes import list_ramses_nodes
+from .utils_attributes import list_ramses_nodes, set_import_attributes
 from .utils_options import get_option
 from .update_manager import update
 from .ui_import import ImportSettingsDialog
@@ -51,11 +51,56 @@ def replacer(file_path, item, step, import_options, show_import_options=False):
     item_namespace = get_import_namespace(item)
 
     options = get_format_options(file_path, import_options)
-    lock_transform = get_option("lock_transformations", options, True)
-    as_reference = get_option("as_reference", options, False)
-    no_root_shape = get_option("no_root_shape", options, False)
+    lock_transform = get_option("lock_transformations", options, "Not set")
+    as_reference = get_option("as_reference", options, "Not set")
+    no_root_shape = get_option("no_root_shape", options, "Not set")
 
     for original_node in original_nodes:
+        # Get the current node settings
+
+        # Make sure the node still exists
+        if not cmds.objExists( original_node ):
+            continue
+
+        # Get the first child to check the options
+        children = cmds.listRelatives( original_node, ad=True, type='transform', fullPath=True)
+        if children and len(children) > 0:
+            child = children[0]
+            # Check if this is a reference, in which case, just replace it,
+            # unless the options state otherwise
+            if (cmds.referenceQuery(child, isNodeReferenced=True) and
+                (as_reference == "Not set" or as_reference == True) ):
+                # Get the reference node
+                rNode = cmds.referenceQuery( child, referenceNode=True)
+                # Reload new file
+                cmds.file( file_path, loadReference=rNode )
+                # Set new version
+                set_import_attributes(original_node, item, step, file_path)
+                continue
+
+            # check if transforms are locked
+            if lock_transform == "Not set":
+                for child in children:
+                    child = dumaf.Node(child)
+                    if not child.is_transform_locked(recursive=True):
+                        lock_transform = False
+                        break
+
+        # check if there's a root shape
+        if no_root_shape == "Not set":
+            ctrl_shape = cmds.listRelatives(original_node, shapes=True, f=True, type='nurbsCurve')
+            no_root_shape = False
+            if not ctrl_shape:
+                no_root_shape = True
+
+        # Clean the options
+        if no_root_shape == "Not set":
+            no_root_shape = False
+        if lock_transform == "Not set":
+            lock_transform = True
+        if as_reference == "Not set":
+            as_reference = False
+
         new_nodes = import_file(file_path, as_reference, lock_transform, no_root_shape, item, item_namespace, item_group, step, autoreload_reference=False)
         update(original_node, new_nodes)
         original_node = dumaf.Node(original_node)
