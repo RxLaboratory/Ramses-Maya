@@ -758,10 +758,10 @@ class PublishDialog(Dialog):
                         load_number_preset( "handle_out", anim, self.__ui_alembic_handle_end_box, 1)
                     load_bool_preset("add_extra_attributes", frmt, self.__ui_abc_custom_attr_box, False)
                     if "attributes" in frmt:
-                        attrs_str = "\n".join(options["attributes"])
+                        attrs_str = "\n".join(frmt["attributes"])
                         self.__ui_abc_attr_edit.setPlainText(attrs_str)
                     if "attributes_prefix" in frmt:
-                        pref_str = "\n".join(options["attributes_prefix"])
+                        pref_str = "\n".join(frmt["attributes_prefix"])
                         self.__ui_abc_prefix_edit.setPlainText(pref_str)
 
                 # <-- ASS -->
