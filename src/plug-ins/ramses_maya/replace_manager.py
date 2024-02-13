@@ -51,9 +51,9 @@ def replacer(file_path, item, step, import_options, show_import_options=False):
     item_namespace = get_import_namespace(item)
 
     options = get_format_options(file_path, import_options)
-    lock_transform = get_option("lock_transformations", options, "Not set")
-    as_reference = get_option("as_reference", options, "Not set")
-    no_root_shape = get_option("no_root_shape", options, "Not set")
+    lock_transform = options.get("lock_transformations", "Not set")
+    as_reference = options.get("as_reference", "Not set")
+    no_root_shape = options.get("no_root_shape", "Not set")
 
     for original_node in original_nodes:
         # Get the current node settings

@@ -300,10 +300,21 @@ def apply_shaders(shaders, geo_nodes, ignore_namespace=True):
 
 def get_format_options( file_path, options ):
     """Returns the options for the given file"""
+
+    if not options:
+        return { 'format': "*" }
+
     ext = os.path.splitext(file_path)[1]
     if ext != "":
         ext = ext[1:]
     ram.log("Checking options for format: " + ext, ram.LogLevel.Debug)
+
+    if "formats" not in options:
+        if 'format' in options:
+            if options['format'] == ext or options['format'] == '*':
+                return options
+        return { 'format': "*" }
+
     for o in options["formats"]:
         if 'format' in o:
             if o['format'] == ext:
