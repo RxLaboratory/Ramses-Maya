@@ -9,7 +9,7 @@ subprocess.run((
     ))
 print("Launching new instance")
 subprocess.Popen((
-    "C:\\Program Files\\Autodesk\\Maya2023\\bin\\maya.exe",
+    "C:\\Program Files\\Autodesk\\Maya2024\\bin\\maya.exe",
     "-noAutoloadPlugins"
     ), stdin=None, stdout=None, stderr=None, close_fds=True)
 print("Done!")
