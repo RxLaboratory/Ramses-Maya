@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
+import os
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QApplication,
-    QDialog,
-    QHBoxLayout,
-    QVBoxLayout,
-    QComboBox,
-    QPushButton,
-)
+try:
+    from PySide2 import QtWidgets as qw
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+
 from ramses_maya.ui_dialog import Dialog
 import ramses as ram
 
@@ -23,19 +20,19 @@ class VersionDialog( Dialog ):
         self.setWindowTitle( "Retrieve Version" )
         self.setMinimumWidth(250)
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setSpacing(3)
         self.main_layout.addLayout(mainLayout)
 
-        self._versionsBox = QComboBox()
+        self._versionsBox = qw.QComboBox()
         mainLayout.addWidget( self._versionsBox )
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._openButton = QPushButton("Retrieve")
+        self._openButton = qw.QPushButton("Retrieve")
         buttonsLayout.addWidget( self._openButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         mainLayout.addLayout( buttonsLayout )

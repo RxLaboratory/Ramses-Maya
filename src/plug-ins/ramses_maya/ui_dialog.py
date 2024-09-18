@@ -5,19 +5,16 @@ The default Dialog
 
 import os
 import yaml
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
-    QDialog,
-    QMenuBar,
-    QVBoxLayout,
-    QFileDialog,
-    QApplication
-)
-from PySide2.QtGui import (  # pylint: disable=no-name-in-module
-    QKeySequence,
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot
-)
+
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtGui as qg
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtGui as qg
+    from PySide6 import QtCore as qc
+
 from ramses_maya.utils import (
     open_help,
     about_ramses,
@@ -27,7 +24,7 @@ from ramses_maya.ui_about import AboutDialog
 from dumaf.utils import checkUpdate
 from ramses_maya.utils import donate
 
-class Dialog(QDialog):
+class Dialog(qw.QDialog):
     """
     The default Dialog
     """
@@ -56,15 +53,15 @@ class Dialog(QDialog):
         help_menu.addSeparator()
         self.__about_qt_action = help_menu.addAction("About Qt...")
         self.__about_action = help_menu.addAction("About...")
-        self.__help_action.setShortcut(QKeySequence("F1"))
+        self.__help_action.setShortcut(qg.QKeySequence("F1"))
 
     def __dialog_setup_ui(self):
-        self.main_layout = QVBoxLayout()
+        self.main_layout = qw.QVBoxLayout()
         self.main_layout.setContentsMargins(6,0,6,6)
         self.main_layout.setSpacing(6)
         self.setLayout(self.main_layout)
 
-        self.__ui_menu_bar = QMenuBar()
+        self.__ui_menu_bar = qw.QMenuBar()
         self.main_layout.addWidget(self.__ui_menu_bar)
 
         self.__ui_about_dialog = AboutDialog(self)
@@ -84,22 +81,22 @@ class Dialog(QDialog):
     def _dialog_add_preset_actions(self):
         self.__save_preset_action = self.edit_menu.addAction("Save preset...")
         self.__load_preset_action = self.edit_menu.addAction("Load preset...")
-        self.__save_preset_action.setShortcut(QKeySequence("Ctrl+S"))
-        self.__load_preset_action.setShortcut(QKeySequence("Ctrl+O"))
+        self.__save_preset_action.setShortcut(qg.QKeySequence("Ctrl+S"))
+        self.__load_preset_action.setShortcut(qg.QKeySequence("Ctrl+O"))
         self.__load_preset_action.triggered.connect( self.load_preset )
         self.__save_preset_action.triggered.connect( self.save_preset )
 
     # <== PUBLIC METHODS ==>
 
-    @Slot()
+    @qc.Slot()
     def show_about(self):
         """Shows the about dialog for the module"""
         self.__ui_about_dialog.exec_()
 
-    @Slot()
+    @qc.Slot()
     def show_about_qt(self):
         """Shows the about dialog for the module"""
-        QApplication.aboutQt()
+        qw.QApplication.aboutQt()
 
     def load_preset_file(self, file_path):
         """Loads a preset file"""
@@ -119,17 +116,17 @@ class Dialog(QDialog):
         """Returns the options as a dict. This is a virtual method"""
         pass
 
-    @Slot()
+    @qc.Slot()
     def load_preset(self):
         """Prompts the user to select a preset file to load"""
-        open_file = QFileDialog.getOpenFileName(self, "OPen publish settings preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
+        open_file = qw.QFileDialog.getOpenFileName(self, "OPen publish settings preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
         if open_file != "":
             self.load_preset_file(open_file)
 
-    @Slot()
+    @qc.Slot()
     def save_preset(self):
         """Saves the current options as a preset file"""
-        save_file = QFileDialog.getSaveFileName(self, "Save current publish settings as preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
+        save_file = qw.QFileDialog.getSaveFileName(self, "Save current publish settings as preset...", self.__preset_folder, "Yaml (*.yml *.yaml)")[0]
         if save_file != "":
             options = self.get_options()
             with open(save_file, "w", encoding='utf-8') as preset_file:

@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
 """Save As/Create scene Dialog"""
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QDialog,
-    QHBoxLayout,
-    QRadioButton,
-    QVBoxLayout,
-    QFormLayout,
-    QWidget,
-    QComboBox,
-    QLineEdit,
-    QPushButton,
-    QLabel,
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-)
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
 
 import ramses as ram
 from ramses_maya.ui_object_combobox import RamObjectBox
@@ -38,27 +29,27 @@ class SaveAsDialog( Dialog ):
 
         self.setMinimumWidth(400)
 
-        main_layout = QVBoxLayout()
+        main_layout = qw.QVBoxLayout()
         main_layout.setSpacing(3)
         self.main_layout.addLayout(main_layout)
 
-        top_layout = QFormLayout()
-        top_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        top_layout = qw.QFormLayout()
+        top_layout.setFieldGrowthPolicy( qw.QFormLayout.AllNonFixedFieldsGrow )
         top_layout.setSpacing(3)
 
         self.project_box = RamObjectBox()
         top_layout.addRow( "Project:", self.project_box )
 
-        typeWidget = QWidget()
-        typeLayout = QVBoxLayout()
+        typeWidget = qw.QWidget()
+        typeLayout = qw.QVBoxLayout()
         typeLayout.setContentsMargins(0,0,0,0)
         typeLayout.setSpacing(3)
-        self.assetButton = QRadioButton("Asset")
+        self.assetButton = qw.QRadioButton("Asset")
         self.assetButton.setChecked(True)
         typeLayout.addWidget(self.assetButton)
-        self.shotButton = QRadioButton("Shot")
+        self.shotButton = qw.QRadioButton("Shot")
         typeLayout.addWidget(self.shotButton)
-        self.otherButton = QRadioButton("Other")
+        self.otherButton = qw.QRadioButton("Other")
         typeLayout.addWidget(self.otherButton)
         typeWidget.setLayout(typeLayout)
         top_layout.addRow("Type:", typeWidget)
@@ -67,48 +58,48 @@ class SaveAsDialog( Dialog ):
         top_layout.addRow( "Step:", self.stepBox )
 
         self.groupBox = RamObjectBox()
-        self.groupLabel = QLabel("Asset Group:")
+        self.groupLabel = qw.QLabel("Asset Group:")
         top_layout.addRow( self.groupLabel, self.groupBox )
 
         self.itemBox = RamObjectBox()
-        self.itemLabel = QLabel("Item:")
+        self.itemLabel = qw.QLabel("Item:")
         top_layout.addRow( self.itemLabel, self.itemBox )
 
-        self.resourceEdit = QLineEdit()
+        self.resourceEdit = qw.QLineEdit()
         top_layout.addRow( "Resource:", self.resourceEdit)
 
-        self.extensionBox = QComboBox()
+        self.extensionBox = qw.QComboBox()
         self.extensionBox.addItem("Maya Binary (.mb)", "mb")
         self.extensionBox.addItem("Maya ASCII (.ma)", "ma")
         top_layout.addRow("File Type:", self.extensionBox)
 
-        locationWidget = QWidget()
-        locationLayout = QHBoxLayout()
+        locationWidget = qw.QWidget()
+        locationLayout = qw.QHBoxLayout()
         locationLayout.setSpacing(3)
         locationLayout.setContentsMargins(0,0,0,0)
         locationWidget.setLayout(locationLayout)
 
-        self.locationEdit = QLineEdit()
+        self.locationEdit = qw.QLineEdit()
         self.locationEdit.setEnabled(False)
         self.locationEdit.setPlaceholderText("Location...")
         locationLayout.addWidget( self.locationEdit )
 
-        self.browseButton = QPushButton("Browse...")
+        self.browseButton = qw.QPushButton("Browse...")
         self.browseButton.setVisible( False )
         locationLayout.addWidget( self.browseButton )
 
         top_layout.addRow("Location:",locationWidget)
 
-        self.fileNameLabel = QLabel()
+        self.fileNameLabel = qw.QLabel()
         top_layout.addRow("Filename:", self.fileNameLabel)
 
         main_layout.addLayout(top_layout)
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
-        self._saveButton = QPushButton("Save")
+        self._saveButton = qw.QPushButton("Save")
         buttonsLayout.addWidget( self._saveButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
         main_layout.addLayout( buttonsLayout )
 
@@ -141,7 +132,7 @@ class SaveAsDialog( Dialog ):
         self.project_box.setCurrentIndex(-1)
         self._loadSteps( )
 
-    @Slot()
+    @qc.Slot()
     def _loadSteps(self):
         self.stepBox.clear()
         project = self.getProject()
@@ -276,7 +267,7 @@ class SaveAsDialog( Dialog ):
 
         self._saveButton.setEnabled(True)
 
-    @Slot()
+    @qc.Slot()
     def _typeChanged(self):
         if self.assetButton.isChecked():
             self.groupBox.show()
@@ -292,7 +283,7 @@ class SaveAsDialog( Dialog ):
 
         self._loadSteps()
 
-    @Slot()
+    @qc.Slot()
     def _loadGroups(self):
         self.itemBox.clear()
         self.groupBox.clear()
@@ -318,7 +309,7 @@ class SaveAsDialog( Dialog ):
 
         self._buildPath()
 
-    @Slot()
+    @qc.Slot()
     def _loadItems(self):
         self.itemBox.clear()
 

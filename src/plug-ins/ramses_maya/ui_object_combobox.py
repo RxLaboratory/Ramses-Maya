@@ -1,36 +1,34 @@
 # -*- coding: utf-8 -*-
 """A ComboBox for displaying RamObjects"""
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QComboBox,
-)
-from PySide2.QtGui import (  # pylint: disable=no-name-in-module
-    QColor,
-    QPalette,
-    )
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-)
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtGui as qg
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtGui as qg
+    from PySide6 import QtCore as qc
 
 import ramses as ram
 RAMSES = ram.Ramses.instance()
 
-class RamObjectBox( QComboBox ):
+class RamObjectBox( qw.QComboBox ):
     """A ComboBox for displaying RamObjects"""
     def __init__(self, parent = None):
         super(RamObjectBox,self).__init__(parent)
         self.currentIndexChanged.connect( self.indexChanged )
 
-    @Slot()
+    @qc.Slot()
     def indexChanged(self, i):
         """Sets the color of the box"""
-        color = QColor( 93, 93, 93 )
+        color = qg.QColor( 93, 93, 93 )
         pal = self.palette()
 
         obj = self.itemData(i)
         if obj:
             colorName = self.itemData(i).colorName()
-            color = QColor( colorName )
+            color = qg.QColor( colorName )
 
         # adjust Lightness
         if color.lightness() > 120:

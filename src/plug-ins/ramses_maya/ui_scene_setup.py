@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
 """Setups the scene according to Ramses settigns"""
 import yaml
-import os
-from PySide2.QtWidgets import (
-    QFormLayout,
-    QCheckBox,
-    QComboBox,
-    QHBoxLayout,
-    QWidget,
-    QLabel,
-    QPushButton
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
-    Slot,
-    Qt
-)
+
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
+
 from maya import cmds # pylint: disable=no-name-in-module,import-error
 import dumaf as maf
 from ramses import (
@@ -57,71 +51,71 @@ class SceneSetupDialog( Dialog ):
     def __setup_ui(self):
         self.setWindowTitle("Scene Setup")
 
-        main_layout = QFormLayout()
-        main_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        main_layout = qw.QFormLayout()
+        main_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         self.main_layout.addLayout(main_layout)
 
         # ANIMATION
 
-        self.__ui_animation_label = QLabel("")
+        self.__ui_animation_label = qw.QLabel("")
         main_layout.addRow("Animation:", self.__ui_animation_label )
 
-        self.__ui_fps_box = QCheckBox("Fix framerate (24 fps)")
+        self.__ui_fps_box = qw.QCheckBox("Fix framerate (24 fps)")
         main_layout.addRow("", self.__ui_fps_box )
 
-        self.__ui_duration_box = QCheckBox("Fix duration (240 frames)")
+        self.__ui_duration_box = qw.QCheckBox("Fix duration (240 frames)")
         main_layout.addRow("", self.__ui_duration_box )
 
         # RENDERING
 
-        self.__ui_rendering_label = QLabel("")
+        self.__ui_rendering_label = qw.QLabel("")
         main_layout.addRow("Rendering:", self.__ui_rendering_label )
 
-        self.__ui_resolution_box = QCheckBox("Fix image size (1920x1080 px)")
+        self.__ui_resolution_box = qw.QCheckBox("Fix image size (1920x1080 px)")
         main_layout.addRow("", self.__ui_resolution_box )
 
-        self.__ui_cam_widget = QWidget()
-        cam_layout = QHBoxLayout(self.__ui_cam_widget)
+        self.__ui_cam_widget = qw.QWidget()
+        cam_layout = qw.QHBoxLayout(self.__ui_cam_widget)
         cam_layout.setContentsMargins(0,0,0,0)
         cam_layout.setSpacing(3)
-        self.__ui_select_camera_box = QCheckBox("Set default camera: ")
-        self.__ui_list_camera_box = QComboBox()
+        self.__ui_select_camera_box = qw.QCheckBox("Set default camera: ")
+        self.__ui_list_camera_box = qw.QComboBox()
         self.__ui_list_camera_box.setEnabled(False)
         cam_layout.addWidget(self.__ui_select_camera_box)
         cam_layout.addWidget(self.__ui_list_camera_box)
         main_layout.addRow("", self.__ui_cam_widget )
 
-        self.__ui_camera_name_box = QCheckBox("Rename camera (shotName)")
+        self.__ui_camera_name_box = qw.QCheckBox("Rename camera (shotName)")
         main_layout.addRow("", self.__ui_camera_name_box )
 
         # COLOR MANAGEMENT
 
-        self.__ui_color_label = QLabel("")
+        self.__ui_color_label = qw.QLabel("")
         main_layout.addRow("Color Management:", self.__ui_color_label )
 
-        self.__ui_ocio_path_box = QCheckBox("Set OCIO Config Path")
+        self.__ui_ocio_path_box = qw.QCheckBox("Set OCIO Config Path")
         main_layout.addRow("", self.__ui_ocio_path_box )
 
-        self.__ui_rendering_space_box = QCheckBox("Set rendering space (space)")
+        self.__ui_rendering_space_box = qw.QCheckBox("Set rendering space (space)")
         main_layout.addRow("", self.__ui_rendering_space_box )
 
-        self.__ui_display_space_box = QCheckBox("Set display space (space)")
+        self.__ui_display_space_box = qw.QCheckBox("Set display space (space)")
         main_layout.addRow("", self.__ui_display_space_box )
 
-        self.__ui_view_transform_box = QCheckBox("Set view transform (transform)")
+        self.__ui_view_transform_box = qw.QCheckBox("Set view transform (transform)")
         main_layout.addRow("", self.__ui_view_transform_box )
 
         # <-- BOTTOM BUTTONS -->
 
-        buttons_layout = QHBoxLayout()
+        buttons_layout = qw.QHBoxLayout()
         buttons_layout.setSpacing(2)
         self.main_layout.addLayout(buttons_layout)
 
-        self.__ui_fix_button = QPushButton("Fix and continue")
+        self.__ui_fix_button = qw.QPushButton("Fix and continue")
         buttons_layout.addWidget( self.__ui_fix_button )
-        self.__ui_ignore_button = QPushButton("Ignore and continue")
+        self.__ui_ignore_button = qw.QPushButton("Ignore and continue")
         buttons_layout.addWidget( self.__ui_ignore_button )
-        self.__ui_cancel_button = QPushButton("Cancel")
+        self.__ui_cancel_button = qw.QPushButton("Cancel")
         buttons_layout.addWidget( self.__ui_cancel_button )
 
     def __connect_events(self):
@@ -327,7 +321,7 @@ class SceneSetupDialog( Dialog ):
 
         return ok
 
-    @Slot()
+    @qc.Slot()
     def fix_scene(self):
         """Sets all scene settings according to ramses settings and user choices"""
         if self.__ui_fps_box.isChecked() and self.__fps != 0:
@@ -343,7 +337,7 @@ class SceneSetupDialog( Dialog ):
             if self.__width != 0 and self.__height != 0:
                 maf.rendering.set_render_resolution(self.__width, self.__height)
         if self.__ui_select_camera_box.isChecked():
-            maf.rendering.set_renderable_camera(self.__ui_list_camera_box.currentData(Qt.UserRole))
+            maf.rendering.set_renderable_camera(self.__ui_list_camera_box.currentData(qc.Qt.UserRole))
         if self.__ui_camera_name_box.isChecked():
             cameras = maf.rendering.get_renderable_cameras()
             for camera in cameras:

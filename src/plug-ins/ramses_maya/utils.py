@@ -2,14 +2,14 @@
 """Some general utilitary stuff"""
 
 import os
-from PySide2.QtGui import ( # pylint: disable=no-name-in-module,import-error
-    QIcon,
-    QDesktopServices
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-    QUrl
-)
+
+try:
+    from PySide2 import QtGui as qg
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtGui as qg
+    from PySide6 import QtCore as qc
+
 from maya import cmds # pylint: disable=import-error
 import dumaf as maf
 
@@ -21,28 +21,28 @@ PUBLISH_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/publish_presets/"
 IMPORT_PRESETS_PATH = os.path.dirname(PLUGIN_PATH) + "/import_presets/"
 
 def icon(name):
-    """Gets QIcon for an icon from its name (without extension)"""
-    return QIcon(ICON_PATH + name + ".png")
+    """Gets qg.QIcon for an icon from its name (without extension)"""
+    return qg.QIcon(ICON_PATH + name + ".png")
 
-@Slot()
+@qc.Slot()
 def open_help():
     """Opens the online help for the addon"""
-    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/components/addons/maya" ) )
+    qg.QDesktopServices.openUrl( qc.QUrl( "https://ramses.rxlab.guide/components/addons/maya" ) )
 
-@Slot()
+@qc.Slot()
 def about_ramses():
     """Opens the web page about Ramses"""
-    QDesktopServices.openUrl( QUrl( "https://rxlaboratory.org/tools/ramses" ) )
+    qg.QDesktopServices.openUrl( qc.QUrl( "https://rxlaboratory.org/tools/ramses" ) )
 
-@Slot()
+@qc.Slot()
 def donate():
     """Opens the donation page"""
-    QDesktopServices.openUrl( QUrl( "http://donate.rxlab.info" ) )
+    qg.QDesktopServices.openUrl( qc.QUrl( "http://donate.rxlab.info" ) )
 
-@Slot()
+@qc.Slot()
 def open_api_reference():
     """Opens the online API reference"""
-    QDesktopServices.openUrl( QUrl( "https://ramses.rxlab.guide/dev/add-ons-reference/" ) )
+    qg.QDesktopServices.openUrl( qc.QUrl( "https://ramses.rxlab.guide/dev/add-ons-reference/" ) )
 
 def end_process(temp_data, progress_dialog):
     """Ends a process on the scene (closes and removes the temp file)"""

@@ -3,29 +3,15 @@
 import sys
 import platform
 import os
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QApplication,
-    QFileDialog,
-    QFormLayout,
-    QStackedLayout,
-    QWidget,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLineEdit,
-    QSpinBox,
-    QCheckBox,
-    QLabel,
-    QPushButton,
-    QComboBox,
-    QListWidget,
-    QListWidgetItem,
-    QAbstractItemView
-)
-from PySide2.QtGui import QDesktopServices # pylint: disable=no-name-in-module
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-    QUrl,
-)
+
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtGui as qg
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtGui as qg
+    from PySide6 import QtCore as qc
 
 import maya.cmds as cmds # pylint: disable=import-error
 import ramses as ram
@@ -73,10 +59,10 @@ class SettingsDialog( Dialog ):
         self.setWindowTitle("Ramses Add-ons settings")
         self.setMinimumWidth( 500 )
 
-        secondaryLayout = QHBoxLayout()
+        secondaryLayout = qw.QHBoxLayout()
         secondaryLayout.setSpacing(3)
 
-        self.sectionsBox = QListWidget()
+        self.sectionsBox = qw.QListWidget()
         self.sectionsBox.addItem("Versionning")
         self.sectionsBox.addItem("Ramses Application")
         self.sectionsBox.addItem("Scripts")
@@ -84,74 +70,74 @@ class SettingsDialog( Dialog ):
         self.sectionsBox.setMaximumWidth( 150 )
         secondaryLayout.addWidget(self.sectionsBox)
 
-        self.stackedLayout = QStackedLayout()
+        self.stackedLayout = qw.QStackedLayout()
 
-        versionningWidget = QWidget()
-        vL = QVBoxLayout()
+        versionningWidget = qw.QWidget()
+        vL = qw.QVBoxLayout()
         versionningWidget.setLayout(vL)
         self.stackedLayout.addWidget( versionningWidget )
-        versionningLayout = QFormLayout()
+        versionningLayout = qw.QFormLayout()
         versionningLayout.setSpacing(3)
         vL.addLayout(versionningLayout)
         vL.addStretch()
 
-        self._autoIncrementBox = QSpinBox()
+        self._autoIncrementBox = qw.QSpinBox()
         self._autoIncrementBox.setMinimum(1)
         self._autoIncrementBox.setMaximum(1440) #24h
         self._autoIncrementBox.setSuffix(" minutes.")
         versionningLayout.addRow( "Auto-increment version every:", self._autoIncrementBox )
 
-        self._saveHotkeyBox = QCheckBox("Replace with the \"ramSave\" command.")
+        self._saveHotkeyBox = qw.QCheckBox("Replace with the \"ramSave\" command.")
         versionningLayout.addRow( "\"Save\" hotkey (Ctrl+S):", self._saveHotkeyBox )
 
-        self._saveAsHotkeyBox = QCheckBox("Replace with the \"ramSaveAs\" command.")
+        self._saveAsHotkeyBox = qw.QCheckBox("Replace with the \"ramSaveAs\" command.")
         versionningLayout.addRow( "\"Save As\" hotkey (Ctrl+Shift+S):", self._saveAsHotkeyBox )
 
-        self._openHotkeyBox = QCheckBox("Replace with the \"ramOpen\" command.")
+        self._openHotkeyBox = qw.QCheckBox("Replace with the \"ramOpen\" command.")
         versionningLayout.addRow( "\"Open\" hotkey (Ctrl+O):", self._openHotkeyBox )
 
-        appWidget = QWidget()
-        aL = QVBoxLayout()
+        appWidget = qw.QWidget()
+        aL = qw.QVBoxLayout()
         appWidget.setLayout(aL)
         self.stackedLayout.addWidget( appWidget )
-        appLayout = QFormLayout()
+        appLayout = qw.QFormLayout()
         appLayout.setSpacing(3)
         aL.addLayout(appLayout)
         aL.addStretch()
 
-        pathLabel = QLabel("Ramses Application path:")       
-        pathLayout = QHBoxLayout()
-        self._clientPathEdit = QLineEdit( )
+        pathLabel = qw.QLabel("Ramses Application path:")       
+        pathLayout = qw.QHBoxLayout()
+        self._clientPathEdit = qw.QLineEdit( )
         pathLayout.addWidget( self._clientPathEdit )
-        self._clientPathButton = QPushButton(text="Browse...")
+        self._clientPathButton = qw.QPushButton(text="Browse...")
         pathLayout.addWidget( self._clientPathButton )
-        appLayout.setWidget( 1, QFormLayout.LabelRole, pathLabel)
-        appLayout.setLayout( 1, QFormLayout.FieldRole, pathLayout)
+        appLayout.setWidget( 1, qw.QFormLayout.LabelRole, pathLabel)
+        appLayout.setLayout( 1, qw.QFormLayout.FieldRole, pathLayout)
 
-        portLabel = QLabel("Ramses Daemon port:")
-        self._clientPortBox = QSpinBox()
+        portLabel = qw.QLabel("Ramses Daemon port:")
+        self._clientPortBox = qw.QSpinBox()
         self._clientPortBox.setMinimum( 1024 )
         self._clientPortBox.setMaximum( 49151 )
         appLayout.addRow( portLabel, self._clientPortBox )
 
-        scriptsWidget = QWidget()
-        sLH = QHBoxLayout()
+        scriptsWidget = qw.QWidget()
+        sLH = qw.QHBoxLayout()
         scriptsWidget.setLayout(sLH)
-        sLV = QVBoxLayout()
+        sLV = qw.QVBoxLayout()
         sLV.setSpacing(2)
         sLH.addLayout(sLV)
         self.stackedLayout.addWidget( scriptsWidget )
-        self.scriptsList = QListWidget()
-        self.scriptsList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.scriptsList = qw.QListWidget()
+        self.scriptsList.setSelectionMode(qw.QAbstractItemView.ExtendedSelection)
         sLV.addWidget(self.scriptsList)
-        scriptsButtonsLayout = QHBoxLayout()
+        scriptsButtonsLayout = qw.QHBoxLayout()
         scriptsButtonsLayout.setSpacing(2)
         sLV.addLayout(scriptsButtonsLayout)
-        self.scriptsRemoveButton = QPushButton("Remove")
+        self.scriptsRemoveButton = qw.QPushButton("Remove")
         scriptsButtonsLayout.addWidget( self.scriptsRemoveButton )
-        self.scriptsAddButton = QPushButton("Add...")
+        self.scriptsAddButton = qw.QPushButton("Add...")
         scriptsButtonsLayout.addWidget( self.scriptsAddButton )
-        scriptsHelpLabel = QLabel( """Custom scripts can define event functions
+        scriptsHelpLabel = qw.QLabel( """Custom scripts can define event functions
 to be run automatically on specific tasks:
 
     - on_open( ... )
@@ -167,22 +153,22 @@ the available arguments for each function"""
         )
         sLH.addWidget( scriptsHelpLabel )
 
-        devWidget = QWidget()
-        dL = QVBoxLayout()
+        devWidget = qw.QWidget()
+        dL = qw.QVBoxLayout()
         devWidget.setLayout(dL)
         self.stackedLayout.addWidget( devWidget )
-        devLayout = QFormLayout()
+        devLayout = qw.QFormLayout()
         devLayout.setSpacing(3)
         dL.addLayout(devLayout)
         dL.addStretch()
 
-        debugModeLabel = QLabel("Debug Mode:")
-        self._debugModeBox = QCheckBox("Enabled")
+        debugModeLabel = qw.QLabel("Debug Mode:")
+        self._debugModeBox = qw.QCheckBox("Enabled")
         devLayout.addRow( debugModeLabel, self._debugModeBox )
 
-        logLabel = QLabel("Log Level:")
+        logLabel = qw.QLabel("Log Level:")
 
-        self._logLevelBox = QComboBox()
+        self._logLevelBox = qw.QComboBox()
         self._logLevelBox.addItem( "Data Received", ram.LogLevel.DataReceived )
         self._logLevelBox.addItem( "Data Sent", ram.LogLevel.DataSent )
         self._logLevelBox.addItem( "Debug", ram.LogLevel.Debug )
@@ -198,12 +184,12 @@ the available arguments for each function"""
         secondaryLayout.setStretch(0, 0)
         secondaryLayout.setStretch(1, 100)
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._saveButton = QPushButton("Save")
+        self._saveButton = qw.QPushButton("Save")
         buttonsLayout.addWidget( self._saveButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         self.main_layout.addLayout( buttonsLayout )
@@ -222,12 +208,12 @@ the available arguments for each function"""
         self.scriptsAddButton.clicked.connect( self.addScript )
         self.scriptsRemoveButton.clicked.connect( self.removeScript )
 
-    @Slot()
+    @qc.Slot()
     def cancel(self):
         """Cancels"""
         self.close()
 
-    @Slot()
+    @qc.Slot()
     def save(self):
         """Saves the settings"""
         SETTINGS.ramsesClientPath = self._clientPathEdit.text()
@@ -261,7 +247,7 @@ the available arguments for each function"""
 
         self.close()
 
-    @Slot()
+    @qc.Slot()
     def revert(self):
         """Reloads the settings"""
         self._clientPathEdit.setText( SETTINGS.ramsesClientPath )
@@ -290,7 +276,7 @@ the available arguments for each function"""
         for s in SETTINGS.userScripts:
             self.__addScriptToList(s)
 
-    @Slot()
+    @qc.Slot()
     def restoreDefaults(self):
         """Restores the default settings"""
         self._clientPathEdit.setText( SETTINGS.defaultRamsesClientPath )
@@ -305,31 +291,31 @@ the available arguments for each function"""
                 break
             i=i+1
 
-    @Slot()
+    @qc.Slot()
     def help(self):
         """Shows the addon help"""
-        QDesktopServices.openUrl( QUrl( SETTINGS.addonsHelpUrl ) )
+        qg.QDesktopServices.openUrl( qc.QUrl( SETTINGS.addonsHelpUrl ) )
 
-    @Slot()
+    @qc.Slot()
     def browseClientPath(self):
         """Opens a file browser to select the Ramses Application path"""
         file_filter = ""
         system = platform.system()
         if system == "Windows":
             file_filter = "Executable Files (*.exe *.bat)"
-        file = QFileDialog.getOpenFileName(self,
+        file = qw.QFileDialog.getOpenFileName(self,
             "Select the path to the Ramses Application",
             self._clientPathEdit.text(),
             file_filter)
         if file[0] != "":
             self._clientPathEdit.setText( file[0] )
 
-    @Slot()
+    @qc.Slot()
     def addScript(self):
         """Adds a new custom script"""
 
         file_filter = "Python Script Files (*.py);;All Files (*.*)"
-        file = QFileDialog.getOpenFileName(self,
+        file = qw.QFileDialog.getOpenFileName(self,
             "Select the Python script to add",
             "",
             file_filter)
@@ -339,10 +325,10 @@ the available arguments for each function"""
             self.__addScriptToList(script_path)
 
     def __addScriptToList(self, script_path):
-        item = QListWidgetItem( os.path.basename(script_path), self.scriptsList )
+        item = qw.QListWidgetItem( os.path.basename(script_path), self.scriptsList )
         item.setToolTip( script_path )
 
-    @Slot()
+    @qc.Slot()
     def removeScript(self):
         """Removes the selected scripts"""
         for item in reversed(self.scriptsList.selectedItems()):
@@ -350,7 +336,7 @@ the available arguments for each function"""
             del item
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = qw.QApplication(sys.argv)
     settingsDialog = SettingsDialog()
     settingsDialog.show()
     sys.exit(app.exec_())

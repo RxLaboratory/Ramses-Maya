@@ -2,22 +2,13 @@
 
 import os
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
-    QDialog,
-    QHBoxLayout,
-    QListWidget,
-    QListWidgetItem,
-    QVBoxLayout,
-    QCheckBox,
-    QPushButton,
-    QAbstractItemView,
-    QLabel,
-)
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
 
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-error
-    Slot,
-    Qt,
-)
 from maya import cmds # pylint: disable=import-error
 from ramses_maya.utils_attributes import list_ramses_nodes, get_item, get_state, get_step, get_ramses_attr, RamsesAttribute
 from ramses_maya.ui_dialog import Dialog
@@ -39,63 +30,63 @@ class UpdateDialog( Dialog ):
 
         self.setWindowTitle("Update Items")
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setSpacing(3)
         self.main_layout.addLayout(mainLayout)
 
-        columnLayout = QHBoxLayout()
+        columnLayout = qw.QHBoxLayout()
         columnLayout.setContentsMargins(0,0,0,0)
         columnLayout.setSpacing(6)
 
-        currentLayout = QVBoxLayout()
+        currentLayout = qw.QVBoxLayout()
         currentLayout.setContentsMargins(0,0,0,0)
         currentLayout.setSpacing(3)
 
-        self.onlyNewButton = QCheckBox("Show only updated items.")
+        self.onlyNewButton = qw.QCheckBox("Show only updated items.")
         self.onlyNewButton.setChecked(True)
         currentLayout.addWidget( self.onlyNewButton )
 
-        self.onlySelectedButton = QCheckBox("Show only selected nodes.")
+        self.onlySelectedButton = qw.QCheckBox("Show only selected nodes.")
         self.onlySelectedButton.setChecked(False)
         currentLayout.addWidget( self.onlySelectedButton )
 
-        self.itemList = QListWidget()
-        self.itemList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.itemList = qw.QListWidget()
+        self.itemList.setSelectionMode(qw.QAbstractItemView.ExtendedSelection)
         currentLayout.addWidget(self.itemList)
 
-        self.currentDetailsLabel = QLabel("")
+        self.currentDetailsLabel = qw.QLabel("")
         currentLayout.addWidget(self.currentDetailsLabel)
 
         columnLayout.addLayout(currentLayout)
 
-        updateLayout = QVBoxLayout()
+        updateLayout = qw.QVBoxLayout()
         updateLayout.setContentsMargins(0,0,0,0)
         updateLayout.setSpacing(3)
 
-        updateLabel = QLabel("Published versions:")
+        updateLabel = qw.QLabel("Published versions:")
         updateLayout.addWidget(updateLabel)
 
-        self.updateList = QListWidget()
-        self.updateList.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.updateList = qw.QListWidget()
+        self.updateList.setSelectionMode(qw.QAbstractItemView.SingleSelection)
         updateLayout.addWidget(self.updateList)
 
-        self.updateDetailsLabel = QLabel("")
+        self.updateDetailsLabel = qw.QLabel("")
         updateLayout.addWidget(self.updateDetailsLabel)
         
         columnLayout.addLayout(updateLayout)
 
         mainLayout.addLayout(columnLayout)
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._updateButton = QPushButton("Update All")
+        self._updateButton = qw.QPushButton("Update All")
         self._updateButton.setEnabled(False)
         buttonsLayout.addWidget( self._updateButton )
-        self._updateSelectedButton = QPushButton("Update Selected")
+        self._updateSelectedButton = qw.QPushButton("Update Selected")
         self._updateSelectedButton.setEnabled(False)
         buttonsLayout.addWidget( self._updateSelectedButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         mainLayout.addLayout( buttonsLayout )
@@ -108,11 +99,11 @@ class UpdateDialog( Dialog ):
         self.itemList.itemSelectionChanged.connect( self.selectionChanged )
         self._updateSelectedButton.clicked.connect( self._updateSelected )
 
-    Slot()
+    qc.Slot()
     def _updateSelected(self):
         self.done(2)
 
-    Slot()
+    qc.Slot()
     def selectionChanged(self):
         """Updates displayed info according to the selection"""
         items = self.itemList.selectedItems()
@@ -125,31 +116,31 @@ class UpdateDialog( Dialog ):
             # Details
 
             currentDetails = '\n'.join((
-                "Current version: " + str( currentItem.data(Qt.UserRole + 4) ),
-                "Current state: " + currentItem.data(Qt.UserRole + 3).name()
+                "Current version: " + str( currentItem.data(qc.Qt.UserRole + 4) ),
+                "Current state: " + currentItem.data(qc.Qt.UserRole + 3).name()
             ))
             self.currentDetailsLabel.setText( currentDetails )
 
-            state = currentItem.data(Qt.UserRole + 8)
+            state = currentItem.data(qc.Qt.UserRole + 8)
             stateName = "- Not Found -"
             if state:
                 stateName = state.name()
 
             updateDetails = '\n'.join((
-                "Latest version: " + str( currentItem.data(Qt.UserRole + 7) ),
+                "Latest version: " + str( currentItem.data(qc.Qt.UserRole + 7) ),
                 "Latest state: " + stateName
             ))
             self.updateDetailsLabel.setText( updateDetails )
 
             # List available versions
-            ramItem = currentItem.data(Qt.UserRole + 1)
-            ramStep = currentItem.data(Qt.UserRole + 2)
-            sourceFile = currentItem.data(Qt.UserRole + 5)
-            resource = currentItem.data(Qt.UserRole + 6)
+            ramItem = currentItem.data(qc.Qt.UserRole + 1)
+            ramStep = currentItem.data(qc.Qt.UserRole + 2)
+            sourceFile = currentItem.data(qc.Qt.UserRole + 5)
+            resource = currentItem.data(qc.Qt.UserRole + 6)
             sourceFileName = os.path.basename(sourceFile)
             publishedFolders = ramItem.publishedVersionFolderPaths( ramStep, sourceFileName, resource )
             for f in reversed(publishedFolders):
-                updateItem = QListWidgetItem(self.updateList)
+                updateItem = qw.QListWidgetItem(self.updateList)
 
                 splitName = os.path.basename(f).split('_')
                 if len(splitName) == 3:
@@ -162,17 +153,17 @@ class UpdateDialog( Dialog ):
                 itemName = ' | '.join(splitName)
                 updateItem.setText( itemName )
                 updateFile = ramses.RamFileManager.buildPath((f, sourceFileName))
-                updateItem.setData(Qt.UserRole, updateFile)
+                updateItem.setData(qc.Qt.UserRole, updateFile)
 
             self.updateList.setCurrentItem( self.updateList.item(0) )
                             
         else:
             self.currentDetailsLabel.setText("")
-    Slot()
+    qc.Slot()
     def showOnlyNew(self, checked = True):
         self.__filterList()
 
-    Slot()
+    qc.Slot()
     def showOnlySelected(self, checked = True):
         self.__filterList()
 
@@ -189,7 +180,7 @@ class UpdateDialog( Dialog ):
                 listItem.setHidden(False)
                 continue
 
-            node = listItem.data(Qt.UserRole)
+            node = listItem.data(qc.Qt.UserRole)
             updated = listItem.text().startswith('New: ')
             selected = node in selection
 
@@ -224,16 +215,16 @@ class UpdateDialog( Dialog ):
             version = get_ramses_attr( node, RamsesAttribute.VERSION )
             resource = get_ramses_attr(node, RamsesAttribute.RESOURCE )
 
-            listItem = QListWidgetItem( self.itemList )
-            listItem.setData(Qt.UserRole, node)
-            listItem.setData(Qt.UserRole + 1, ramItem )
-            listItem.setData(Qt.UserRole + 2, ramStep )
-            listItem.setData(Qt.UserRole + 3, ramState )
-            listItem.setData(Qt.UserRole + 4, version )
-            listItem.setData(Qt.UserRole + 5, sourceFile )
-            listItem.setData(Qt.UserRole + 6, resource )
-            listItem.setData(Qt.UserRole + 7, '-Not found-')
-            listItem.setData(Qt.UserRole + 8, None )
+            listItem = qw.QListWidgetItem( self.itemList )
+            listItem.setData(qc.Qt.UserRole, node)
+            listItem.setData(qc.Qt.UserRole + 1, ramItem )
+            listItem.setData(qc.Qt.UserRole + 2, ramStep )
+            listItem.setData(qc.Qt.UserRole + 3, ramState )
+            listItem.setData(qc.Qt.UserRole + 4, version )
+            listItem.setData(qc.Qt.UserRole + 5, sourceFile )
+            listItem.setData(qc.Qt.UserRole + 6, resource )
+            listItem.setData(qc.Qt.UserRole + 7, '-Not found-')
+            listItem.setData(qc.Qt.UserRole + 8, None )
             listItem.setToolTip( node )
 
             itemText = ramItem.name() + ' | ' + ramStep.name()
@@ -253,9 +244,9 @@ class UpdateDialog( Dialog ):
                 updateVersion = ramses.RamMetaDataManager.getVersion(latestFile)
                 updateState = ramses.RamMetaDataManager.getState( latestFile )
                 updateState = ramses.Ramses.instance().state(updateState)
-                listItem.setData(Qt.UserRole + 7, updateVersion)
-                listItem.setData(Qt.UserRole + 8, updateState)
-                listItem.setData(Qt.UserRole + 9, latestFile )
+                listItem.setData(qc.Qt.UserRole + 7, updateVersion)
+                listItem.setData(qc.Qt.UserRole + 8, updateState)
+                listItem.setData(qc.Qt.UserRole + 9, latestFile )
             if updated:
                 itemText = 'New: ' + itemText 
 
@@ -269,7 +260,7 @@ class UpdateDialog( Dialog ):
         for i in range(0, self.itemList.count()):
             item = self.itemList.item(i)
             if item.text().startswith('New: '):
-                nodes.append( ( item.data(Qt.UserRole), item.data(Qt.UserRole + 9)) )
+                nodes.append( ( item.data(qc.Qt.UserRole), item.data(qc.Qt.UserRole + 9)) )
         return nodes
 
     def getSelectedNodes(self):
@@ -279,11 +270,11 @@ class UpdateDialog( Dialog ):
         currentItem = self.itemList.currentItem()
 
         if updateItem is not None and currentItem is not None:
-            nodes.append( ( currentItem.data(Qt.UserRole), updateItem.data(Qt.UserRole) ) )
+            nodes.append( ( currentItem.data(qc.Qt.UserRole), updateItem.data(qc.Qt.UserRole) ) )
             return nodes
 
         for item in self.itemList.selectedItems():
-            nodes.append( ( item.data(Qt.UserRole), item.data(Qt.UserRole + 9) ) )
+            nodes.append( ( item.data(qc.Qt.UserRole), item.data(qc.Qt.UserRole + 9) ) )
         return nodes
 
 if __name__ == '__main__':

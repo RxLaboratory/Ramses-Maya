@@ -1,25 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QDialog,
-    QHBoxLayout,
-    QVBoxLayout,
-    QFormLayout,
-    QWidget,
-    QComboBox,
-    QLineEdit,
-    QPushButton,
-    QLabel,
-    QFileDialog,
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-)
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
+
 import maya.cmds as cmds # pylint: disable=import-error
 from ramses_maya.ui_dialog import Dialog
 from ramses_maya.ui_object_combobox import RamObjectBox
-
-
 import ramses as ram
 ramses = ram.Ramses.instance()
 
@@ -36,12 +26,12 @@ class PublishTemplateDialog( Dialog ):
 
         self.setMinimumWidth(400)
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setSpacing(3)
         self.main_layout.addLayout(mainLayout)
 
-        topLayout = QFormLayout()
-        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        topLayout = qw.QFormLayout()
+        topLayout.setFieldGrowthPolicy( qw.QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
         self.projectBox = RamObjectBox()
@@ -50,43 +40,43 @@ class PublishTemplateDialog( Dialog ):
         self.stepBox = RamObjectBox()
         topLayout.addRow( "Step:", self.stepBox )
 
-        self.nameEdit = QLineEdit()
+        self.nameEdit = qw.QLineEdit()
         self.nameEdit.setPlaceholderText("Template")
         topLayout.addRow("Name:", self.nameEdit)
 
-        self.extensionBox = QComboBox()
+        self.extensionBox = qw.QComboBox()
         self.extensionBox.addItem("Maya Binary (.mb)", "mb")
         self.extensionBox.addItem("Maya ASCII (.ma)", "ma")
         topLayout.addRow("File Type:", self.extensionBox)
 
-        locationWidget = QWidget()
-        locationLayout = QHBoxLayout()
+        locationWidget = qw.QWidget()
+        locationLayout = qw.QHBoxLayout()
         locationLayout.setSpacing(3)
         locationLayout.setContentsMargins(0,0,0,0)
         locationWidget.setLayout(locationLayout)
 
-        self.locationEdit = QLineEdit()
+        self.locationEdit = qw.QLineEdit()
         self.locationEdit.setEnabled(False)
         self.locationEdit.setPlaceholderText("Location...")
         locationLayout.addWidget( self.locationEdit )
 
-        self.browseButton = QPushButton("Browse...")
+        self.browseButton = qw.QPushButton("Browse...")
         self.browseButton.setVisible( False )
         locationLayout.addWidget( self.browseButton )
 
         topLayout.addRow("Location:",locationWidget)
 
-        self.fileNameLabel = QLabel()
+        self.fileNameLabel = qw.QLabel()
         topLayout.addRow("Filename:", self.fileNameLabel)
 
         mainLayout.addLayout( topLayout )
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._publishButton = QPushButton("Save Template")
+        self._publishButton = qw.QPushButton("Save Template")
         buttonsLayout.addWidget( self._publishButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         mainLayout.addLayout( buttonsLayout )
@@ -112,7 +102,7 @@ class PublishTemplateDialog( Dialog ):
             self.projectBox.addItem(str(project), project)
         self.__loadSteps( )
 
-    @Slot()
+    @qc.Slot()
     def __loadSteps(self):
         project = self.projectBox.getObject()
         if project is not None:
@@ -121,7 +111,7 @@ class PublishTemplateDialog( Dialog ):
                 self.stepBox.addItem(str(step), step)
         self.__buildPath()
 
-    @Slot()
+    @qc.Slot()
     def __buildPath(self):
         self._publishButton.setEnabled(False)
         self.locationEdit.setText("")
@@ -151,7 +141,7 @@ class PublishTemplateDialog( Dialog ):
         # build file name
         self.__buildFileName()
 
-    @Slot()
+    @qc.Slot()
     def __buildFileName(self):
         nm = ram.RamFileInfo()
 
@@ -171,13 +161,13 @@ class PublishTemplateDialog( Dialog ):
 
         self.fileNameLabel.setText( nm.fileName() )
 
-    @Slot()
+    @qc.Slot()
     def browse(self):
-        path = QFileDialog.getExistingDirectory(
+        path = qw.QFileDialog.getExistingDirectory(
             self,
             "Select Templates Directory",
             ramses.folderPath(),
-            QFileDialog.ShowDirsOnly
+            qw.QFileDialog.ShowDirsOnly
             )
         self.locationEdit.setText("")
         # Try to extract info from the path

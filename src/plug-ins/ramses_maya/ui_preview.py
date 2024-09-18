@@ -2,25 +2,13 @@
 """UI for the preview options"""
 
 import os
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QCheckBox,
-    QDialog,
-    QHBoxLayout,
-    QSpinBox,
-    QVBoxLayout,
-    QFormLayout,
-    QWidget,
-    QComboBox,
-    QLineEdit,
-    QPushButton,
-    QSlider,
-    QFileDialog
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-    Qt,
-    QFileInfo
-)
+
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
 
 import maya.mel as mel  # pylint: disable=import-error
 import maya.cmds as cmds # pylint: disable=import-error
@@ -52,29 +40,29 @@ class PreviewDialog( Dialog ):
     def _setupUi(self):
         self.setWindowTitle( "Create preview" )
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setSpacing(3)
         self.main_layout.addLayout(mainLayout)
 
-        topLayout = QFormLayout()
-        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        topLayout = qw.QFormLayout()
+        topLayout.setFieldGrowthPolicy( qw.QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
-        self.cameraBox = QComboBox()
+        self.cameraBox = qw.QComboBox()
         topLayout.addRow("Camera:", self.cameraBox)
 
-        sizeWidget = QWidget()
-        sizeLayout = QHBoxLayout()
+        sizeWidget = qw.QWidget()
+        sizeLayout = qw.QHBoxLayout()
         sizeLayout.setContentsMargins(0,1,0,0)
         sizeLayout.setSpacing(3)
-        self.sizeEdit = QSpinBox()
+        self.sizeEdit = qw.QSpinBox()
         self.sizeEdit.setMaximum(100)
         self.sizeEdit.setMinimum(10)
         self.sizeEdit.setSuffix(' %')
         self.sizeEdit.setValue(50)
         sizeLayout.addWidget(self.sizeEdit)
-        self.sizeSlider = QSlider()
-        self.sizeSlider.setOrientation( Qt.Horizontal )
+        self.sizeSlider = qw.QSlider()
+        self.sizeSlider.setOrientation( qc.Qt.Horizontal )
         self.sizeSlider.setMaximum(100)
         self.sizeSlider.setMinimum(10)
         self.sizeSlider.setValue(50)
@@ -82,84 +70,84 @@ class PreviewDialog( Dialog ):
         sizeWidget.setLayout(sizeLayout)
         topLayout.addRow("Size:", sizeWidget)
 
-        renderOptionsWidget = QWidget()
-        renderOptionsLayout = QVBoxLayout()
+        renderOptionsWidget = qw.QWidget()
+        renderOptionsLayout = qw.QVBoxLayout()
         renderOptionsLayout.setContentsMargins(0,1,0,0)
         renderOptionsLayout.setSpacing(3)
-        self.displayAppearenceBox = QComboBox()
+        self.displayAppearenceBox = qw.QComboBox()
         self.displayAppearenceBox.addItem("Smooth Shaded", 'smoothShaded')
         self.displayAppearenceBox.addItem("Flat Shaded", 'flatShaded')
         self.displayAppearenceBox.addItem("Bounding Box", 'boundingBox')
         self.displayAppearenceBox.addItem("Points", 'points')
         self.displayAppearenceBox.addItem("Wireframe", 'wireframe')
         renderOptionsLayout.addWidget(self.displayAppearenceBox)
-        self.useLightsBox = QComboBox( )
+        self.useLightsBox = qw.QComboBox( )
         self.useLightsBox.addItem( "Default Lighting", 'default' )
         self.useLightsBox.addItem( "Silhouette", 'none' )
         self.useLightsBox.addItem( "Scene Lighting", 'all' )
         renderOptionsLayout.addWidget(self.useLightsBox)
-        self.displayTexturesBox = QCheckBox( "Display Textures")
+        self.displayTexturesBox = qw.QCheckBox( "Display Textures")
         self.displayTexturesBox.setChecked(True)
         renderOptionsLayout.addWidget(self.displayTexturesBox)
-        self.displayShadowsBox = QCheckBox("Display Shadows")
+        self.displayShadowsBox = qw.QCheckBox("Display Shadows")
         self.displayShadowsBox.setChecked(True)
         renderOptionsLayout.addWidget(self.displayShadowsBox )
-        self.aoBox = QCheckBox("Ambient Occlusion")
+        self.aoBox = qw.QCheckBox("Ambient Occlusion")
         self.aoBox.setChecked(True)
         renderOptionsLayout.addWidget(self.aoBox)
-        self.aaBox = QCheckBox("Anti-Aliasing")
+        self.aaBox = qw.QCheckBox("Anti-Aliasing")
         self.aaBox.setChecked(True)
         renderOptionsLayout.addWidget(self.aaBox)
-        self.onlyPolyBox = QCheckBox("Only Polygons")
+        self.onlyPolyBox = qw.QCheckBox("Only Polygons")
         self.onlyPolyBox.setChecked(True)
         renderOptionsLayout.addWidget(self.onlyPolyBox)
-        self.motionTrailBox = QCheckBox("Show Motion Trails")
+        self.motionTrailBox = qw.QCheckBox("Show Motion Trails")
         renderOptionsLayout.addWidget(self.motionTrailBox)
-        self.imagePlaneBox = QCheckBox("Show Image Plane")
+        self.imagePlaneBox = qw.QCheckBox("Show Image Plane")
         renderOptionsLayout.addWidget(self.imagePlaneBox)
-        self.showHudBox = QCheckBox("Show HUD")
+        self.showHudBox = qw.QCheckBox("Show HUD")
         self.showHudBox.setChecked(True)
         renderOptionsLayout.addWidget(self.showHudBox)
         renderOptionsWidget.setLayout( renderOptionsLayout )
         topLayout.addRow("Renderer:", renderOptionsWidget)
 
-        self.commentEdit = QLineEdit()
+        self.commentEdit = qw.QLineEdit()
         self.commentEdit.setMaxLength(20)
         topLayout.addRow("Comment:", self.commentEdit)
 
-        self._playblastBox = QCheckBox("Playblast")
+        self._playblastBox = qw.QCheckBox("Playblast")
         self._playblastBox.setChecked(True)
         topLayout.addRow("Type:", self._playblastBox)
-        self._thumbnailBox = QCheckBox("Thumbnail")
+        self._thumbnailBox = qw.QCheckBox("Thumbnail")
         self._thumbnailBox.setChecked(True)
         topLayout.addRow("", self._thumbnailBox)
 
-        folderLayout = QHBoxLayout()
+        folderLayout = qw.QHBoxLayout()
         folderLayout.setSpacing(3)
         folderLayout.setContentsMargins(0,0,0,0)
         topLayout.addRow("Folder:", folderLayout)
 
-        self.folderEdit = QLineEdit()
+        self.folderEdit = qw.QLineEdit()
         self.folderEdit.setPlaceholderText("Auto")
         folderLayout.addWidget(self.folderEdit)
 
-        self.folderButton = QPushButton("Browse...")
+        self.folderButton = qw.QPushButton("Browse...")
         folderLayout.addWidget(self.folderButton)
 
         folderLayout.setStretch(0, 1)
         folderLayout.setStretch(1, 0)
 
-        self.filenameEdit = QLineEdit()
+        self.filenameEdit = qw.QLineEdit()
         self.filenameEdit.setPlaceholderText("Auto")
         topLayout.addRow("File name:", self.filenameEdit)
 
         mainLayout.addLayout(topLayout)
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
-        self._renderButton = QPushButton("Render")
+        self._renderButton = qw.QPushButton("Render")
         buttonsLayout.addWidget( self._renderButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
         mainLayout.addLayout( buttonsLayout )
 
@@ -303,7 +291,7 @@ class PreviewDialog( Dialog ):
             maf.options.get('dublast.showHud', 1) == 1
         )
         folder = maf.options.get('dublast.folder', "")
-        if not QFileInfo.exists(folder):
+        if not qc.QFileInfo.exists(folder):
             folder = ""
         self.folderEdit.setText( folder )
 
@@ -323,25 +311,25 @@ class PreviewDialog( Dialog ):
 
     def _setPlayer(self):
         current = getVideoPlayer()
-        new = QFileDialog.getOpenFileName(self, "Select the video player", os.path.dirname(current))[0]
-        if QFileInfo.exists(new):
+        new = qw.QFileDialog.getOpenFileName(self, "Select the video player", os.path.dirname(current))[0]
+        if qc.QFileInfo.exists(new):
             maf.options.save('dublast.videoPlayer', new)
 
-    Slot()
+    qc.Slot()
     def _updateLightsBox(self, index):
         self.useLightsBox.setEnabled( index < 2 )
 
-    Slot()
+    qc.Slot()
     def _thumbnail(self):
         self.done(2)
 
     def _loadCameras(self):
         maf.ui.update_cam_combobox(self.cameraBox)
 
-    Slot()
+    qc.Slot()
     def _browseFolder(self):
-        f = QFileDialog.getExistingDirectory(self, "Select output folder", self.folderEdit.text() )
-        if QFileInfo.exists(f):
+        f = qw.QFileDialog.getExistingDirectory(self, "Select output folder", self.folderEdit.text() )
+        if qc.QFileInfo.exists(f):
             self.folderEdit.setText(f)
 
     def comment(self):
@@ -382,7 +370,7 @@ class PreviewDialog( Dialog ):
         fn = fn + self.commentEdit.text()
         return fn
 
-    Slot()
+    qc.Slot()
     def hideRenderer(self):
         """Hides the Maya viewport used to capture the preview"""
         cmds.window( self.pbWin, visible=False, edit=True)

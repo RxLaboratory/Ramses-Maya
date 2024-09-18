@@ -1,21 +1,13 @@
 # -*- coding: utf-8 -*-
 """The UI for changing the scene status/publishing"""
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QLabel,
-    QDialog,
-    QFormLayout,
-    QHBoxLayout,
-    QVBoxLayout,
-    QSlider,
-    QSpinBox,
-    QTextEdit,
-    QPushButton,
-    QCheckBox,
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Qt
-)
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
+
 from ramses_maya.ui_object_combobox import RamObjectBox
 from ramses_maya.ui_dialog import Dialog
 
@@ -53,20 +45,20 @@ class StatusDialog( Dialog ):
         self.setWindowTitle( "Incremental Save: Update Status" )
         self.setMinimumWidth( 400 )
 
-        main_layout = QVBoxLayout()
+        main_layout = qw.QVBoxLayout()
         main_layout.setSpacing(3)
         self.main_layout.addLayout(main_layout)
 
-        top_layout = QHBoxLayout()
+        top_layout = qw.QHBoxLayout()
         top_layout.setSpacing(3)
 
         self.__ui_state_box = StateBox()
         top_layout.addWidget( self.__ui_state_box )
 
-        self.__ui_completion_slider = QSlider( Qt.Horizontal )
+        self.__ui_completion_slider = qw.QSlider( qc.Qt.Horizontal )
         self.__ui_completion_slider.setMaximum(100)
         top_layout.addWidget( self.__ui_completion_slider )
-        self.__ui_completion_box = QSpinBox( )
+        self.__ui_completion_box = qw.QSpinBox( )
         self.__ui_completion_box.setMinimum( 0 )
         self.__ui_completion_box.setMaximum( 100 )
         self.__ui_completion_box.setSuffix( "%" )
@@ -74,34 +66,34 @@ class StatusDialog( Dialog ):
 
         main_layout.addLayout( top_layout )
 
-        options_layout = QFormLayout()
-        options_layout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        options_layout = qw.QFormLayout()
+        options_layout.setFieldGrowthPolicy( qw.QFormLayout.AllNonFixedFieldsGrow )
         options_layout.setSpacing(3)
 
-        self.__ui_publish_box = QCheckBox("Publish the current scene.")
+        self.__ui_publish_box = qw.QCheckBox("Publish the current scene.")
         options_layout.addRow( "Publication:", self.__ui_publish_box )
 
-        self.__ui_publish_settings_box = QCheckBox("Edit publish settings.")
+        self.__ui_publish_settings_box = qw.QCheckBox("Edit publish settings.")
         self.__ui_publish_settings_box.setEnabled(False)
         options_layout.addRow( "", self.__ui_publish_settings_box )
 
-        self.__ui_preview_box = QCheckBox("Create preview files (thumbnail or playblast).")
+        self.__ui_preview_box = qw.QCheckBox("Create preview files (thumbnail or playblast).")
         options_layout.addRow( "Preview:", self.__ui_preview_box )
 
-        self.__ui_comment_label = QLabel("Comment:")
-        self.__ui_comment_edit = QTextEdit()
+        self.__ui_comment_label = qw.QLabel("Comment:")
+        self.__ui_comment_edit = qw.QTextEdit()
         options_layout.addRow( self.__ui_comment_label, self.__ui_comment_edit )
 
         main_layout.addLayout( options_layout )
 
-        buttons_layout = QHBoxLayout()
+        buttons_layout = qw.QHBoxLayout()
         buttons_layout.setSpacing(2)
 
-        self.__ui_save_button = QPushButton("Update Status and Save")
+        self.__ui_save_button = qw.QPushButton("Update Status and Save")
         buttons_layout.addWidget( self.__ui_save_button )
-        self.__ui_skip_button = QPushButton("Skip and just Save")
+        self.__ui_skip_button = qw.QPushButton("Skip and just Save")
         buttons_layout.addWidget( self.__ui_skip_button )
-        self.__ui_cancel_button = QPushButton("Cancel")
+        self.__ui_cancel_button = qw.QPushButton("Cancel")
         buttons_layout.addWidget( self.__ui_cancel_button )
 
         main_layout.addLayout( buttons_layout )

@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# PySide
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module
-    QDialog,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLineEdit,
-    QPushButton,
-)
+try:
+    from PySide2 import QtWidgets as qw
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
 
 from ramses_maya.ui_dialog import Dialog
 
@@ -21,19 +17,19 @@ class CommentDialog( Dialog ):
         self.setWindowTitle( "Add a comment to this version" )
         self.setMinimumWidth(400)
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setSpacing(3)
         self.main_layout.addLayout(mainLayout)
 
-        self.textEdit = QLineEdit()
+        self.textEdit = qw.QLineEdit()
         mainLayout.addWidget(self.textEdit)
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
 
-        self._saveButton = QPushButton("Add Comment and Save")
+        self._saveButton = qw.QPushButton("Add Comment and Save")
         buttonsLayout.addWidget( self._saveButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         mainLayout.addLayout( buttonsLayout )

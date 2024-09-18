@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Utilitaries to manage options dicts"""
 
-from PySide2.QtCore import Qt # pylint: disable=no-name-in-module
 
+try:
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtCore as qc
 
 def get_option(name, options, default=None):
     """Returns the option or the default value if it is missing"""
@@ -26,7 +29,7 @@ def load_enum_preset( name, options, combobox, default=None ):
 
     if data is not None:
         for i in range(combobox.count()):
-            if combobox.itemData(i, Qt.UserRole) == options[name]:
+            if combobox.itemData(i, qc.Qt.UserRole) == options[name]:
                 combobox.setCurrentIndex(i)
                 break
 

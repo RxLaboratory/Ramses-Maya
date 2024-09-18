@@ -4,30 +4,15 @@ The UI for publishing scenes
 """
 
 import os
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
-    QVBoxLayout,
-    QHBoxLayout,
-    QListWidget,
-    QStackedLayout,
-    QWidget,
-    QFormLayout,
-    QCheckBox,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QAbstractItemView,
-    QStyledItemDelegate,
-    QPushButton,
-    QLabel,
-    QTextEdit,
-    QComboBox,
-    QLineEdit,
-    QSpinBox,
-    QDoubleSpinBox,
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-    Qt,
-)
+
+
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
+
 import yaml
 from dumaf import Node
 from .utils import (
@@ -44,7 +29,7 @@ from .ui_stepComboBox import StepComboBox
 # NOTE
 # formats to implement: abc, ma, mb, ma shaders, mb shaders, ass
 
-class NoEditDelegate(QStyledItemDelegate):
+class NoEditDelegate(qw.QStyledItemDelegate):
     """
     A delegate to be able to edit only the second column of the Nodes tree view
     """
@@ -52,7 +37,7 @@ class NoEditDelegate(QStyledItemDelegate):
         super(NoEditDelegate, self).__init__(parent)
 
     def createEditor(self, parent, option, index): # pylint: disable=unused-argument,invalid-name
-        """Overrides QStyledItemDelegate.createEditor"""
+        """Overrides qw.QStyledItemDelegate.createEditor"""
         return 0
 
 class PublishDialog(Dialog):
@@ -77,11 +62,11 @@ class PublishDialog(Dialog):
         self.setWindowTitle("Publish scene")
         self.setMinimumWidth( 700 )
 
-        content_layout = QHBoxLayout()
+        content_layout = qw.QHBoxLayout()
         self.main_layout.addLayout(content_layout)
         content_layout.setSpacing(3)
 
-        self.__ui_sections_box = QListWidget()
+        self.__ui_sections_box = qw.QListWidget()
         self.__ui_sections_box.addItem("Select: Format")
         self.__ui_sections_box.addItem("Select: Nodes")
         self.__ui_sections_box.addItem("Pre-Publish: Settings")
@@ -95,172 +80,172 @@ class PublishDialog(Dialog):
         self.__ui_sections_box.setMaximumWidth( 150 )
         content_layout.addWidget(self.__ui_sections_box)
 
-        self.__ui_stacked_layout = QStackedLayout()
+        self.__ui_stacked_layout = qw.QStackedLayout()
         content_layout.addLayout(self.__ui_stacked_layout)
 
         # <-- PRESET -->
 
-        preset_widget = QWidget()
-        preset_layout = QVBoxLayout(preset_widget)
+        preset_widget = qw.QWidget()
+        preset_layout = qw.QVBoxLayout(preset_widget)
         preset_layout.setSpacing(3)
         preset_layout.setContentsMargins(3,3,3,3)
         content_layout.addWidget(preset_widget)
 
-        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for steps.")
+        preset_label = qw.QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for steps.")
         preset_layout.addWidget(preset_label)
-        self.__ui_preset_edit = QTextEdit()
+        self.__ui_preset_edit = qw.QTextEdit()
         self.__ui_preset_edit.setReadOnly(True)
         preset_layout.addWidget(self.__ui_preset_edit)
 
         # <-- BOTTOM BUTTONS -->
-        buttons_layout = QHBoxLayout()
+        buttons_layout = qw.QHBoxLayout()
         buttons_layout.setSpacing(2)
         self.main_layout.addLayout(buttons_layout)
 
-        self.__ui_publish_button = QPushButton("Publish Scene")
+        self.__ui_publish_button = qw.QPushButton("Publish Scene")
         buttons_layout.addWidget( self.__ui_publish_button )
-        self.__ui_cancel_button = QPushButton("Cancel")
+        self.__ui_cancel_button = qw.QPushButton("Cancel")
         buttons_layout.addWidget( self.__ui_cancel_button )
 
         # <-- GENERAL -->
 
-        general_widget = QWidget()
+        general_widget = qw.QWidget()
         self.__ui_stacked_layout.addWidget(general_widget)
-        general_layout = QFormLayout(general_widget)
-        general_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        general_layout = qw.QFormLayout(general_widget)
+        general_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         general_layout.setSpacing(3)
 
         self.__ui_step_box = StepComboBox()
-        self.__ui_step_label = QLabel("Step:")
+        self.__ui_step_label = qw.QLabel("Step:")
         self.__ui_step_box.hide()
         self.__ui_step_label.hide()
         general_layout.addRow(self.__ui_step_label, self.__ui_step_box)
 
-        self.__ui_preset_box = QComboBox()
+        self.__ui_preset_box = qw.QComboBox()
         general_layout.addRow("Preset:", self.__ui_preset_box)
 
-        format_widget = QWidget()
-        format_layout = QVBoxLayout(format_widget)
+        format_widget = qw.QWidget()
+        format_layout = qw.QVBoxLayout(format_widget)
         format_layout.setSpacing(3)
         format_layout.setContentsMargins(3,3,3,3)
         general_layout.addRow("Format:", format_widget)
 
-        self.__ui_maya_scene_box = QCheckBox("Maya scene (ma/mb)")
+        self.__ui_maya_scene_box = qw.QCheckBox("Maya scene (ma/mb)")
         self.__ui_maya_scene_box.setChecked(True)
         format_layout.addWidget(self.__ui_maya_scene_box)
-        self.__ui_maya_shaders_box = QCheckBox("Maya scene, shaders only (ma/mb)")
+        self.__ui_maya_shaders_box = qw.QCheckBox("Maya scene, shaders only (ma/mb)")
         format_layout.addWidget(self.__ui_maya_shaders_box)
-        self.__ui_alembic_box = QCheckBox("Alembic (abc)")
+        self.__ui_alembic_box = qw.QCheckBox("Alembic (abc)")
         format_layout.addWidget(self.__ui_alembic_box)
-        self.__ui_arnold_scene_source_box = QCheckBox("Arnold scene source (ass)")
+        self.__ui_arnold_scene_source_box = qw.QCheckBox("Arnold scene source (ass)")
         format_layout.addWidget(self.__ui_arnold_scene_source_box)
-        self.__ui_obj_box = QCheckBox("OBJ")
+        self.__ui_obj_box = qw.QCheckBox("OBJ")
         format_layout.addWidget(self.__ui_obj_box)
 
         # <-- Nodes -->
 
-        nodes_widget = QWidget()
-        nodes_layout = QVBoxLayout(nodes_widget)
+        nodes_widget = qw.QWidget()
+        nodes_layout = qw.QVBoxLayout(nodes_widget)
         nodes_layout.setContentsMargins(0,0,0,0)
         nodes_layout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( nodes_widget )
 
-        self.__ui_nodes_tree = QTreeWidget()
+        self.__ui_nodes_tree = qw.QTreeWidget()
         self.__ui_nodes_tree.setHeaderLabels(("Node", "Publish name"))
-        self.__ui_nodes_tree.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.__ui_nodes_tree.setSelectionMode(qw.QAbstractItemView.MultiSelection)
         self.__ui_nodes_tree.setItemDelegateForColumn(0, NoEditDelegate())
         nodes_layout.addWidget(self.__ui_nodes_tree)
 
-        nodes_buttons_layout = QHBoxLayout()
+        nodes_buttons_layout = qw.QHBoxLayout()
         nodes_buttons_layout.setSpacing(3)
         nodes_layout.addLayout(nodes_buttons_layout)
-        self.__ui_select_no_nodes = QPushButton("Select none")
+        self.__ui_select_no_nodes = qw.QPushButton("Select none")
         nodes_buttons_layout.addWidget( self.__ui_select_no_nodes )
-        self.__ui_select_all_nodes = QPushButton("Select all")
+        self.__ui_select_all_nodes = qw.QPushButton("Select all")
         nodes_buttons_layout.addWidget( self.__ui_select_all_nodes )
 
         # <-- PRE-PUBLISH -->
 
-        pre_publish_widget = QWidget()
-        pre_publish_vlayout = QVBoxLayout(pre_publish_widget)
+        pre_publish_widget = qw.QWidget()
+        pre_publish_vlayout = qw.QVBoxLayout(pre_publish_widget)
         pre_publish_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( pre_publish_widget )
 
-        pre_publish_layout = QFormLayout()
+        pre_publish_layout = qw.QFormLayout()
         pre_publish_layout.setSpacing(3)
-        pre_publish_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        pre_publish_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         pre_publish_vlayout.addLayout(pre_publish_layout)
 
-        self.__ui_import_references_box = QCheckBox("Import references")
+        self.__ui_import_references_box = qw.QCheckBox("Import references")
         pre_publish_layout.addRow("Clean:", self.__ui_import_references_box)
 
-        self.__ui_remove_namespaces_box = QCheckBox("Remove namespaces")
+        self.__ui_remove_namespaces_box = qw.QCheckBox("Remove namespaces")
         pre_publish_layout.addRow("", self.__ui_remove_namespaces_box)
 
-        self.__ui_remove_hidden_nodes_box = QCheckBox("Remove hidden nodes")
+        self.__ui_remove_hidden_nodes_box = qw.QCheckBox("Remove hidden nodes")
         pre_publish_layout.addRow("", self.__ui_remove_hidden_nodes_box)
 
-        self.__ui_delete_history_box = QCheckBox("Delete node history")
+        self.__ui_delete_history_box = qw.QCheckBox("Delete node history")
         pre_publish_layout.addRow("", self.__ui_delete_history_box)
 
-        self.__ui_remove_extra_shapes_box = QCheckBox("Remove extra shapes")
+        self.__ui_remove_extra_shapes_box = qw.QCheckBox("Remove extra shapes")
         pre_publish_layout.addRow("", self.__ui_remove_extra_shapes_box)
 
-        self.__ui_remove_empty_groups_box = QCheckBox("Remove empty groups")
+        self.__ui_remove_empty_groups_box = qw.QCheckBox("Remove empty groups")
         pre_publish_layout.addRow("", self.__ui_remove_empty_groups_box)
 
-        self.__ui_remove_animation_box = QCheckBox("Remove animation")
+        self.__ui_remove_animation_box = qw.QCheckBox("Remove animation")
         pre_publish_layout.addRow("", self.__ui_remove_animation_box)
 
-        self.__ui_types_box = QComboBox()
+        self.__ui_types_box = qw.QComboBox()
         self.__ui_types_box.addItem("Keep", "keep")
         self.__ui_types_box.addItem("Remove", "remove")
         pre_publish_layout.addRow("Types:", self.__ui_types_box)
 
-        self.__ui_types_edit = QTextEdit()
+        self.__ui_types_edit = qw.QTextEdit()
         self.__ui_types_edit.setPlainText("locator\nbezierCurve\nnurbsCurve\nnurbsSurface")
         self.__ui_types_edit.setMaximumHeight(100)
         pre_publish_layout.addRow("", self.__ui_types_edit)
 
-        self.__ui_freeze_transform_box = QCheckBox("")
+        self.__ui_freeze_transform_box = qw.QCheckBox("")
         pre_publish_layout.addRow("Freeze transformations", self.__ui_freeze_transform_box)
 
-        self.__ui_freeze_white_list_widget = QWidget()
-        freeze_white_list_layout = QVBoxLayout(self.__ui_freeze_white_list_widget)
+        self.__ui_freeze_white_list_widget = qw.QWidget()
+        freeze_white_list_layout = qw.QVBoxLayout(self.__ui_freeze_white_list_widget)
         freeze_white_list_layout.setContentsMargins(0,0,0,0)
         freeze_white_list_layout.setSpacing(3)
-        freeze_white_list_label = QLabel("Ignore names containing:")
+        freeze_white_list_label = qw.QLabel("Ignore names containing:")
         freeze_white_list_layout.addWidget(freeze_white_list_label)
-        self.__ui_freeze_white_list_edit = QLineEdit("_eye_, _eyes_")
+        self.__ui_freeze_white_list_edit = qw.QLineEdit("_eye_, _eyes_")
         freeze_white_list_layout.addWidget( self.__ui_freeze_white_list_edit )
-        self.__ui_freeze_white_list_case_box = QCheckBox("Case sensitive")
+        self.__ui_freeze_white_list_case_box = qw.QCheckBox("Case sensitive")
         freeze_white_list_layout.addWidget(self.__ui_freeze_white_list_case_box )
         pre_publish_layout.addRow("", self.__ui_freeze_white_list_widget)
 
         # <-- Maya Scene -->
 
-        maya_widget = QWidget()
-        maya_vlayout = QVBoxLayout(maya_widget)
+        maya_widget = qw.QWidget()
+        maya_vlayout = qw.QVBoxLayout(maya_widget)
         maya_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( maya_widget )
 
-        maya_layout = QFormLayout()
+        maya_layout = qw.QFormLayout()
         maya_layout.setSpacing(3)
-        maya_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        maya_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         maya_vlayout.addLayout(maya_layout)
 
-        self.__ui_maya_format_box = QComboBox()
+        self.__ui_maya_format_box = qw.QComboBox()
         self.__ui_maya_format_box.addItem("Maya Binary (mb)", "mb")
         self.__ui_maya_format_box.addItem("Maya ASCII (ma)", "ma")
         maya_layout.addRow("Format:", self.__ui_maya_format_box )
 
-        self.__ui_maya_hidden_nodes_box = QCheckBox("Lock visibility")
+        self.__ui_maya_hidden_nodes_box = qw.QCheckBox("Lock visibility")
         maya_layout.addRow("Hidden nodes:", self.__ui_maya_hidden_nodes_box)
 
-        self.__ui_maya_lock_transform_box = QCheckBox("Lock transformations")
+        self.__ui_maya_lock_transform_box = qw.QCheckBox("Lock transformations")
         maya_layout.addRow("Node transform:", self.__ui_maya_lock_transform_box)
 
-        self.__ui_maya_hide_joints_box = QComboBox()
+        self.__ui_maya_hide_joints_box = qw.QComboBox()
         self.__ui_maya_hide_joints_box.addItem("Disable draw", "disable")
         self.__ui_maya_hide_joints_box.addItem("Hide", "hide")
         self.__ui_maya_hide_joints_box.addItem("Hide and lock visibility", "lock")
@@ -269,88 +254,88 @@ class PublishDialog(Dialog):
 
         # <-- Maya Shaders -->
 
-        shaders_widget = QWidget()
-        shaders_vlayout = QVBoxLayout(shaders_widget)
+        shaders_widget = qw.QWidget()
+        shaders_vlayout = qw.QVBoxLayout(shaders_widget)
         shaders_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( shaders_widget )
-        shaders_layout = QFormLayout()
-        shaders_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        shaders_layout = qw.QFormLayout()
+        shaders_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         shaders_layout.setSpacing(3)
         shaders_vlayout.addLayout(shaders_layout)
 
-        self.__ui_shaders_format_box = QComboBox()
+        self.__ui_shaders_format_box = qw.QComboBox()
         self.__ui_shaders_format_box.addItem("Maya Binary (mb)", "mb")
         self.__ui_shaders_format_box.addItem("Maya ASCII (ma)", "ma")
         shaders_layout.addRow("Format:", self.__ui_shaders_format_box )
 
         # <-- Alembic -->
 
-        alembic_widget = QWidget()
-        alembic_vlayout = QVBoxLayout(alembic_widget)
+        alembic_widget = qw.QWidget()
+        alembic_vlayout = qw.QVBoxLayout(alembic_widget)
         alembic_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( alembic_widget )
-        alembic_layout = QFormLayout()
-        alembic_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        alembic_layout = qw.QFormLayout()
+        alembic_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         alembic_layout.setSpacing(3)
         alembic_vlayout.addLayout(alembic_layout)
 
-        self.__ui_alembic_renderable_box = QCheckBox("Renderable only")
+        self.__ui_alembic_renderable_box = qw.QCheckBox("Renderable only")
         alembic_layout.addRow("Export:", self.__ui_alembic_renderable_box)
 
-        self.__ui_alembic_worldSpace_box = QCheckBox("World space")
+        self.__ui_alembic_worldSpace_box = qw.QCheckBox("World space")
         alembic_layout.addRow("", self.__ui_alembic_worldSpace_box)
 
-        self.__ui_alembic_handles_widget = QWidget()
-        handles_layout = QHBoxLayout(self.__ui_alembic_handles_widget)
+        self.__ui_alembic_handles_widget = qw.QWidget()
+        handles_layout = qw.QHBoxLayout(self.__ui_alembic_handles_widget)
         handles_layout.setContentsMargins(0,0,0,0)
         handles_layout.setSpacing(3)
-        self.__ui_alembic_handle_start_box = QSpinBox()
+        self.__ui_alembic_handle_start_box = qw.QSpinBox()
         self.__ui_alembic_handle_start_box.setMinimum(0)
         self.__ui_alembic_handle_start_box.setMaximum(10000)
         self.__ui_alembic_handle_start_box.setPrefix("-")
         handles_layout.addWidget( self.__ui_alembic_handle_start_box)
         self.__ui_alembic_handle_start_box.setValue( 0 )
-        self.__ui_alembic_handle_end_box = QSpinBox()
+        self.__ui_alembic_handle_end_box = qw.QSpinBox()
         self.__ui_alembic_handle_end_box.setMinimum(0)
         self.__ui_alembic_handle_end_box.setMaximum(10000)
         self.__ui_alembic_handle_end_box.setPrefix("+")
         handles_layout.addWidget( self.__ui_alembic_handle_end_box)
         alembic_layout.addRow("Handles:", self.__ui_alembic_handles_widget)
 
-        self.__ui_alembic_frame_step_box = QDoubleSpinBox()
+        self.__ui_alembic_frame_step_box = qw.QDoubleSpinBox()
         self.__ui_alembic_frame_step_box.setMinimum(0.1)
         self.__ui_alembic_frame_step_box.setMaximum( 100 )
         self.__ui_alembic_frame_step_box.setDecimals(1)
         alembic_layout.addRow("Frame step:", self.__ui_alembic_frame_step_box)
 
-        self.__ui_alembic_filter_euler_box = QCheckBox("Filter Euler rotations")
+        self.__ui_alembic_filter_euler_box = qw.QCheckBox("Filter Euler rotations")
         alembic_layout.addRow("Rotations:", self.__ui_alembic_filter_euler_box)
 
-        self.__ui_abc_custom_attr_box = QCheckBox("Automatically add all custom/extra attributes")
+        self.__ui_abc_custom_attr_box = qw.QCheckBox("Automatically add all custom/extra attributes")
         alembic_layout.addRow("Custom Attributes:", self.__ui_abc_custom_attr_box)
 
-        self.__ui_abc_attr_edit = QTextEdit()
+        self.__ui_abc_attr_edit = qw.QTextEdit()
         self.__ui_abc_attr_edit.setPlaceholderText("Add all the attributes with these exact names.\nOne attribute per line.")
         self.__ui_abc_attr_edit.setMaximumHeight(100)
         alembic_layout.addRow("Attributes:", self.__ui_abc_attr_edit)
 
-        self.__ui_abc_prefix_edit = QTextEdit()
+        self.__ui_abc_prefix_edit = qw.QTextEdit()
         self.__ui_abc_prefix_edit.setPlaceholderText("Add all the attributes with these prefix in their names.\nOne prefix per line.")
         self.__ui_abc_prefix_edit.setMaximumHeight(100)
         alembic_layout.addRow("Attributes prefix:", self.__ui_abc_prefix_edit)
 
         # <-- OBJ -->
 
-        obj_widget = QWidget()
-        obj_vlayout = QVBoxLayout(obj_widget)
+        obj_widget = qw.QWidget()
+        obj_vlayout = qw.QVBoxLayout(obj_widget)
         obj_vlayout.setSpacing(3)
         self.__ui_stacked_layout.addWidget( obj_widget )
-        obj_layout = QFormLayout()
-        obj_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        obj_layout = qw.QFormLayout()
+        obj_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         obj_layout.setSpacing(3)
         obj_vlayout.addLayout(obj_layout)
 
-        self.__ui_obj_mtl_box = QCheckBox("Materials (.mtl)")
+        self.__ui_obj_mtl_box = qw.QCheckBox("Materials (.mtl)")
         obj_layout.addRow("Export:", self.__ui_obj_mtl_box)
 
     def __connect_events(self):
@@ -427,15 +412,15 @@ class PublishDialog(Dialog):
 
     # <== PRIVATE SLOTS ==>
 
-    @Slot()
+    @qc.Slot()
     def __ui_publish_button_clicked(self):
         self.accept()
 
-    @Slot()
+    @qc.Slot()
     def __ui_cancel_button_clicked(self):
         self.reject()
 
-    @Slot(bool)
+    @qc.Slot(bool)
     def __ui_maya_scene_box_clicked(self, checked):
         item = self.__ui_sections_box.item(3)
         item.setHidden(not checked)
@@ -443,13 +428,13 @@ class PublishDialog(Dialog):
             self.__set_maya_defaults()
         self.__update_preset()
 
-    @Slot(bool)
+    @qc.Slot(bool)
     def __ui_maya_shaders_box_clicked(self, checked):
         item = self.__ui_sections_box.item(4)
         item.setHidden(not checked)
         self.__update_preset()
 
-    @Slot(bool)
+    @qc.Slot(bool)
     def __ui_alembic_box_clicked(self, checked):
         item = self.__ui_sections_box.item(5)
         item.setHidden(not checked)
@@ -457,13 +442,13 @@ class PublishDialog(Dialog):
             self.__set_alembic_defaults()
         self.__update_preset()
 
-    @Slot()
+    @qc.Slot()
     def __ui_arnold_scene_source_box_clicked(self):
         #item = self.__ui_sections_box.item(5)
         #item.setHidden(not checked)
         self.__update_preset()
 
-    @Slot()
+    @qc.Slot()
     def __ui_obj_box_clicked(self, checked):
         item = self.__ui_sections_box.item(6)
         item.setHidden(not checked)
@@ -471,21 +456,21 @@ class PublishDialog(Dialog):
             self.__set_obj_defaults()
         self.__update_preset()
 
-    @Slot(int)
+    @qc.Slot(int)
     def __ui_preset_box_current_changed(self, index):
         if index < 0:
             return
-        file_path = self.__ui_preset_box.itemData(index, Qt.UserRole)
+        file_path = self.__ui_preset_box.itemData(index, qc.Qt.UserRole)
         self.load_preset_file( file_path )
 
-    @Slot()
+    @qc.Slot()
     def __update_preset(self):
         # Main options
         options = self.get_options()
         options_str = yaml.dump(options)
         self.__ui_preset_edit.setText(options_str)
 
-    @Slot()
+    @qc.Slot()
     def __ui_step_box_changed(self):
         current_step = self.__ui_step_box.current_step()
         if current_step is None:
@@ -517,7 +502,7 @@ class PublishDialog(Dialog):
         types_str = self.__ui_types_edit.toPlainText()
         if types_str != "":
             options["types"] = {}
-            options["types"]["mode"] = self.__ui_types_box.currentData(Qt.UserRole)
+            options["types"]["mode"] = self.__ui_types_box.currentData(qc.Qt.UserRole)
             types_arr = types_str.split("\n")
             options["types"]["list"] = []
             for type_str in types_arr:
@@ -572,9 +557,9 @@ class PublishDialog(Dialog):
 
         maya["lock_hidden_nodes"] = self.__ui_maya_hidden_nodes_box.isChecked()
         maya["lock_transformations"] = self.__ui_maya_lock_transform_box.isChecked()
-        maya["joints"] = self.__ui_maya_hide_joints_box.currentData(Qt.UserRole)
+        maya["joints"] = self.__ui_maya_hide_joints_box.currentData(qc.Qt.UserRole)
                  
-        options[ self.__ui_maya_format_box.currentData(Qt.UserRole) ] = maya
+        options[ self.__ui_maya_format_box.currentData(qc.Qt.UserRole) ] = maya
         
         return options
 
@@ -588,7 +573,7 @@ class PublishDialog(Dialog):
 
         maya["only_shaders"] = True
         
-        options[ self.__ui_shaders_format_box.currentData(Qt.UserRole) ] = maya
+        options[ self.__ui_shaders_format_box.currentData(qc.Qt.UserRole) ] = maya
         return options
 
     def get_alembic_options(self):
@@ -646,12 +631,12 @@ class PublishDialog(Dialog):
         self.__ui_nodes_tree.clear()
         for node in nodes:
             maNode = Node(node)
-            item = QTreeWidgetItem(self.__ui_nodes_tree)
+            item = qw.QTreeWidgetItem(self.__ui_nodes_tree)
             item.setText(0, maNode.name())
             item.setText(1, maNode.name().replace("_", " "))
             item.setSelected(True)
-            item.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            item.setData(0, Qt.UserRole, maNode)
+            item.setFlags(qc.Qt.ItemIsEditable | qc.Qt.ItemIsEnabled | qc.Qt.ItemIsSelectable)
+            item.setData(0, qc.Qt.UserRole, maNode)
             self.__ui_nodes_tree.addTopLevelItem(item)
 
     def update_preset_files(self, preset_files):
@@ -785,7 +770,7 @@ class PublishDialog(Dialog):
         """"Returns a list of tuples (node, publish name)"""
         nodes = []
         for item in self.__ui_nodes_tree.selectedItems():
-            nodes.append((item.data(0, Qt.UserRole), item.text(1)))
+            nodes.append((item.data(0, qc.Qt.UserRole), item.text(1)))
         return nodes
 
     def set_steps(self, steps):

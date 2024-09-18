@@ -3,29 +3,17 @@
 
 import os
 from functools import cmp_to_key
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module,import-error
-    QDialog,
-    QHBoxLayout,
-    QVBoxLayout,
-    QFormLayout,
-    QComboBox,
-    QListWidget,
-    QListWidgetItem,
-    QLabel,
-    QPushButton,
-    QWidget,
-    QLineEdit,
-    QAbstractItemView,
-    QCheckBox,
-    QTextEdit,
-    QStackedLayout,
-    QRadioButton,
-    QAction
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module,import-error
-    Slot,
-    Qt
-)
+
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+    QAction = qw.QAction
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtGui as qg
+    from PySide6 import QtCore as qc
+    QAction = qg.QAction
+
 import yaml
 import ramses as ram
 from ramses_maya.ui_object_combobox import RamObjectBox
@@ -57,16 +45,16 @@ class ImportDialog( Dialog ):
         """Creates the dialog UI"""
 
         checkableButtonCSS = """
-            QPushButton {
+            qw.QPushButton {
                 background-color: rgba(0,0,0,0);
                 border:none;
                 padding: 5px;
                 color: #eeeeee;
             }
-            QPushButton:hover {
+            qw.QPushButton:hover {
                 background-color: #707070;
             }
-            QPushButton:checked {
+            qw.QPushButton:checked {
                 background-color: #2b2b2b;
             }"""
 
@@ -74,36 +62,36 @@ class ImportDialog( Dialog ):
 
         self.setMinimumWidth(1000)
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setSpacing(3)
         self.main_layout.addLayout(mainLayout)
 
-        midLayout = QHBoxLayout()
+        midLayout = qw.QHBoxLayout()
         midLayout.setSpacing(3)
 
-        topLayout = QFormLayout()
-        topLayout.setFieldGrowthPolicy( QFormLayout.AllNonFixedFieldsGrow )
+        topLayout = qw.QFormLayout()
+        topLayout.setFieldGrowthPolicy( qw.QFormLayout.AllNonFixedFieldsGrow )
         topLayout.setSpacing(3)
 
-        topLayout.addRow(QLabel("Info:"))
+        topLayout.addRow(qw.QLabel("Info:"))
 
         self.projectBox = RamObjectBox()
         topLayout.addRow( "Project:", self.projectBox )
 
-        self.typeWidget = QWidget()
-        typeLayout = QVBoxLayout()
+        self.typeWidget = qw.QWidget()
+        typeLayout = qw.QVBoxLayout()
         typeLayout.setContentsMargins(0,0,0,0)
         typeLayout.setSpacing(3)
-        self.recentButton = QRadioButton()
+        self.recentButton = qw.QRadioButton()
         self.recentButton.setText("Recent")
         typeLayout.addWidget(self.recentButton)
-        self.assetButton = QRadioButton()
+        self.assetButton = qw.QRadioButton()
         self.assetButton.setText("Asset")
         typeLayout.addWidget(self.assetButton)
-        self.shotButton = QRadioButton()
+        self.shotButton = qw.QRadioButton()
         self.shotButton.setText("Shot")
         typeLayout.addWidget(self.shotButton)
-        self.templateButton = QRadioButton()
+        self.templateButton = qw.QRadioButton()
         self.templateButton.setText("Template")
         typeLayout.addWidget(self.templateButton)
         self.typeWidget.setLayout(typeLayout)
@@ -111,99 +99,99 @@ class ImportDialog( Dialog ):
         self.recentButton.setChecked(True)
         topLayout.addRow( "Type:", self.typeWidget )
 
-        self.actionWidget = QWidget()
-        actionLayout = QVBoxLayout()
+        self.actionWidget = qw.QWidget()
+        actionLayout = qw.QVBoxLayout()
         actionLayout.setContentsMargins(0,0,0,0)
         actionLayout.setSpacing(3)
-        self.openButton = QRadioButton()
+        self.openButton = qw.QRadioButton()
         self.openButton.setText("Open item")
         self.openButton.setChecked(True)
         actionLayout.addWidget(self.openButton)
-        self.importButton = QRadioButton()
+        self.importButton = qw.QRadioButton()
         self.importButton.setText("Import item")
         actionLayout.addWidget(self.importButton)
-        self.replaceButton = QRadioButton()
+        self.replaceButton = qw.QRadioButton()
         self.replaceButton.setText("Replace selected items")
         actionLayout.addWidget(self.replaceButton)
         self.actionWidget.setLayout(actionLayout)
         topLayout.addRow( "Action:", self.actionWidget )
 
-        self.optionsWidget = QWidget()
-        optionsLayout = QVBoxLayout(self.optionsWidget)
+        self.optionsWidget = qw.QWidget()
+        optionsLayout = qw.QVBoxLayout(self.optionsWidget)
         optionsLayout.setContentsMargins(0,0,0,0)
         optionsLayout.setSpacing(3)
-        self.__show_import_options = QCheckBox("Edit import options")
+        self.__show_import_options = qw.QCheckBox("Edit import options")
         optionsLayout.addWidget(self.__show_import_options)
         topLayout.addRow( "Settings:", self.optionsWidget )
 
         midLayout.addLayout( topLayout )
 
-        self.itemWidget = QWidget()
+        self.itemWidget = qw.QWidget()
         midLayout.addWidget(self.itemWidget)
-        itemLayout = QVBoxLayout(self.itemWidget)
+        itemLayout = qw.QVBoxLayout(self.itemWidget)
         itemLayout.setSpacing(3)
         itemLayout.setContentsMargins(0,0,0,0)
-        self.itemLabel = QLabel("Item")
+        self.itemLabel = qw.QLabel("Item")
         itemLayout.addWidget(self.itemLabel)
         self.groupBox = RamObjectBox()
         itemLayout.addWidget(self.groupBox)
-        self.itemSearchField = QLineEdit()
+        self.itemSearchField = qw.QLineEdit()
         self.itemSearchField.setPlaceholderText('Search...')
         self.itemSearchField.setClearButtonEnabled(True)
         itemLayout.addWidget(self.itemSearchField)
-        self.itemList = QListWidget()
+        self.itemList = qw.QListWidget()
         itemLayout.addWidget(self.itemList)
 
-        self.stepWidget = QWidget()
+        self.stepWidget = qw.QWidget()
         midLayout.addWidget(self.stepWidget)
-        stepLayout = QVBoxLayout(self.stepWidget)
+        stepLayout = qw.QVBoxLayout(self.stepWidget)
         stepLayout.setSpacing(3)
         stepLayout.setContentsMargins(0,0,0,0)
-        stepLabel = QLabel("Step:")
+        stepLabel = qw.QLabel("Step:")
         stepLayout.addWidget(stepLabel)
-        self.stepList = QListWidget()
+        self.stepList = qw.QListWidget()
         stepLayout.addWidget(self.stepList)
 
-        self.resourcesWidget = QWidget()
+        self.resourcesWidget = qw.QWidget()
         midLayout.addWidget(self.resourcesWidget)
-        resourcesLayout = QVBoxLayout(self.resourcesWidget)
+        resourcesLayout = qw.QVBoxLayout(self.resourcesWidget)
         resourcesLayout.setSpacing(3)
         resourcesLayout.setContentsMargins(0,0,0,0)
-        self.resourcesLabel = QLabel("Resource:")
+        self.resourcesLabel = qw.QLabel("Resource:")
         resourcesLayout.addWidget(self.resourcesLabel)
-        self.resourceList = QListWidget()
+        self.resourceList = qw.QListWidget()
         resourcesLayout.addWidget(self.resourceList)
 
-        self.versionsWidget = QWidget()
+        self.versionsWidget = qw.QWidget()
         midLayout.addWidget(self.versionsWidget)
-        versionsLayout = QVBoxLayout(self.versionsWidget)
+        versionsLayout = qw.QVBoxLayout(self.versionsWidget)
         versionsLayout.setSpacing(3)
         versionsLayout.setContentsMargins(0,0,0,0)
-        self.versionsLabel = QLabel("Version:")
+        self.versionsLabel = qw.QLabel("Version:")
         versionsLayout.addWidget(self.versionsLabel)
-        self.publishVersionBox = QComboBox()
+        self.publishVersionBox = qw.QComboBox()
         versionsLayout.addWidget(self.publishVersionBox)
         self.publishVersionBox.setVisible(False)
-        self.versionSearchField = QLineEdit()
+        self.versionSearchField = qw.QLineEdit()
         self.versionSearchField.setPlaceholderText('Search...')
         self.versionSearchField.setClearButtonEnabled(True)
         versionsLayout.addWidget(self.versionSearchField)
-        self.versionList = QListWidget()
+        self.versionList = qw.QListWidget()
         versionsLayout.addWidget(self.versionList)
 
         mainLayout.addLayout( midLayout )
 
-        buttonsLayout = QHBoxLayout()
+        buttonsLayout = qw.QHBoxLayout()
         buttonsLayout.setSpacing(2)
-        self._openButton = QPushButton("Open")
+        self._openButton = qw.QPushButton("Open")
         buttonsLayout.addWidget( self._openButton )
-        self._importButton = QPushButton("Import")
+        self._importButton = qw.QPushButton("Import")
         self._importButton.hide()
         buttonsLayout.addWidget( self._importButton )
-        self._replaceButton = QPushButton("Replace")
+        self._replaceButton = qw.QPushButton("Replace")
         self._replaceButton.hide()
         buttonsLayout.addWidget( self._replaceButton )
-        self._cancelButton = QPushButton("Cancel")
+        self._cancelButton = qw.QPushButton("Cancel")
         buttonsLayout.addWidget( self._cancelButton )
 
         self._openButton.setEnabled(False)
@@ -280,7 +268,7 @@ class ImportDialog( Dialog ):
         self.sort_publish_asc.toggled.connect( self.__change_sort_publish_asc )
         self.sort_publish_desc.toggled.connect( self.__change_sort_publish_desc )
 
-    @Slot()
+    @qc.Slot()
     def __change_sort_publish_by_version(self, checked):
         self.sort_publish_by_version.setChecked( checked )
         self.sort_publish_by_resource.setChecked( not checked )
@@ -288,7 +276,7 @@ class ImportDialog( Dialog ):
         SETTINGS.save()
         self.__update_resources()
 
-    @Slot()
+    @qc.Slot()
     def __change_sort_publish_by_resource(self, checked):
         self.sort_publish_by_version.setChecked( not checked )
         self.sort_publish_by_resource.setChecked( checked )
@@ -296,7 +284,7 @@ class ImportDialog( Dialog ):
         SETTINGS.save()
         self.__update_resources()
 
-    @Slot()
+    @qc.Slot()
     def __change_sort_publish_asc(self, checked):
         self.sort_publish_asc.setChecked( checked )
         self.sort_publish_desc.setChecked( not checked )
@@ -304,7 +292,7 @@ class ImportDialog( Dialog ):
         SETTINGS.save()
         self.__update_resources()
 
-    @Slot()
+    @qc.Slot()
     def __change_sort_publish_desc(self, checked):
         self.sort_publish_asc.setChecked( not checked )
         self.sort_publish_desc.setChecked( checked )
@@ -312,35 +300,35 @@ class ImportDialog( Dialog ):
         SETTINGS.save()
         self.__update_resources()
 
-    @Slot()
+    @qc.Slot()
     def __recent_button_clicked(self):
         self.recentButton.setChecked(True)
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(False)
 
-    @Slot()
+    @qc.Slot()
     def __asset_button_clicked(self):
         self.recentButton.setChecked(False)
         self.assetButton.setChecked(True)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(False)
 
-    @Slot()
+    @qc.Slot()
     def __shot_button_clicked(self):
         self.recentButton.setChecked(False)
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(True)
         self.templateButton.setChecked(False)
 
-    @Slot()
+    @qc.Slot()
     def __template_button_clicked(self):
         self.recentButton.setChecked(False)
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(False)
         self.templateButton.setChecked(True)
 
-    @Slot()
+    @qc.Slot()
     def __open_button_clicked(self):
         self.openButton.setChecked(True)
         self.importButton.setChecked(False)
@@ -348,14 +336,14 @@ class ImportDialog( Dialog ):
         self.__show_import_options.setEnabled(False)
         self.__show_import_options.setChecked(False)
 
-    @Slot()
+    @qc.Slot()
     def __import_button_clicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(True)
         self.replaceButton.setChecked(False)
         self.__show_import_options.setEnabled(True)
 
-    @Slot()
+    @qc.Slot()
     def __replace_button_clicked(self):
         self.openButton.setChecked(False)
         self.importButton.setChecked(False)
@@ -378,7 +366,7 @@ class ImportDialog( Dialog ):
 
         self.projectBox.setCurrentIndex(-1)
 
-    @Slot()
+    @qc.Slot()
     def __project_changed(self, index):
         self.assetButton.setChecked(False)
         self.shotButton.setChecked(False)
@@ -387,7 +375,7 @@ class ImportDialog( Dialog ):
         if index == -1:
             return
 
-    @Slot()
+    @qc.Slot()
     def __type_changed( self ):
         recent = self.recentButton.isChecked()
         shot = self.shotButton.isChecked()
@@ -470,11 +458,11 @@ class ImportDialog( Dialog ):
         # Populate steps
         for step in steps:
             n = str(step)
-            item = QListWidgetItem( n )
-            item.setData( Qt.UserRole, step )
+            item = qw.QListWidgetItem( n )
+            item.setData( qc.Qt.UserRole, step )
             self.stepList.addItem( item )
 
-    @Slot()
+    @qc.Slot()
     def __update_items(self):
 
         project = self.projectBox.currentData()
@@ -491,11 +479,11 @@ class ImportDialog( Dialog ):
         self.itemList.clear()
         for item in items:
             n = str(item)
-            listItem = QListWidgetItem( n )
-            listItem.setData( Qt.UserRole, item )
+            listItem = qw.QListWidgetItem( n )
+            listItem.setData( qc.Qt.UserRole, item )
             self.itemList.addItem( listItem )
 
-    @Slot()
+    @qc.Slot()
     def __search_item(self, text):
         text = text.lower()
         for i in range(0, self.itemList.count()):
@@ -504,7 +492,7 @@ class ImportDialog( Dialog ):
                 text != '' and text not in item.text().lower()
                 )
 
-    @Slot()
+    @qc.Slot()
     def __search_version(self, text):
         text = text.lower()
         for i in range(0, self.versionList.count()):
@@ -513,25 +501,25 @@ class ImportDialog( Dialog ):
                 text != '' and text not in item.text().lower()
                 )
 
-    @Slot()
+    @qc.Slot()
     def __action_changed(self):
         if self.openButton.isChecked():
             self._importButton.hide()
             self._replaceButton.hide()
             self._openButton.show()
             self.versionsLabel.setText("Version:")
-            self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
+            self.versionList.setSelectionMode(qw.QAbstractItemView.SingleSelection)
             self.publishVersionBox.setVisible(False)
             self.resourcesWidget.show()
         else: # Import or replace
             if self.replaceButton.isChecked():
                 self._replaceButton.show()
                 self._importButton.hide()
-                self.versionList.setSelectionMode(QAbstractItemView.SingleSelection)
+                self.versionList.setSelectionMode(qw.QAbstractItemView.SingleSelection)
             else:
                 self._replaceButton.hide()
                 self._importButton.show()
-                self.versionList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+                self.versionList.setSelectionMode(qw.QAbstractItemView.ExtendedSelection)
             self._openButton.hide()
             self.versionsLabel.setText("File:")
             self.publishVersionBox.setVisible(True)
@@ -539,7 +527,7 @@ class ImportDialog( Dialog ):
         self.__update_resources()
         self.__resource_changed( self.resourceList.currentRow() )
 
-    @Slot()
+    @qc.Slot()
     def __update_resources(self):
 
         def listTemplateResources(step):
@@ -588,8 +576,8 @@ class ImportDialog( Dialog ):
                     if res == "":
                         res = "Main (" + nm.extension + ")"
 
-                    item = QListWidgetItem( nm.shortName + " | " + res )
-                    item.setData( Qt.UserRole, resource )
+                    item = qw.QListWidgetItem( nm.shortName + " | " + res )
+                    item.setData( qc.Qt.UserRole, resource )
                     item.setToolTip(os.path.basename(t))
                     self.resourceList.addItem( item )
 
@@ -606,8 +594,8 @@ class ImportDialog( Dialog ):
                     continue
                 item = ram.RamItem.fromPath(file)
                 if not item:
-                    it = QListWidgetItem( os.path.basename(file) )
-                    it.setData( Qt.UserRole, file )
+                    it = qw.QListWidgetItem( os.path.basename(file) )
+                    it.setData( qc.Qt.UserRole, file )
                     self.resourceList.insertItem(0, it)
                     continue
 
@@ -630,8 +618,8 @@ class ImportDialog( Dialog ):
                 if res != "":
                     itemName = itemName + " | " + res
 
-                it = QListWidgetItem( itemName )
-                it.setData( Qt.UserRole, file )
+                it = qw.QListWidgetItem( itemName )
+                it.setData( qc.Qt.UserRole, file )
                 it.setToolTip( os.path.basename(file) )
                 self.resourceList.insertItem(0, it)
             return
@@ -639,7 +627,7 @@ class ImportDialog( Dialog ):
         stepItem = self.stepList.currentItem()
         if not stepItem:
             return
-        step = stepItem.data(Qt.UserRole)
+        step = stepItem.data(qc.Qt.UserRole)
 
         currentItem = self.getItem()
 
@@ -669,8 +657,8 @@ class ImportDialog( Dialog ):
                         res = "Main (" + nm.extension + ")"
                         self._openButton.setEnabled(True)
 
-                    item = QListWidgetItem( res )
-                    item.setData( Qt.UserRole, resource )
+                    item = qw.QListWidgetItem( res )
+                    item.setData( qc.Qt.UserRole, resource )
                     item.setToolTip( os.path.basename(resource) )
                     self.resourceList.addItem( item )
 
@@ -686,7 +674,7 @@ class ImportDialog( Dialog ):
         else:
             listTemplateResources(step)
 
-    @Slot()
+    @qc.Slot()
     def __list_published_versions(self):
         self.publishVersionBox.clear()
         folders = []
@@ -726,7 +714,7 @@ class ImportDialog( Dialog ):
             self.publishVersionBox.addItem(title, f)
             self.__update_published_files()
 
-    @Slot()
+    @qc.Slot()
     def __update_published_files(self):
         self.versionList.clear()
         # List available files
@@ -741,12 +729,12 @@ class ImportDialog( Dialog ):
             if resource == "":
                 resource = "/ scene_backup /"
             title = resource + " (" + nm.extension + ")"
-            item = QListWidgetItem( title )
-            item.setData(Qt.UserRole, f)
+            item = qw.QListWidgetItem( title )
+            item.setData(qc.Qt.UserRole, f)
             item.setToolTip(fileName)
             self.versionList.addItem(item)
 
-    @Slot()
+    @qc.Slot()
     def __resource_changed(self, row):
 
         # Import, list publish files for templates
@@ -784,8 +772,8 @@ class ImportDialog( Dialog ):
         versionFiles.reverse()    
 
         # Add current
-        item = QListWidgetItem("Current version")
-        item.setData(Qt.UserRole, versionFiles[0])
+        item = qw.QListWidgetItem("Current version")
+        item.setData(qc.Qt.UserRole, versionFiles[0])
         self.versionList.addItem(item)
 
         # Add other versions
@@ -798,20 +786,20 @@ class ImportDialog( Dialog ):
             itemText = nm.state + ' | ' + str( nm.version )
             if comment != "":
                 itemText = itemText + ' | ' + comment
-            item = QListWidgetItem( itemText )
-            item.setData(Qt.UserRole, v)
+            item = qw.QListWidgetItem( itemText )
+            item.setData(qc.Qt.UserRole, v)
             self.versionList.addItem(item)
 
-    @Slot()
+    @qc.Slot()
     def __version_changed(self, row):
         self._importButton.setEnabled(row >= 0)
         self._replaceButton.setEnabled(row >= 0)
 
-    @Slot()
+    @qc.Slot()
     def __import(self):
         self.done(2)
 
-    @Slot()
+    @qc.Slot()
     def __replace(self):
         self.done(3)
 
@@ -856,7 +844,7 @@ class ImportDialog( Dialog ):
         self.groupBox.setCurrentIndex(0)
         for i in range( 0, self.itemList.count()):
             listItem = self.itemList.item(i)
-            if listItem.data(Qt.UserRole).shortName() == itemShortName:
+            if listItem.data(qc.Qt.UserRole).shortName() == itemShortName:
                 self.itemList.setCurrentItem(listItem)
                 self.__update_resources()
                 return
@@ -865,7 +853,7 @@ class ImportDialog( Dialog ):
         """Selects a specific step"""
         for i in range(0, self.stepList.count()):
             listItem = self.stepList.item(i)
-            if listItem.data(Qt.UserRole).shortName() == stepShortName:
+            if listItem.data(qc.Qt.UserRole).shortName() == stepShortName:
                 self.stepList.setCurrentItem(listItem)
                 self.__update_resources()
                 return
@@ -882,20 +870,20 @@ class ImportDialog( Dialog ):
             item = self.itemList.currentItem()
             if not item:
                 return None
-            return item.data(Qt.UserRole)
+            return item.data(qc.Qt.UserRole)
 
         # if it's a template, gets a virtual item from the path of the selected resource (or version if import)
         item = self.resourceList.currentItem()
         if not item:
             return None
-        return ram.RamItem.fromPath( item.data(Qt.UserRole), True )
+        return ram.RamItem.fromPath( item.data(qc.Qt.UserRole), True )
 
     def getStep(self):
         """Returns the selected step"""
         item = self.stepList.currentItem()
         if not item:
             return None
-        return item.data(Qt.UserRole)
+        return item.data(qc.Qt.UserRole)
 
     def getResource(self):
         """Returns the selected resource string if any"""
@@ -904,7 +892,7 @@ class ImportDialog( Dialog ):
             return ""
 
         nm = ram.RamFileInfo()
-        nm.setFilePath( item.data(Qt.UserRole) )
+        nm.setFilePath( item.data(qc.Qt.UserRole) )
         return nm.resource
 
     def getFile(self):
@@ -913,7 +901,7 @@ class ImportDialog( Dialog ):
         rowForCurrent = -1
         if self.openButton.isChecked(): rowForCurrent = 0
         if self.versionList.currentRow() > rowForCurrent:
-            return self.versionList.currentItem().data(Qt.UserRole)
+            return self.versionList.currentItem().data(qc.Qt.UserRole)
 
         # no version selected, return the resource file
         # We can't import if no version file selected
@@ -922,7 +910,7 @@ class ImportDialog( Dialog ):
         # return the selected resource if any
         item = self.resourceList.currentItem()
         if item:
-            return item.data(Qt.UserRole)
+            return item.data(qc.Qt.UserRole)
 
         # If it's an asset or a shot which is selected, return the default (no resource)
         if self.assetButton.isChecked() or self.shotButton.isChecked():
@@ -951,7 +939,7 @@ class ImportDialog( Dialog ):
 
         files = []
         for item in items:
-            files.append( item.data(Qt.UserRole) )
+            files.append( item.data(qc.Qt.UserRole) )
         return files
 
     def show_import_options(self):
@@ -981,36 +969,36 @@ class ImportSettingsDialog( Dialog ):
     def __setup_ui(self):
         self.setWindowTitle("Import items")
 
-        uber_layout = QHBoxLayout()
+        uber_layout = qw.QHBoxLayout()
         uber_layout.setSpacing(3)
         self.main_layout.addLayout(uber_layout)
 
-        self.__ui_files_box = QListWidget()
+        self.__ui_files_box = qw.QListWidget()
         self.__ui_files_box.setMaximumWidth( 150 )
         #uber_layout.addWidget(self.__ui_files_box)
 
-        self.__ui_stacked_layout = QStackedLayout()
+        self.__ui_stacked_layout = qw.QStackedLayout()
         uber_layout.addLayout(self.__ui_stacked_layout)
 
-        #preset_widget = QWidget()
-        #preset_layout = QFormLayout(preset_widget)
-        #preset_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        #preset_widget = qw.QWidget()
+        #preset_layout = qw.QFormLayout(preset_widget)
+        #preset_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         #preset_layout.setSpacing(3)
 
-        #self.__ui_preset_box = QComboBox()
+        #self.__ui_preset_box = qw.QComboBox()
         #preset_layout.addRow("Preset:", self.__ui_preset_box)
 
         #self.__ui_stacked_layout.addWidget(preset_widget)
 
         # <-- BOTTOM BUTTONS -->
 
-        buttons_layout = QHBoxLayout()
+        buttons_layout = qw.QHBoxLayout()
         buttons_layout.setSpacing(2)
         self.main_layout.addLayout(buttons_layout)
 
-        self.__ui_import_button = QPushButton("Import")
+        self.__ui_import_button = qw.QPushButton("Import")
         buttons_layout.addWidget( self.__ui_import_button )
-        self.__ui_cancel_button = QPushButton("Cancel")
+        self.__ui_cancel_button = qw.QPushButton("Cancel")
         buttons_layout.addWidget( self.__ui_cancel_button )
 
     def __connect_events(self):
@@ -1021,11 +1009,11 @@ class ImportSettingsDialog( Dialog ):
 
     # <== PRIVATE SLOTS ==>
 
-    @Slot(int)
+    @qc.Slot(int)
     def __ui_preset_box_current_changed(self, index):
         if index < 0:
             return
-        file_path = self.__ui_preset_box.itemData(index, Qt.UserRole)
+        file_path = self.__ui_preset_box.itemData(index, qc.Qt.UserRole)
         self.load_preset_file( file_path )
 
     # <== PRIVATE METHODS ==>
@@ -1102,7 +1090,7 @@ class ImportSettingsDialog( Dialog ):
             }
             self.__add_file(default)
 
-class ImportSettingsWidget( QWidget ):
+class ImportSettingsWidget( qw.QWidget ):
     """
     The Dialog to edit import settings for a single pipe
     """
@@ -1117,49 +1105,49 @@ class ImportSettingsWidget( QWidget ):
         self.__update_preset()
 
     def __setup_ui(self):
-        uber_layout = QHBoxLayout(self)
+        uber_layout = qw.QHBoxLayout(self)
 
         # <-- GENERAL -->
 
-        main_layout = QFormLayout()
-        main_layout.setFormAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        main_layout = qw.QFormLayout()
+        main_layout.setFormAlignment(qc.Qt.AlignHCenter | qc.Qt.AlignTop)
         uber_layout.addLayout(main_layout)
 
-        self.__ui_reference_box = QCheckBox("As reference")
+        self.__ui_reference_box = qw.QCheckBox("As reference")
         main_layout.addRow("Import:", self.__ui_reference_box )
 
-        self.__ui_reload_reference_box = QCheckBox("Auto-reload reference")
+        self.__ui_reload_reference_box = qw.QCheckBox("Auto-reload reference")
         self.__ui_reload_reference_box.setEnabled(False)
         main_layout.addRow("", self.__ui_reload_reference_box )
 
-        self.__ui_lock_transform_box = QCheckBox("Lock transformations")
+        self.__ui_lock_transform_box = qw.QCheckBox("Lock transformations")
         self.__ui_lock_transform_box.setChecked(True)
         main_layout.addRow("", self.__ui_lock_transform_box)
 
-        self.__ui_namespace_box = QCheckBox("Create namespace")
+        self.__ui_namespace_box = qw.QCheckBox("Create namespace")
         self.__ui_namespace_box.setChecked(True)
         main_layout.addRow("", self.__ui_namespace_box)
 
-        self.__ui_no_root_shape_box = QCheckBox("Don't add shape")
+        self.__ui_no_root_shape_box = qw.QCheckBox("Don't add shape")
         self.__ui_no_root_shape_box.setChecked(False)
         main_layout.addRow("Root node:", self.__ui_no_root_shape_box)
     
 
-        self.__ui_apply_shaders_box = QCheckBox("Apply to selected nodes")
+        self.__ui_apply_shaders_box = qw.QCheckBox("Apply to selected nodes")
         self.__ui_apply_shaders_box.setChecked(True)
         main_layout.addRow("Shaders:", self.__ui_apply_shaders_box)
 
         # <-- PRESET -->
 
-        preset_widget = QWidget()
-        preset_layout = QVBoxLayout(preset_widget)
+        preset_widget = qw.QWidget()
+        preset_layout = qw.QVBoxLayout(preset_widget)
         preset_layout.setSpacing(3)
         preset_layout.setContentsMargins(3,3,3,3)
         uber_layout.addWidget(preset_widget)
 
-        preset_label = QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for pipes.")
+        preset_label = qw.QLabel("You can use this preset in Ramses to set\nthe current settings as default settings for pipes.")
         preset_layout.addWidget(preset_label)
-        self.__ui_preset_edit = QTextEdit()
+        self.__ui_preset_edit = qw.QTextEdit()
         self.__ui_preset_edit.setReadOnly(True)
         preset_layout.addWidget(self.__ui_preset_edit)
 
@@ -1170,14 +1158,14 @@ class ImportSettingsWidget( QWidget ):
         self.__ui_no_root_shape_box.toggled.connect( self.__update_preset )
         self.__ui_namespace_box.toggled.connect( self.__update_preset )
 
-    @Slot()
+    @qc.Slot()
     def __update_preset(self):
         # Main options
         options = self.get_options()
         options_str = yaml.dump(options)
         self.__ui_preset_edit.setText(options_str)
 
-    @Slot(bool)
+    @qc.Slot(bool)
     def __ui_reference_box_clicked(self, checked):
         self.__ui_lock_transform_box.setDisabled(checked)
         self.__ui_reload_reference_box.setEnabled(checked)

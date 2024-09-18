@@ -9,7 +9,7 @@
     },
     "meta": {
         "name": "ramses-maya",
-        "version": "0.10.1-Beta",
+        "version": "1.0.0-Beta",
         "prerelease": true,
         "modpath": "D:\\Path\\To\\Ramses-Maya"
     },

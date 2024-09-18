@@ -3,17 +3,16 @@
 A ComboBox for selecting steps
 """
 
-from PySide2.QtWidgets import (
-    QComboBox
-)
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module
-    Slot,
-    Qt,
-    Signal,
-)
+try:
+    from PySide2 import QtWidgets as qw
+    from PySide2 import QtCore as qc
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
+    from PySide6 import QtCore as qc
+
 from ramses import RamStep
 
-class StepComboBox(QComboBox):
+class StepComboBox(qw.QComboBox):
     """
     A ComboBox for selecting steps
     """
@@ -34,16 +33,16 @@ class StepComboBox(QComboBox):
     def current_step(self):
         return self.currentData()
 
-    @Slot()
+    @qc.Slot()
     def set_step(self, step):
         if isinstance(step, RamStep):
             for i in range(self.count()):
-                if self.itemData(i, Qt.UserRole) == step:
+                if self.itemData(i, qc.Qt.UserRole) == step:
                     self.setCurrentIndex(i)
                     return
         else:
             for i in range(self.count()):
-                if self.itemData(i, Qt.UserRole).shortName() == step:
+                if self.itemData(i, qc.Qt.UserRole).shortName() == step:
                     self.setCurrentIndex(i)
                     return
         return None

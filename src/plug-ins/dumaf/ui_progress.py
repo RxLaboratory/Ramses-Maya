@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtWidgets import ( # pylint: disable=no-name-in-module disable=import-error
-    QMainWindow,
-    QVBoxLayout,
-    QProgressBar,
-    QWidget,
-    QPushButton,
-)
-
-from PySide2.QtCore import ( # pylint: disable=no-name-in-module disable=import-error
-    Slot,
-)
+try:
+    from PySide2 import QtWidgets as qw
+except:  # pylint: disable=bare-except
+    from PySide6 import QtWidgets as qw
 
 from .ui import getMayaWindow
 
-class ProgressDialog( QMainWindow ):
+class ProgressDialog( qw.QMainWindow ):
 
     def __init__(self, parent = None):
         if parent is None:
@@ -29,16 +22,16 @@ class ProgressDialog( QMainWindow ):
         self.setMinimumWidth( 300 )
         self.setMaximumHeight(50)
 
-        mainLayout = QVBoxLayout()
+        mainLayout = qw.QVBoxLayout()
         mainLayout.setContentsMargins(6,6,6,6)
         mainLayout.setSpacing(3)
 
-        self.progressBar = QProgressBar()
+        self.progressBar = qw.QProgressBar()
         self.progressBar.setTextVisible(False)
 
         mainLayout.addWidget(self.progressBar)
 
-        mainWidget = QWidget()
+        mainWidget = qw.QWidget()
         mainWidget.setLayout( mainLayout )
         self.setCentralWidget( mainWidget )
         
@@ -64,4 +57,3 @@ if __name__ == '__main__':
     progressDialog.setMaximum(10)
     progressDialog.increment()
     progressDialog.show()
-    
