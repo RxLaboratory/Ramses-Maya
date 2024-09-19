@@ -3,12 +3,13 @@ import zipfile
 from rxbuilder.utils import (
     wipe,
     replace_in_file,
-    zip_dir
+    zip_dir,
+    write_version
 )
 from rxbuilder.py import (
     build_folder
 )
-from config import (
+from _config import (
     BUILD_PATH,
     SRC_PATH,
     VERSION
@@ -55,3 +56,4 @@ if __name__ == '__main__':
     wipe(BUILD_PATH)
     build()
     zip_module()
+    write_version(BUILD_PATH, VERSION)

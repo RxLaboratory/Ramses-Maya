@@ -81,3 +81,8 @@ def zip_dir( dir, zip_file_handler ):
             zip_file_handler.write(os.path.join(root, file),
                                   os.path.join(root.replace(dir, ''), file)
                                   )
+
+def write_version(build_path, version):
+    v_file = os.path.join(build_path, 'version')
+    with open(v_file, 'w', encoding='utf8') as f:
+        f.write(version)
