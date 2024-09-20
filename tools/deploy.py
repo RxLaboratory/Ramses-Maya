@@ -4,17 +4,18 @@ from rxbuilder.utils import (
     wipe,
     replace_in_file,
     zip_dir,
-    write_version
+    read_version
 )
 from rxbuilder.py import (
     build_folder
 )
 from _config import (
+    REPO_PATH,
     BUILD_PATH,
     SRC_PATH,
-    VERSION
 )
 
+VERSION = read_version(REPO_PATH)
 MOD_PATH = os.path.join( BUILD_PATH, 'ramses-maya' )
 
 def build():
@@ -56,4 +57,3 @@ if __name__ == '__main__':
     wipe(BUILD_PATH)
     build()
     zip_module()
-    write_version(BUILD_PATH, VERSION)

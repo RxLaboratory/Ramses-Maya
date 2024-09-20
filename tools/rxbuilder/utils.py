@@ -86,3 +86,10 @@ def write_version(build_path, version):
     v_file = os.path.join(build_path, 'version')
     with open(v_file, 'w', encoding='utf8') as f:
         f.write(version)
+
+def read_version(path, default='0.0.0'):
+    version_file = os.path.join(path, 'version')
+    version = default
+    with open(version_file, encoding='utf8') as f:
+        version = f.read()
+    return version
