@@ -23,7 +23,10 @@ import re
 import uuid as UUID
 import maya.api.OpenMaya as om  # pylint: disable=import-error
 import maya.cmds as cmds  # pylint: disable=import-error
-from .paths import baseName
+from .paths import (
+    baseName,
+    sanitizeName
+)
 
 class Node():
     """A wrapper class for maya nodes"""
@@ -95,7 +98,7 @@ class Node():
     @staticmethod
     def get_create_group(group_name, parent_node=None):
         """Gets or create a group with the groupName in the parentNode"""
-        group_name = group_name.replace(' ', '_')
+        group_name = sanitizeName(group_name)
         # Check if exists
         if parent_node is None:
             if not group_name.startswith('|'):
