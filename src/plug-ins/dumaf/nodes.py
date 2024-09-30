@@ -497,7 +497,7 @@ class Node():
         if lock_children:
             children = self.children(transform_only=True)
             for child in children:
-                child.lockTransform(lock_node)
+                child.lock_transform(lock_node)
 
         nodePath = self.path()
         for attr in ['.tx', '.ty', '.tz', '.rx', '.ry', '.rz', '.sx', '.sy', '.sz']:
